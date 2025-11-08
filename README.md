@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LCCI Global - Course Showcase Website
 
-## Getting Started
+A modern, developer-friendly Next.js 16 application for showcasing LCCI courses and qualifications.
 
-First, run the development server:
+## Project Structure
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+lcci-global/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Homepage (/)
+│   ├── courses/           # Courses listing page (/courses)
+│   ├── about/             # About page (/about)
+│   ├── contact-us/        # Contact page (/contact-us)
+│   ├── login/             # Login page (/login)
+│   └── dashboards/        # Dashboards section (to be implemented)
+├── components/
+│   └── website/           # Website-specific components
+│       ├── Header.tsx     # Site header/navigation
+│       ├── Footer.tsx     # Site footer
+│       └── CourseCard.tsx # Course card component
+├── data/
+│   └── courses.json       # Course data (JSON)
+├── lib/
+│   └── courses.ts         # Course data utilities
+├── types/
+│   └── course.ts          # TypeScript types for courses
+└── public/                # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Pages
+- **Homepage (/)**: Features hero section, featured courses, and course type information
+- **Courses (/courses)**: Complete course listing with filtering by type (guided/self-paced)
+- **About (/about)**: Information about LCCI, mission, values, and offerings
+- **Contact Us (/contact-us)**: Contact form and information
+- **Login (/login)**: Multiple login flows:
+  - Regular B2C: Google login
+  - Cambridge Students: School Name + School Code
+  - SQA Students: SCN number
+  - Admin: Email + Password
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Course Types
+1. **Guided Courses**: Instructor-led courses for schools/colleges/corporate training
+2. **Self-Paced Courses**: Materials provided by admin, accessible via student dashboard
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+### Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Install dependencies
+npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Run development server
+npm run dev
 
-## Deploy on Vercel
+# Build for production
+npm run build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Start production server
+npm start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tech Stack
+- **Next.js 16**: React framework with App Router
+- **React 19**: Latest React version
+- **TypeScript**: Type safety
+- **Tailwind CSS v4**: Styling
+- **JSON Data**: Course data stored in JSON (no API calls needed for now)
+
+## Data Structure
+
+Courses are stored in `data/courses.json` with the following structure:
+
+```typescript
+{
+  id: string;
+  title: string;
+  description: string;
+  type: "guided" | "self-paced";
+  category: string;
+  duration: string;
+  level: string;
+  featured: boolean;
+  image: string;
+  instructor: string;
+  price: string;
+  format: string;
+}
+```
+
+## Code Organization
+
+- **Components**: Reusable UI components in `components/website/`
+- **Utilities**: Helper functions in `lib/`
+- **Types**: TypeScript definitions in `types/`
+- **Data**: JSON data files in `data/`
+
+## Future Enhancements
+
+- Dashboard section (student/admin dashboards)
+- API integration for course data
+- User authentication
+- Course enrollment functionality
+- Payment integration
