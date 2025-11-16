@@ -10,7 +10,7 @@ export default function Home() {
   const featuredCourses = getFeaturedCourses();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       
       <main className="flex-1">

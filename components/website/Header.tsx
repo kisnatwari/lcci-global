@@ -32,7 +32,7 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? "bg-white/95 backdrop-blur-xl shadow-lg border-b border-[#4A9FD8]/20"
+            ? "bg-white/95 backdrop-blur-xl shadow-lg border-b border-[color:var(--brand-blue)]/20"
             : "bg-white/90 backdrop-blur-md"
         }`}
       >
@@ -51,13 +51,13 @@ export default function Header() {
                     href={link.href}
                     className={`relative px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
                       isActive
-                        ? "text-[#4A9FD8] bg-[#4A9FD8]/10"
-                        : "text-gray-700 hover:text-[#4A9FD8] hover:bg-[#4A9FD8]/5"
+                        ? "text-[color:var(--brand-blue)] bg-[color:var(--brand-blue)]/10"
+                        : "text-gray-700 hover:text-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/5"
                     }`}
                   >
                     {link.label}
                     {isActive && (
-                      <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-[#4A9FD8] rounded-full"></span>
+                      <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-[color:var(--brand-blue)] rounded-full"></span>
                     )}
                   </Link>
                 );
@@ -68,7 +68,7 @@ export default function Header() {
             <div className="hidden md:flex items-center space-x-3">
               <button
                 onClick={() => setIsLoginModalOpen(true)}
-                className="px-5 py-2.5 text-sm font-semibold text-gray-700 hover:text-[#4A9FD8] transition-colors"
+                className="px-5 py-2.5 text-sm font-semibold text-gray-700 hover:text-[color:var(--brand-blue)] transition-colors"
               >
                 Login
               </button>
@@ -83,7 +83,7 @@ export default function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-[#4A9FD8]/10 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-[color:var(--brand-blue)]/10 transition-colors"
               aria-label="Toggle menu"
             >
               <svg
@@ -117,8 +117,8 @@ export default function Header() {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`px-4 py-2 rounded-lg font-semibold ${
                         isActive
-                          ? "text-[#4A9FD8] bg-[#4A9FD8]/10"
-                          : "text-gray-700 hover:text-[#4A9FD8] hover:bg-[#4A9FD8]/5"
+                        ? "text-[color:var(--brand-blue)] bg-[color:var(--brand-blue)]/10"
+                        : "text-gray-700 hover:text-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/5"
                       }`}
                     >
                       {link.label}
@@ -131,7 +131,7 @@ export default function Header() {
                       setIsMobileMenuOpen(false);
                       setIsLoginModalOpen(true);
                     }}
-                    className="block w-full px-4 py-2 text-center font-semibold text-gray-700 hover:text-[#4A9FD8] transition-colors"
+                    className="block w-full px-4 py-2 text-center font-semibold text-gray-700 hover:text-[color:var(--brand-blue)] transition-colors"
                   >
                     Login
                   </button>
