@@ -1,167 +1,184 @@
 import Link from "next/link";
+import { ArrowRight, CheckCircle2, Users, Building2, Award } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative h-screen flex items-center overflow-hidden bg-white">
+    <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-sky-50">
       {/* Spacer for fixed header */}
-      <div className="absolute top-0 left-0 right-0 h-20"></div>
-      
-      {/* Diagonal Split Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4A9FD8] via-[#6BB5E8] to-cyan-400" style={{ clipPath: 'polygon(0 0, 100% 0, 70% 100%, 0 100%)' }}></div>
-        <div className="absolute inset-0 bg-white" style={{ clipPath: 'polygon(70% 0, 100% 0, 100% 100%, 70% 100%)' }}></div>
-      </div>
+      <div className="absolute top-0 left-0 right-0 h-20" />
 
-      {/* Animated Background Elements */}
+      {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Left side - Blue gradient orbs */}
-        <div className="absolute top-20 left-20 w-96 h-96 bg-white/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-32 left-32 w-80 h-80 bg-cyan-300/25 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }}></div>
+        {/* Large gradient orbs */}
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-sky-200/30 rounded-full blur-3xl animate-float" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
         
-        {/* Right side - White area patterns */}
-        <div className="absolute top-40 right-40 w-64 h-64 bg-[#4A9FD8]/5 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-20 right-20 w-72 h-72 bg-cyan-400/5 rounded-full blur-2xl"></div>
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
+          }}
+        />
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-20">
-        <div className="grid lg:grid-cols-12 gap-8 items-center h-full">
-          {/* Left Side - Blue Gradient Area */}
-          <div className="lg:col-span-7 text-white relative">
-            {/* Floating Badge */}
-            <div className="inline-block mb-8 px-6 py-3 bg-white/20 backdrop-blur-xl rounded-full border border-white/30 shadow-2xl animate-fade-in-up">
-              <span className="text-sm font-black flex items-center gap-2">
-                <span className="text-xl">🎯</span>
-                Professional Excellence Starts Here
-              </span>
+      <div className="container mx-auto px-4 lg:px-8 relative z-10 py-16 lg:py-20">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left Side - Hero Content */}
+          <div className="space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky-100/80 backdrop-blur-sm px-4 py-2 text-xs font-semibold text-sky-900 border border-sky-200/50">
+              <Award className="w-3.5 h-3.5" />
+              Award-winning qualifications since 1887
             </div>
-            
-            {/* Main Headline - Large & Bold */}
-            <h1 className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black mb-8 leading-[0.9] tracking-tight animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              BUILD YOUR
-              <br />
-              <span className="bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent">
-                FUTURE
-              </span>
-              <br />
-              <span className="text-5xl md:text-6xl lg:text-7xl">WITH LCCI</span>
-            </h1>
-            
-            {/* Subheadline */}
-            <p className="text-2xl md:text-3xl lg:text-4xl mb-12 font-bold text-white/90 leading-relaxed max-w-2xl animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Industry-leading qualifications that transform careers worldwide
-            </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-5 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+
+            {/* Main Headline */}
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.1]">
+                Start your journey to
+                <span className="block text-sky-700 mt-2">
+                  professional success
+                </span>
+                <span className="block mt-2">
+                  with LCCI
+                </span>
+              </h1>
+              
+              <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl">
+                Gain industry-recognized qualifications in business, accounting, finance, IT and English. Learn at your own pace or join guided programmes—start building your future today.
+              </p>
+            </div>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/courses"
-                className="group relative px-10 py-6 bg-white text-[#4A9FD8] rounded-2xl font-black text-lg shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-sky-700/20 hover:bg-sky-800 hover:shadow-xl hover:shadow-sky-700/30 transition-all duration-200"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#4A9FD8]/10 to-cyan-400/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <span className="relative z-10">Start Learning</span>
-                <svg className="w-6 h-6 relative z-10 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                Start learning now
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              
+
               <Link
                 href="/about"
-                className="px-10 py-6 bg-white/10 backdrop-blur-xl border-2 border-white/40 text-white rounded-2xl font-black text-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 shadow-2xl"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
               >
-                Explore Programs
+                Learn more about us
               </Link>
             </div>
 
-            {/* Quick Stats - Horizontal */}
-            <div className="flex flex-wrap gap-8 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-              {[
-                { number: "25K+", label: "Students" },
-                { number: "120+", label: "Partners" },
-                { number: "40+", label: "Courses" },
-              ].map((stat, idx) => (
-                <div key={idx} className="text-center">
-                  <div className="text-4xl md:text-5xl font-black mb-1 text-white">{stat.number}</div>
-                  <div className="text-sm font-bold text-white/80">{stat.label}</div>
+            {/* Trust indicators */}
+            <div className="flex flex-wrap items-center gap-8 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 border-2 border-white" />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 border-2 border-white" />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-white" />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Side - White Area with Cards */}
-          <div className="lg:col-span-5 relative">
-            {/* Floating Course Cards */}
-            <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
-              {/* Card 1 - Top Right */}
-              <div className="premium-card bg-white rounded-3xl p-8 shadow-2xl border-2 border-gray-100 hover:border-[#4A9FD8] hover:scale-105 transition-all duration-300 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#4A9FD8]/10 to-transparent rounded-bl-3xl"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-[#4A9FD8] to-cyan-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all">
-                    🍴
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 text-xl mb-1">Hospitality</h3>
-                    <p className="text-sm text-gray-600 font-semibold">Culinary Excellence</p>
-                  </div>
+                <div className="text-sm">
+                  <div className="font-semibold text-slate-900">25,000+</div>
+                  <div className="text-slate-600">Learners trained</div>
                 </div>
               </div>
 
-              {/* Card 2 - Middle */}
-              <div className="premium-card bg-white rounded-3xl p-8 shadow-2xl border-2 border-gray-100 hover:border-green-500 hover:scale-105 transition-all duration-300 relative overflow-hidden group ml-8">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-transparent rounded-bl-3xl"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all">
-                    💻
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 text-xl mb-1">Computing & IT</h3>
-                    <p className="text-sm text-gray-600 font-semibold">Tech Innovation</p>
-                  </div>
-                </div>
-              </div>
+              <div className="h-8 w-px bg-slate-200" />
 
-              {/* Card 3 - Bottom */}
-              <div className="premium-card bg-white rounded-3xl p-8 shadow-2xl border-2 border-gray-100 hover:border-purple-500 hover:scale-105 transition-all duration-300 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-transparent rounded-bl-3xl"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all">
-                    📚
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 text-xl mb-1">English</h3>
-                    <p className="text-sm text-gray-600 font-semibold">Cambridge Programs</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 4 - Offset */}
-              <div className="premium-card bg-white rounded-3xl p-8 shadow-2xl border-2 border-gray-100 hover:border-orange-500 hover:scale-105 transition-all duration-300 relative overflow-hidden group ml-8">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-400/10 to-transparent rounded-bl-3xl"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all">
-                    🎨
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 text-xl mb-1">Soft Skills</h3>
-                    <p className="text-sm text-gray-600 font-semibold">Personal Growth</p>
-                  </div>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-sky-600" />
+                <div className="text-sm">
+                  <div className="font-semibold text-slate-900">120+</div>
+                  <div className="text-slate-600">Partner institutions</div>
                 </div>
               </div>
             </div>
-
-            {/* Floating Decorative Elements */}
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-gradient-to-br from-[#4A9FD8] to-cyan-600 rounded-3xl shadow-2xl rotate-12 animate-float opacity-20"></div>
-            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl shadow-2xl -rotate-12 animate-float opacity-20" style={{ animationDelay: "2s" }}></div>
           </div>
-        </div>
-      </div>
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-[#4A9FD8]/60 rounded-full flex justify-center bg-white/10 backdrop-blur-md">
-          <div className="w-1.5 h-3 bg-[#4A9FD8] rounded-full mt-2 animate-pulse"></div>
+          {/* Right Side - Visual Feature Card */}
+          <div className="relative lg:pl-8">
+            {/* Main feature card */}
+            <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/10 border border-slate-100 p-8 lg:p-10 space-y-6">
+              {/* Decorative gradient */}
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-sky-100 to-blue-100 rounded-3xl opacity-50 blur-2xl -z-10" />
+              
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Choose your path
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  What would you like to learn?
+                </h3>
+              </div>
+
+              {/* Feature list */}
+              <div className="space-y-4">
+                {[
+                  {
+                    title: "Business & Finance",
+                    description: "Accounting, bookkeeping, financial management and business administration",
+                    icon: "💼",
+                    color: "from-blue-500 to-sky-500"
+                  },
+                  {
+                    title: "English & Communication",
+                    description: "Cambridge-aligned English language and professional communication skills",
+                    icon: "🗣️",
+                    color: "from-purple-500 to-pink-500"
+                  },
+                  {
+                    title: "Computing & IT",
+                    description: "Digital skills, software applications and IT fundamentals",
+                    icon: "💻",
+                    color: "from-green-500 to-emerald-500"
+                  },
+                  {
+                    title: "Hospitality & Soft Skills",
+                    description: "Customer service, leadership and interpersonal effectiveness",
+                    icon: "✨",
+                    color: "from-orange-500 to-amber-500"
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="group flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-all duration-200 cursor-default"
+                  >
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-xl shadow-lg`}>
+                      {item.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-slate-900 mb-1">
+                        {item.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom accent */}
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-500 text-center">
+                  Flexible delivery: Guided cohorts or self-paced learning
+                </p>
+              </div>
+            </div>
+
+            {/* Floating accent card */}
+            <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-sky-600 to-blue-600 rounded-2xl shadow-xl shadow-sky-900/20 p-6 max-w-[240px] hidden lg:block">
+              <div className="flex items-center gap-3 text-white">
+                <Users className="w-8 h-8" />
+                <div>
+                  <div className="text-2xl font-bold">40+</div>
+                  <div className="text-sm text-sky-100">Active programmes</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
-

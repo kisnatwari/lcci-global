@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Course } from "@/types/course";
+import { Clock, User2 } from "lucide-react";
 
 interface CourseCardProps {
   course: Course;
@@ -25,96 +26,118 @@ export default function CourseCard({ course }: CourseCardProps) {
   const imageUrl = getCourseImage(course);
   const hasImage = !!imageUrl;
 
+  const typeLabel =
+    course.type === "guided" ? "Guided programme" : "Self-paced programme";
+
   return (
     <Link href={`/courses/${course.id}`}>
-      <div className="group premium-card bg-white rounded-2xl overflow-hidden hover:-translate-y-2 transition-all duration-300 h-full flex flex-col border border-gray-100">
-        {/* Image Header - More Compact */}
-        <div className="relative h-40 overflow-hidden">
+      <div className="group rounded-2xl bg-white/95 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 h-full flex flex-col">
+        {/* Image Header */}
+        <div className="relative h-40 overflow-hidden rounded-t-2xl">
           {hasImage ? (
             <>
               <Image
                 src={imageUrl}
                 alt={course.title}
                 fill
-                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/20 to-transparent" />
             </>
           ) : (
-            <div className={`absolute inset-0 ${
-              course.type === "guided" 
-                ? "bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600" 
-                : "bg-gradient-to-br from-[#4A9FD8] via-[#6BB5E8] to-cyan-500"
-            }`}>
+            <div
+              className={`absolute inset-0 ${
+                course.type === "guided"
+                  ? "bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500"
+                  : "bg-gradient-to-br from-sky-700 via-sky-600 to-cyan-500"
+              }`}
+            >
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-3xl font-black drop-shadow-lg">{course.category}</span>
+                <span className="text-white text-xl font-semibold">
+                  {course.category}
+                </span>
               </div>
             </div>
           )}
-          
+
           {/* Featured Badge */}
           {course.featured && (
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 px-3 py-1.5 rounded-full text-xs font-black shadow-xl flex items-center gap-1 border-2 border-yellow-300 z-20">
-              <span className="text-sm">⭐</span>
-              <span>Featured</span>
+            <div className="absolute top-3 right-3 rounded-full border border-amber-300 bg-amber-100/95 px-3 py-1 text-[11px] font-semibold text-amber-900 shadow-sm">
+              Featured
             </div>
           )}
-          
+
           {/* Type Badge */}
-          <div className={`absolute top-3 left-3 px-3 py-1.5 rounded-full text-xs font-black shadow-lg backdrop-blur-md ${
-            course.type === "guided" 
-              ? "bg-green-500/90 text-white border border-green-300" 
-              : "bg-[#4A9FD8]/90 text-white border border-[#4A9FD8]/30"
-          }`}>
-            {course.type === "guided" ? "🎓 Guided" : "📚 Self-Paced"}
+          <div
+            className={`absolute top-3 left-3 rounded-full px-3 py-1 text-[11px] font-semibold text-white shadow-sm ${
+              course.type === "guided"
+                ? "bg-emerald-600/95"
+                : "bg-sky-700/95"
+            }`}
+          >
+            {typeLabel}
           </div>
         </div>
-        
-        {/* Content - Compact */}
+
+        {/* Content */}
         <div className="p-5 flex-1 flex flex-col">
           {/* Level Badge */}
           <div className="mb-3">
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700 border border-slate-200">
               {course.level}
             </span>
           </div>
-          
+
           {/* Title */}
-          <h3 className="text-lg font-black text-gray-900 mb-2 line-clamp-2 group-hover:text-[#4A9FD8] transition-colors leading-tight">
+          <h3 className="text-base md:text-lg font-semibold text-slate-900 mb-1.5 line-clamp-2 group-hover:text-sky-700 transition-colors leading-snug">
             {course.title}
           </h3>
-          
+
           {/* Description */}
-          <p className="text-sm text-gray-600 mb-4 flex-1 line-clamp-2 leading-relaxed font-medium">
+          <p className="text-xs md:text-sm text-slate-600 mb-4 flex-1 line-clamp-2 leading-relaxed">
             {course.description}
           </p>
-          
-          {/* Info Icons - Compact */}
-          <div className="flex flex-wrap gap-3 text-xs text-gray-600 mb-4">
+
+          {/* Meta */}
+          <div className="flex flex-wrap gap-3 text-[11px] text-slate-600 mb-4">
             <div className="flex items-center gap-1.5">
-              <span className="text-base">⏱️</span>
-              <span className="font-semibold">{course.duration}</span>
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <span className="font-medium">{course.duration}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-base">👤</span>
-              <span className="font-semibold truncate max-w-[120px]">{course.instructor}</span>
+              <User2 className="w-3.5 h-3.5 text-slate-500" />
+              <span className="font-medium truncate max-w-[140px]">
+                {course.instructor}
+              </span>
             </div>
           </div>
-          
-          {/* Footer - Price & CTA */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
             {course.price ? (
-              <span className="text-2xl font-black bg-gradient-to-r from-[#4A9FD8] via-[#6BB5E8] to-cyan-600 bg-clip-text text-transparent">
+              <span className="text-sm md:text-base font-semibold text-slate-900">
                 {course.price}
               </span>
             ) : (
-              <span className="text-xs text-gray-500 font-bold">Contact for Pricing</span>
+              <span className="text-[11px] text-slate-500 font-medium">
+                Contact for pricing
+              </span>
             )}
-            <span className="text-[#4A9FD8] font-bold group-hover:text-cyan-600 transition-colors flex items-center gap-1.5 text-sm">
-              Learn More
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            <span className="text-xs md:text-sm text-sky-700 font-semibold group-hover:text-sky-800 transition-colors flex items-center gap-1.5">
+              Learn more
+              <svg
+                className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.2}
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
               </svg>
             </span>
           </div>
