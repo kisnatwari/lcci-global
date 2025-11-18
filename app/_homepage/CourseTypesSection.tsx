@@ -3,7 +3,7 @@ import { Clock, Users, Laptop2 } from "lucide-react";
 
 export default function CourseTypesSection() {
   return (
-    <section className="py-20 bg-slate-50">
+    <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
         {/* Section header */}
         <div className="max-w-3xl mx-auto text-center mb-12">
@@ -22,7 +22,7 @@ export default function CourseTypesSection() {
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Guided Courses */}
-          <div className="relative rounded-2xl bg-white border border-slate-200 p-7 lg:p-8 shadow-sm overflow-hidden">
+          <div className="group relative rounded-2xl bg-white border-2 border-slate-200 p-7 lg:p-8 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/30 transition-all duration-300 overflow-hidden">
             <div className="absolute -top-10 -right-10 h-28 w-28 rounded-3xl bg-sky-100 blur-2xl opacity-70" />
             <div className="relative space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
@@ -52,7 +52,7 @@ export default function CourseTypesSection() {
           </div>
 
           {/* Self-paced Courses */}
-          <div className="relative rounded-2xl bg-white border border-slate-200 p-7 lg:p-8 shadow-sm overflow-hidden">
+          <div className="group relative rounded-2xl bg-white border-2 border-slate-200 p-7 lg:p-8 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/30 transition-all duration-300 overflow-hidden">
             <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-3xl bg-cyan-100 blur-2xl opacity-70" />
             <div className="relative space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-sky-700">

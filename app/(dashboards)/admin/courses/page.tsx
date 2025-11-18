@@ -1,0 +1,594 @@
+"use client";
+
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, Copy, BookOpen } from "lucide-react";
+
+// Static categories data (for dropdown)
+const categories = [
+  {
+    categoryId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    name: "Programming",
+    description: "Courses related to programming",
+  },
+  {
+    categoryId: "4fa85f64-5717-4562-b3fc-2c963f66afa7",
+    name: "Business & Finance",
+    description: "Courses covering business management",
+  },
+  {
+    categoryId: "5fa85f64-5717-4562-b3fc-2c963f66afa8",
+    name: "English & Communication",
+    description: "Language and communication skills",
+  },
+];
+
+// Static creators data (for dropdown)
+const creators = [
+  {
+    userId: "user-1",
+    profile: {
+      firstName: "John",
+      lastName: "Doe",
+    },
+  },
+  {
+    userId: "user-2",
+    profile: {
+      firstName: "Jane",
+      lastName: "Smith",
+    },
+  },
+];
+
+// Static courses data matching the API schema
+const initialCourses = [
+  {
+    courseId: "course-1",
+    name: "Introduction to JavaScript",
+    description: "Learn the fundamentals of JavaScript programming",
+    level: "beginner" as const,
+    price: 99,
+    duration: 40,
+    createdAt: "2025-11-18",
+    updatedAt: "2025-11-18",
+    category: categories[0],
+    creator: creators[0],
+  },
+  {
+    courseId: "course-2",
+    name: "Advanced Business Management",
+    description: "Master advanced business management strategies and techniques",
+    level: "advanced" as const,
+    price: 199,
+    duration: 60,
+    createdAt: "2025-11-17",
+    updatedAt: "2025-11-17",
+    category: categories[1],
+    creator: creators[1],
+  },
+  {
+    courseId: "course-3",
+    name: "Professional English Communication",
+    description: "Enhance your professional English communication skills",
+    level: "intermediate" as const,
+    price: 149,
+    duration: 50,
+    createdAt: "2025-11-16",
+    updatedAt: "2025-11-16",
+    category: categories[2],
+    creator: creators[0],
+  },
+];
+
+type Course = {
+  courseId: string;
+  name: string;
+  description: string;
+  level: "beginner" | "intermediate" | "advanced";
+  price: number;
+  duration: number;
+  createdAt: string;
+  updatedAt: string;
+  category: {
+    categoryId: string;
+    name: string;
+    description: string;
+  };
+  creator: {
+    userId: string;
+    profile: {
+      firstName: string;
+      lastName: string;
+    };
+  };
+};
+
+export default function CoursesPage() {
+  const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    level: "beginner" as "beginner" | "intermediate" | "advanced",
+    price: "",
+    duration: "",
+    categoryId: "",
+    creatorId: "",
+  });
+
+  // Filter courses based on search
+  const filteredCourses = courses.filter(
+    (course) =>
+      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle create/edit dialog open
+  const handleOpenDialog = (course?: Course) => {
+    if (course) {
+      setEditingCourse(course);
+      setFormData({
+        name: course.name,
+        description: course.description,
+        level: course.level,
+        price: course.price.toString(),
+        duration: course.duration.toString(),
+        categoryId: course.category.categoryId,
+        creatorId: course.creator.userId,
+      });
+    } else {
+      setEditingCourse(null);
+      setFormData({
+        name: "",
+        description: "",
+        level: "beginner",
+        price: "",
+        duration: "",
+        categoryId: "",
+        creatorId: "",
+      });
+    }
+    setIsDialogOpen(true);
+  };
+
+  // Handle save (create or update)
+  const handleSave = () => {
+    if (!formData.name.trim() || !formData.categoryId || !formData.creatorId) return;
+
+    const selectedCategory = categories.find((cat) => cat.categoryId === formData.categoryId);
+    const selectedCreator = creators.find((c) => c.userId === formData.creatorId);
+
+    if (!selectedCategory || !selectedCreator) return;
+
+    if (editingCourse) {
+      // Update existing course
+      setCourses(
+        courses.map((course) =>
+          course.courseId === editingCourse.courseId
+            ? {
+                ...course,
+                name: formData.name,
+                description: formData.description,
+                level: formData.level,
+                price: parseFloat(formData.price) || 0,
+                duration: parseInt(formData.duration) || 0,
+                updatedAt: new Date().toISOString().split("T")[0],
+                category: selectedCategory,
+                creator: selectedCreator,
+              }
+            : course
+        )
+      );
+    } else {
+      // Create new course
+      const newCourse: Course = {
+        courseId: `course-${Date.now()}`,
+        name: formData.name,
+        description: formData.description,
+        level: formData.level,
+        price: parseFloat(formData.price) || 0,
+        duration: parseInt(formData.duration) || 0,
+        createdAt: new Date().toISOString().split("T")[0],
+        updatedAt: new Date().toISOString().split("T")[0],
+        category: selectedCategory,
+        creator: selectedCreator,
+      };
+      setCourses([...courses, newCourse]);
+    }
+
+    setIsDialogOpen(false);
+    setEditingCourse(null);
+    setFormData({
+      name: "",
+      description: "",
+      level: "beginner",
+      price: "",
+      duration: "",
+      categoryId: "",
+      creatorId: "",
+    });
+  };
+
+  // Handle delete
+  const handleDelete = () => {
+    if (deletingCourse) {
+      setCourses(courses.filter((course) => course.courseId !== deletingCourse.courseId));
+      setIsDeleteDialogOpen(false);
+      setDeletingCourse(null);
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // Get creator full name
+  const getCreatorName = (creator: Course["creator"]) => {
+    return `${creator.profile.firstName} ${creator.profile.lastName}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Main Card with all content */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <CardTitle className="text-2xl">Courses</CardTitle>
+              <CardDescription className="mt-1">
+                Manage courses and their details
+              </CardDescription>
+            </div>
+            <Button onClick={() => handleOpenDialog()} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Course
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Search Section */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search courses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {filteredCourses.length} {filteredCourses.length === 1 ? "course" : "courses"} found
+            </div>
+          </div>
+
+          {/* Table Section */}
+          {filteredCourses.length > 0 ? (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Level</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Creator</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCourses.map((course) => (
+                    <TableRow key={course.courseId}>
+                      <TableCell>
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-(--brand-blue)/10 text-(--brand-blue)">
+                          <BookOpen className="h-4 w-4" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{course.name}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-1 max-w-md">
+                            {course.description}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{course.category.name}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted capitalize">
+                          {course.level}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        ${course.price}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {course.duration} hrs
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {getCreatorName(course.creator)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDate(course.updatedAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => handleOpenDialog(course)}
+                              className="cursor-pointer"
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                // View action - can be implemented later
+                                console.log("View course:", course.courseId);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                // Duplicate action - can be implemented later
+                                console.log("Duplicate course:", course.courseId);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setDeletingCourse(course);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              className="cursor-pointer text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-12 border rounded-md">
+              <p className="text-muted-foreground">
+                {searchTerm ? "No courses found matching your search." : "No courses yet. Create your first course."}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCourse ? "Edit Course" : "Create New Course"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingCourse
+                ? "Update the course information below."
+                : "Fill in the details to create a new course."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter course name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category *</Label>
+                <Select
+                  value={formData.categoryId}
+                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.categoryId} value={category.categoryId}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter course description"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="level">Level *</Label>
+                <Select
+                  value={formData.level}
+                  onValueChange={(value: "beginner" | "intermediate" | "advanced") =>
+                    setFormData({ ...formData, level: value })
+                  }
+                >
+                  <SelectTrigger id="level">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="beginner">Beginner</SelectItem>
+                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="creator">Creator *</Label>
+                <Select
+                  value={formData.creatorId}
+                  onValueChange={(value) => setFormData({ ...formData, creatorId: value })}
+                >
+                  <SelectTrigger id="creator">
+                    <SelectValue placeholder="Select creator" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {creators.map((creator) => (
+                      <SelectItem key={creator.userId} value={creator.userId}>
+                        {getCreatorName(creator)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Price ($) *</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (hours) *</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min="0"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={
+                !formData.name.trim() ||
+                !formData.categoryId ||
+                !formData.creatorId ||
+                !formData.price ||
+                !formData.duration
+              }
+            >
+              {editingCourse ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Course</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{deletingCourse?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
