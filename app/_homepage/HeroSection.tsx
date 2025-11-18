@@ -6,7 +6,7 @@ export default function HeroSection() {
     <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gradient-to-br from-[color:var(--brand-blue)]/5 via-white to-[color:var(--brand-cyan)]/10">
       {/* Spacer for fixed header */}
       <div className="absolute top-0 left-0 right-0 h-20" />
-
+      
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Large gradient orbs */}
@@ -32,7 +32,7 @@ export default function HeroSection() {
               <Award className="w-3.5 h-3.5" />
               Award-winning qualifications since 1887
             </div>
-
+            
             {/* Main Headline */}
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.1]">
@@ -42,14 +42,14 @@ export default function HeroSection() {
                 </span>
                 <span className="block mt-2">
                   with LCCI
-                </span>
-              </h1>
-              
+              </span>
+            </h1>
+            
               <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl">
                 Gain industry-recognized qualifications in business, accounting, finance, IT and English. Learn at your own pace or join guided programmes—start building your future today.
-              </p>
+            </p>
             </div>
-
+            
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
@@ -59,7 +59,7 @@ export default function HeroSection() {
                 Start learning now
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-
+              
               <Link
                 href="/about"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
@@ -79,8 +79,8 @@ export default function HeroSection() {
                 <div className="text-sm">
                   <div className="font-semibold text-slate-900">25,000+</div>
                   <div className="text-slate-600">Learners trained</div>
-                </div>
-              </div>
+            </div>
+          </div>
 
               <div className="h-8 w-px bg-slate-200" />
 
@@ -89,10 +89,10 @@ export default function HeroSection() {
                 <div className="text-sm">
                   <div className="font-semibold text-slate-900">120+</div>
                   <div className="text-slate-600">Partner institutions</div>
+                  </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
           {/* Right Side - Visual Feature Card */}
           <div className="relative lg:pl-8">
@@ -145,7 +145,7 @@ export default function HeroSection() {
                   >
                     <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-xl shadow-lg`}>
                       {item.icon}
-                    </div>
+                  </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold text-slate-900 mb-1">
                         {item.title}
@@ -153,8 +153,8 @@ export default function HeroSection() {
                       <p className="text-xs text-slate-600 leading-relaxed">
                         {item.description}
                       </p>
-                    </div>
                   </div>
+                </div>
                 ))}
               </div>
 
@@ -163,20 +163,20 @@ export default function HeroSection() {
                 <p className="text-xs text-slate-500 text-center">
                   Flexible delivery: Guided cohorts or self-paced learning
                 </p>
+                </div>
               </div>
-            </div>
 
             {/* Floating accent card */}
             <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-sky-600 to-blue-600 rounded-2xl shadow-xl shadow-sky-900/20 p-6 max-w-[240px] hidden lg:block">
               <div className="flex items-center gap-3 text-white">
                 <Users className="w-8 h-8" />
-                <div>
+                  <div>
                   <div className="text-2xl font-bold">40+</div>
                   <div className="text-sm text-sky-100">Active programmes</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </section>
