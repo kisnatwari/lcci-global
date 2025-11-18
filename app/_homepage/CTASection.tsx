@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function CTASection() {
   return (
-    <section className="py-16 lg:py-20 bg-white border-t border-slate-100">
+    <section className="py-20 bg-gradient-to-br from-[color:var(--brand-blue)]/10 via-white to-[color:var(--brand-cyan)]/5 border-t border-slate-200">
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl text-center">
         <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-sky-600 mb-2">
           Ready to begin
@@ -17,7 +17,7 @@ export default function CTASection() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/courses"
-            className="inline-flex items-center justify-center rounded-lg bg-[color:var(--brand-blue)] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#3b89bc] transition-colors"
+            className="inline-flex items-center justify-center rounded-xl bg-[color:var(--brand-blue)] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[color:var(--brand-blue)]/30 hover:bg-[#0099d6] hover:shadow-2xl hover:shadow-[color:var(--brand-blue)]/40 hover:-translate-y-0.5 transition-all duration-200"
           >
             Browse programmes
           </Link>

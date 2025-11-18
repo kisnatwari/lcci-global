@@ -31,7 +31,7 @@ export default function CourseCard({ course }: CourseCardProps) {
 
   return (
     <Link href={`/courses/${course.id}`}>
-      <div className="group rounded-2xl bg-white/95 border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 h-full flex flex-col">
+      <div className="group rounded-2xl bg-white border-2 border-slate-200 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/30 hover:-translate-y-2 transition-all duration-300 h-full flex flex-col overflow-hidden">
         {/* Image Header */}
         <div className="relative h-40 overflow-hidden rounded-t-2xl">
           {hasImage ? (

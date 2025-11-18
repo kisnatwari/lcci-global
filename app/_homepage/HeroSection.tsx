@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, Users, Building2, Award } from "lucide-react"
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-sky-50">
+    <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gradient-to-br from-[color:var(--brand-blue)]/5 via-white to-[color:var(--brand-cyan)]/10">
       {/* Spacer for fixed header */}
       <div className="absolute top-0 left-0 right-0 h-20" />
 
@@ -23,7 +23,7 @@ export default function HeroSection() {
         />
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 relative z-10 py-16 lg:py-20">
+      <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-24 pb-16 lg:pt-20 lg:pb-20">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left Side - Hero Content */}
           <div className="space-y-8">
@@ -54,7 +54,7 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/courses"
-                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-sky-700/20 hover:bg-sky-800 hover:shadow-xl hover:shadow-sky-700/30 transition-all duration-200"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-blue)] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[color:var(--brand-blue)]/30 hover:bg-[#0099d6] hover:shadow-2xl hover:shadow-[color:var(--brand-blue)]/40 hover:-translate-y-0.5 transition-all duration-200"
               >
                 Start learning now
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -97,7 +97,7 @@ export default function HeroSection() {
           {/* Right Side - Visual Feature Card */}
           <div className="relative lg:pl-8">
             {/* Main feature card */}
-            <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/10 border border-slate-100 p-8 lg:p-10 space-y-6">
+            <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/20 border border-slate-200/50 p-8 lg:p-10 space-y-6 hover:shadow-3xl transition-shadow duration-300">
               {/* Decorative gradient */}
               <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-sky-100 to-blue-100 rounded-3xl opacity-50 blur-2xl -z-10" />
               
