@@ -1,73 +1,104 @@
-import { Award, Users, Globe2 } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
+import { Award, Users, Globe2, TrendingUp } from "lucide-react";
+
+const outcomes = [
+  {
+    icon: Users,
+    value: "25,000+",
+    label: "Learners Trained",
+    description: "Students and professionals across 50+ countries",
+    gradient: "from-blue-500 to-cyan-500",
+  },
+  {
+    icon: Globe2,
+    value: "120+",
+    label: "Partner Institutions",
+    description: "Schools, colleges and training centers worldwide",
+    gradient: "from-emerald-500 to-teal-500",
+  },
+  {
+    icon: Award,
+    value: "40+",
+    label: "Active Programmes",
+    description: "Updated curricula across multiple disciplines",
+    gradient: "from-[color:var(--brand-blue)] to-blue-600",
+  },
+  {
+    icon: TrendingUp,
+    value: "98%",
+    label: "Success Rate",
+    description: "Learners achieving their certification goals",
+    gradient: "from-orange-500 to-amber-500",
+  },
+];
 
 export default function OutcomesSection() {
   return (
-    <section className="py-20 bg-gradient-to-br from-[color:var(--brand-blue)]/5 via-white to-[color:var(--brand-cyan)]/5 border-t border-slate-200">
-      <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-        <div className="max-w-3xl mx-auto text-center mb-10">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-sky-600 mb-2">
-            Outcomes
-          </p>
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900 mb-3">
-            Impact for learners and organisations
+    <section className="relative py-24 bg-slate-50">
+      <div className="container mx-auto px-4 lg:px-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
+            <TrendingUp className="w-4 h-4" />
+            Proven Results
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            Our Global Impact
           </h2>
-          <p className="text-sm md:text-base text-slate-600">
-            LCCI Global programmes are designed to deliver tangible skills and credentials that
-            matter in classrooms, workplaces and communities.
+          <p className="text-xl text-slate-600">
+            Delivering measurable outcomes for learners and institutions worldwide
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm text-slate-700">
-          <OutcomeCard
-            icon={<Users className="w-6 h-6" />}
-            stat="25,000+"
-            label="Learners trained"
-            body="Students, graduates and working professionals who have completed LCCI programmes."
-          />
-          <OutcomeCard
-            icon={<Globe2 className="w-6 h-6" />}
-            stat="120+"
-            label="Partner institutions"
-            body="Schools, colleges, training providers and organisations collaborating with LCCI."
-          />
-          <OutcomeCard
-            icon={<Award className="w-6 h-6" />}
-            stat="40+"
-            label="Active programmes"
-            body="Courses across business, finance, IT, English and soft skills, updated for industry needs."
-          />
+        {/* Outcomes Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
+          {outcomes.map((outcome, index) => {
+            const Icon = outcome.icon;
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -10, scale: 1.05 }}
+                className="group"
+              >
+                <div className="relative h-full bg-white border-2 border-slate-200 rounded-3xl p-8 hover:border-[color:var(--brand-blue)] hover:shadow-lg transition-all duration-300 text-center">
+                  {/* Icon */}
+                  <div className="relative inline-flex mb-6">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[color:var(--brand-blue)]/10 group-hover:scale-110 transition-transform duration-300">
+                      <Icon className="w-8 h-8 text-[color:var(--brand-blue)]" />
+                    </div>
+                  </div>
+
+                  {/* Value */}
+                  <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">
+                    {outcome.value}
+                  </div>
+
+                  {/* Label */}
+                  <div className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                    {outcome.label}
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {outcome.description}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
-
-interface OutcomeCardProps {
-  icon: React.ReactNode;
-  stat: string;
-  label: string;
-  body: string;
-}
-
-function OutcomeCard({ icon, stat, label, body }: OutcomeCardProps) {
-  return (
-    <div className="group rounded-2xl bg-white border-2 border-slate-200 p-8 flex flex-col gap-4 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/30 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[color:var(--brand-blue)]/5 to-transparent rounded-full blur-2xl -mr-16 -mt-16" />
-      <div className="flex items-center gap-4 relative z-10">
-        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-          {icon}
-        </div>
-        <div>
-          <div className="text-3xl font-bold text-slate-900 mb-1">{stat}</div>
-          <div className="text-xs uppercase tracking-[0.16em] text-slate-500 font-semibold">
-            {label}
-          </div>
-        </div>
-      </div>
-      <p className="text-sm text-slate-600 leading-relaxed relative z-10">{body}</p>
-    </div>
-  );
-}
-
-
-

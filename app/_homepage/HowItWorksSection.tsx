@@ -1,124 +1,128 @@
-import { Search, UserCheck, BookOpen, Award } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
+import { Search, UserCheck, BookOpen, Award, ArrowRight } from "lucide-react";
+
+const steps = [
+  {
+    step: "01",
+    title: "Explore Programmes",
+    body: "Browse our catalogue of industry-recognized qualifications across business, IT, English and professional skills.",
+    icon: Search,
+    color: "from-blue-500 to-cyan-500",
+  },
+  {
+    step: "02",
+    title: "Enroll & Register",
+    body: "Sign up through your institution or directly online. Get instant access to learning materials and support resources.",
+    icon: UserCheck,
+    color: "from-cyan-500 to-blue-500",
+  },
+  {
+    step: "03",
+    title: "Learn & Master",
+    body: "Follow structured modules, complete assignments and get feedback from expert instructors throughout your journey.",
+    icon: BookOpen,
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    step: "04",
+    title: "Earn Certificate",
+    body: "Complete assessments and receive your globally-recognized LCCI certificate to advance your career.",
+    icon: Award,
+    color: "from-orange-500 to-amber-500",
+  },
+];
 
 export default function HowItWorksSection() {
-  const steps = [
-    {
-      step: "01",
-      title: "Explore programmes",
-      body: "Choose the qualification level, subject area and delivery style that fits your learners or career goals.",
-      icon: Search,
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      step: "02",
-      title: "Enroll via centre or online",
-      body: "Register through your school, college, training centre or directly with LCCI-approved partners.",
-      icon: UserCheck,
-      color: "from-purple-500 to-pink-500",
-    },
-    {
-      step: "03",
-      title: "Learn & get assessed",
-      body: "Follow structured content, activities and assessments designed to measure real understanding and skills.",
-      icon: BookOpen,
-      color: "from-emerald-500 to-teal-500",
-    },
-    {
-      step: "04",
-      title: "Earn your certificate",
-      body: "On successful completion, receive an LCCI certificate that can support further study and employment.",
-      icon: Award,
-      color: "from-orange-500 to-amber-500",
-    },
-  ];
-
   return (
-    <section className="py-24 bg-gradient-to-b from-white via-slate-50/30 to-white border-t border-slate-200 relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-0 w-96 h-96 bg-[color:var(--brand-blue)]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[color:var(--brand-cyan)]/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
+    <section className="relative py-24 bg-slate-100">
+      <div className="container mx-auto px-4 lg:px-8">
         {/* Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[color:var(--brand-blue)] mb-4">
-            How learning with LCCI works
-          </p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 mb-4">
-            A clear path from enrolment to certification
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            Simple Process
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            Your Learning Journey
           </h2>
-          <p className="text-base md:text-lg text-slate-600 leading-relaxed">
-            We work with learners and institutions through a simple, structured process so
-            everyone knows what to expect at each stage.
+          <p className="text-xl text-slate-600">
+            From exploration to certification in four clear steps
           </p>
-        </div>
+        </motion.div>
 
-        {/* Steps - New Unique Design */}
-        <div className="relative">
-          {/* Connection line for desktop */}
-          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-[color:var(--brand-blue)] via-[color:var(--brand-cyan)] to-[color:var(--brand-blue)] opacity-20" />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
-            {steps.map((item, idx) => {
-              const Icon = item.icon;
-              const isLast = idx === steps.length - 1;
-              
+        {/* Steps */}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
               return (
-                <div key={item.step} className="relative group">
-                  {/* Step Card */}
-                  <div className="relative bg-white rounded-2xl border-2 border-slate-200 p-8 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/40 transition-all duration-500 hover:-translate-y-2 h-full">
-                    {/* Gradient overlay on hover */}
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[color:var(--brand-blue)]/0 to-[color:var(--brand-cyan)]/0 group-hover:from-[color:var(--brand-blue)]/5 group-hover:to-[color:var(--brand-cyan)]/5 transition-all duration-500" />
-                    
-                    {/* Icon with gradient background */}
-                    <div className="relative mb-6">
-                      <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
-                        <Icon className="w-8 h-8 text-white" />
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.15 }}
+                  whileHover={{ y: -10 }}
+                  className="group relative"
+                >
+                  {/* Connecting line (except last) */}
+                  {index < steps.length - 1 && (
+                    <div className="hidden lg:block absolute top-20 left-[calc(100%+16px)] w-8 h-1 bg-slate-300 z-0" />
+                  )}
+
+                  {/* Card */}
+                  <div className="relative h-full bg-white border-2 border-slate-200 rounded-3xl p-8 hover:border-[color:var(--brand-blue)] hover:shadow-lg transition-all duration-300">
+                    {/* Step Number Badge */}
+                    <div className="absolute top-6 right-6">
+                      <div className="w-12 h-12 rounded-xl bg-[color:var(--brand-blue)] flex items-center justify-center text-white font-bold text-lg">
+                        {step.step}
                       </div>
-                      {/* Step number badge */}
-                      <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-blue)] text-white text-xs font-bold shadow-md border-2 border-white">
-                        {item.step}
-                      </div>
+                    </div>
+
+                    {/* Icon */}
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color:var(--brand-blue)]/10 mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Icon className="w-8 h-8 text-[color:var(--brand-blue)]" />
                     </div>
 
                     {/* Content */}
-                    <div className="relative space-y-3">
-                      <h3 className="text-xl font-bold text-slate-900 leading-tight">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {item.body}
-                      </p>
-                    </div>
-
-                    {/* Decorative corner accent */}
-                    <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-[color:var(--brand-blue)]/10 to-transparent rounded-tl-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {step.body}
+                    </p>
                   </div>
-
-                  {/* Arrow connector for desktop (except last) */}
-                  {!isLast && (
-                    <div className="hidden lg:block absolute top-24 -right-3 w-6 h-6 z-20">
-                      <div className="w-full h-0.5 bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)]" />
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-[color:var(--brand-cyan)] border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent" />
-                    </div>
-                  )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
 
-        {/* Bottom CTA hint */}
-        <div className="mt-16 text-center">
-          <p className="text-sm text-slate-500">
-            Ready to start your journey?{" "}
-            <a href="/courses" className="text-[color:var(--brand-blue)] font-semibold hover:underline">
-              Browse our programmes →
-            </a>
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-16 text-center"
+        >
+          <p className="text-slate-600 mb-4">
+            Ready to start your journey?
           </p>
-        </div>
+          <a
+            href="/courses"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[color:var(--brand-blue)] text-white font-bold hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
+            Browse Courses
+            <ArrowRight className="w-5 h-5" />
+          </a>
+        </motion.div>
       </div>
     </section>
   );

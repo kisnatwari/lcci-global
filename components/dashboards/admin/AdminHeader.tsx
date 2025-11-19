@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Bell, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { logout } from "@/lib/auth";
 
 export function AdminHeader() {
   return (
@@ -80,7 +81,16 @@ export function AdminHeader() {
               <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive cursor-pointer focus:text-destructive">Logout</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive cursor-pointer focus:text-destructive"
+                onClick={async () => {
+                  await logout();
+                  // Redirect after logout (component handles navigation)
+                  window.location.href = '/';
+                }}
+              >
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

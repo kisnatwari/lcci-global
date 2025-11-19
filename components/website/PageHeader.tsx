@@ -1,49 +1,57 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 interface PageHeaderProps {
-  badge?: {
-    icon: string;
-    text: string;
-  };
+  badge?: { icon: string; text: string };
   title: string;
   titleHighlight?: string;
   description: string;
-  extraContent?: React.ReactNode;
-  rightContent?: React.ReactNode;
 }
 
-export default function PageHeader({
-  badge,
-  title,
-  titleHighlight,
-  description,
-  extraContent,
-  rightContent,
-}: PageHeaderProps) {
+export default function PageHeader({ badge, title, titleHighlight, description }: PageHeaderProps) {
   return (
-    <section className="relative pt-24 bg-transparent">
-      <div className="container mx-auto px-4 lg:px-8 py-8 lg:py-10">
-        <div className="max-w-3xl mx-auto text-center">
+    <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-24 bg-slate-900">
+
+      <div className="container mx-auto px-4 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Badge */}
             {badge && (
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/80 px-4 py-1.5 text-[11px] font-semibold text-sky-700 shadow-sm mb-4 uppercase tracking-[0.16em]">
-              {badge.icon && <span className="text-xs">{badge.icon}</span>}
-              <span>{badge.text}</span>
-              </div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6"
+            >
+              <span className="text-2xl">{badge.icon}</span>
+              <span className="text-sm font-semibold text-blue-200">{badge.text}</span>
+            </motion.div>
             )}
             
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-[0.16em] text-slate-900 mb-3 uppercase">
-            {title}{" "}
+          {/* Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+          >
+              {title}
               {titleHighlight && (
-              <span className="text-sky-700">{titleHighlight}</span>
+              <span className="block text-[color:var(--brand-cyan)]">
+                    {titleHighlight}
+                  </span>
               )}
-            </h1>
-            
-          <p className="text-sm md:text-base text-slate-600 mb-4">
-              {description}
-            </p>
+          </motion.h1>
 
-          {extraContent && <div className="mt-4">{extraContent}</div>}
+          {/* Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg md:text-xl text-blue-100 leading-relaxed max-w-3xl mx-auto"
+          >
+            {description}
+          </motion.p>
         </div>
-
-        <div className="mt-6 h-px w-full bg-slate-200" />
       </div>
     </section>
   );

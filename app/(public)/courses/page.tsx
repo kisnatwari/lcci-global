@@ -34,10 +34,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
         <CoursesContent
           courses={courses}
-          allCount={allCourses.length}
-          guidedCount={guidedCount}
-          selfPacedCount={selfPacedCount}
-          activeType={type}
+          activeType={type || null}
         />
       </main>
       

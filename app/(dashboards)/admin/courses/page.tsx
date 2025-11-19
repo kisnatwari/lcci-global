@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +36,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, Copy, BookOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, Copy, BookOpen, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { apiClient, ENDPOINTS } from "@/lib/api";
 
 // Static categories data (for dropdown)
 const categories = [
@@ -139,7 +140,8 @@ type Course = {
 };
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -155,26 +157,83 @@ export default function CoursesPage() {
     creatorId: "",
   });
 
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchCourses();
+    fetchCategories();
+  }, []);
+
+  // Fetch courses from API
+  const fetchCourses = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get(ENDPOINTS.courses.get());
+      if (response.success && response.data && Array.isArray(response.data.courses)) {
+        setCourses(response.data.courses);
+      } else if (response.data && Array.isArray(response.data.courses)) {
+        setCourses(response.data.courses);
+      } else if (Array.isArray(response)) {
+        setCourses(response);
+      } else {
+        setCourses([]);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch courses:", err);
+      setError(err.message || "Failed to load courses");
+      setCourses([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.get(ENDPOINTS.categories.get());
+      if (response.success && response.data && Array.isArray(response.data.categories)) {
+        setCategories(response.data.categories);
+      } else if (response.data && Array.isArray(response.data.categories)) {
+        setCategories(response.data.categories);
+      } else if (Array.isArray(response)) {
+        setCategories(response);
+      } else {
+        setCategories([]);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch categories:", err);
+      setCategories([]);
+    }
+  };
+
   // Filter courses based on search
   const filteredCourses = courses.filter(
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (course.category && course.category.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Handle create/edit dialog open
   const handleOpenDialog = (course?: Course) => {
+    setError(null);
+    setSuccessMessage(null);
     if (course) {
       setEditingCourse(course);
       setFormData({
-        name: course.name,
-        description: course.description,
+        name: course.name || "",
+        description: course.description || "",
         level: course.level,
-        price: course.price.toString(),
-        duration: course.duration.toString(),
-        categoryId: course.category.categoryId,
-        creatorId: course.creator.userId,
+        price: course.price?.toString() || "",
+        duration: course.duration?.toString() || "",
+        categoryId: course.category?.categoryId || "",
+        creatorId: course.creator?.userId || "",
       });
     } else {
       setEditingCourse(null);
@@ -192,69 +251,95 @@ export default function CoursesPage() {
   };
 
   // Handle save (create or update)
-  const handleSave = () => {
-    if (!formData.name.trim() || !formData.categoryId || !formData.creatorId) return;
+  const handleSave = async () => {
+    if (!formData.name || !formData.name.trim()) {
+      setError("Course name is required");
+      return;
+    }
 
-    const selectedCategory = categories.find((cat) => cat.categoryId === formData.categoryId);
-    const selectedCreator = creators.find((c) => c.userId === formData.creatorId);
+    if (!formData.categoryId) {
+      setError("Category is required");
+      return;
+    }
 
-    if (!selectedCategory || !selectedCreator) return;
+    setIsSaving(true);
+    setError(null);
+    setSuccessMessage(null);
 
-    if (editingCourse) {
-      // Update existing course
-      setCourses(
-        courses.map((course) =>
-          course.courseId === editingCourse.courseId
-            ? {
-                ...course,
-                name: formData.name,
-                description: formData.description,
-                level: formData.level,
-                price: parseFloat(formData.price) || 0,
-                duration: parseInt(formData.duration) || 0,
-                updatedAt: new Date().toISOString().split("T")[0],
-                category: selectedCategory,
-                creator: selectedCreator,
-              }
-            : course
-        )
-      );
-    } else {
-      // Create new course
-      const newCourse: Course = {
-        courseId: `course-${Date.now()}`,
-        name: formData.name,
-        description: formData.description,
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        description: (formData.description && formData.description.trim()) || undefined,
         level: formData.level,
         price: parseFloat(formData.price) || 0,
         duration: parseInt(formData.duration) || 0,
-        createdAt: new Date().toISOString().split("T")[0],
-        updatedAt: new Date().toISOString().split("T")[0],
-        category: selectedCategory,
-        creator: selectedCreator,
+        categoryId: formData.categoryId,
       };
-      setCourses([...courses, newCourse]);
-    }
 
-    setIsDialogOpen(false);
-    setEditingCourse(null);
-    setFormData({
-      name: "",
-      description: "",
-      level: "beginner",
-      price: "",
-      duration: "",
-      categoryId: "",
-      creatorId: "",
-    });
+      if (editingCourse) {
+        // Update existing course
+        const response = await apiClient.put(ENDPOINTS.courses.update(editingCourse.courseId), payload);
+        console.log("Update response:", response);
+        setSuccessMessage("Course updated successfully!");
+      } else {
+        // Create new course
+        const response = await apiClient.post(ENDPOINTS.courses.post(), payload);
+        console.log("Create response:", response);
+        setSuccessMessage("Course created successfully!");
+      }
+
+      // Refresh the list
+      await fetchCourses();
+
+      // Close dialog after a short delay to show success message
+      setTimeout(() => {
+        setIsDialogOpen(false);
+        setEditingCourse(null);
+        setFormData({
+          name: "",
+          description: "",
+          level: "beginner",
+          price: "",
+          duration: "",
+          categoryId: "",
+          creatorId: "",
+        });
+        setSuccessMessage(null);
+      }, 1000);
+    } catch (err: any) {
+      console.error("Failed to save course:", err);
+      const errorMessage = err.message || 
+                          (err.response?.data?.message) ||
+                          (editingCourse ? "Failed to update course" : "Failed to create course");
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle delete
-  const handleDelete = () => {
-    if (deletingCourse) {
+  const handleDelete = async () => {
+    if (!deletingCourse) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      await apiClient.delete(ENDPOINTS.courses.delete(deletingCourse.courseId));
+      
+      // Remove from local state
       setCourses(courses.filter((course) => course.courseId !== deletingCourse.courseId));
+      
+      // Close dialog
       setIsDeleteDialogOpen(false);
       setDeletingCourse(null);
+      
+      console.log("Course deleted successfully");
+    } catch (err: any) {
+      console.error("Failed to delete course:", err);
+      setError(err.message || "Failed to delete course");
+    } finally {
+      setIsSaving(false);
     }
   };
 

@@ -1,184 +1,246 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Users, Building2, Award } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Play, CheckCircle2, Sparkles } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gradient-to-br from-[color:var(--brand-blue)]/5 via-white to-[color:var(--brand-cyan)]/10">
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-slate-900">
       {/* Spacer for fixed header */}
       <div className="absolute top-0 left-0 right-0 h-20" />
       
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Large gradient orbs */}
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-sky-200/30 rounded-full blur-3xl animate-float" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-        
-        {/* Grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
+      {/* Animated background with multiple layers */}
+      <div className="absolute inset-0">
+        {/* Large animated gradient orbs - subtle light effect */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.08, 0.15, 0.08],
           }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] rounded-full blur-3xl"
         />
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.06, 0.12, 0.06],
+          }}
+          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+          className="absolute -bottom-1/4 -left-1/4 w-[700px] h-[700px] bg-gradient-to-tr from-[color:var(--brand-cyan)] to-blue-500 rounded-full blur-3xl"
+        />
+        
+        {/* Animated grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
+        
+        {/* Floating particles */}
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-24 pb-16 lg:pt-20 lg:pb-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left Side - Hero Content */}
-          <div className="space-y-8">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-100/80 backdrop-blur-sm px-4 py-2 text-xs font-semibold text-sky-900 border border-sky-200/50">
-              <Award className="w-3.5 h-3.5" />
-              Award-winning qualifications since 1887
-            </div>
+      <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-20 pb-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Hero Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
+            >
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+              >
+                <Sparkles className="w-4 h-4 text-yellow-400" />
+                Award-winning qualifications since 1887
+              </motion.div>
             
-            {/* Main Headline */}
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.1]">
-                Start your journey to
-                <span className="block text-sky-700 mt-2">
-                  professional success
-                </span>
-                <span className="block mt-2">
-                  with LCCI
+              {/* Main Headline */}
+              <div className="space-y-6">
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight">
+                  Master Your
+                  <span className="block bg-gradient-to-r from-[color:var(--brand-cyan)] to-blue-400 bg-clip-text text-transparent mt-2">
+                    Professional Future
               </span>
             </h1>
             
-              <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl">
-                Gain industry-recognized qualifications in business, accounting, finance, IT and English. Learn at your own pace or join guided programmes—start building your future today.
-            </p>
-            </div>
-            
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4">
+                <p className="text-xl md:text-2xl text-blue-100 leading-relaxed max-w-2xl">
+                  Industry-recognized qualifications in business, finance, IT and English. 
+                  <span className="text-white font-semibold"> Learn at your pace, certified globally.</span>
+                </p>
+              </div>
+              
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href="/courses"
-                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[color:var(--brand-blue)] px-8 py-4 text-base font-semibold text-white shadow-xl shadow-[color:var(--brand-blue)]/30 hover:bg-[#0099d6] hover:shadow-2xl hover:shadow-[color:var(--brand-blue)]/40 hover:-translate-y-0.5 transition-all duration-200"
+                    className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] px-8 py-4 text-lg font-bold text-white shadow-2xl shadow-blue-500/50 hover:shadow-blue-500/70 transition-all duration-300 relative overflow-hidden"
               >
-                Start learning now
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <span className="relative z-10">Start Learning Now</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-[color:var(--brand-cyan)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Link>
-              
-              <Link
-                href="/about"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
-              >
-                Learn more about us
-              </Link>
+                </motion.div>
+                
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <button className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-md px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300">
+                    <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    Watch Overview
+                  </button>
+                </motion.div>
             </div>
 
-            {/* Trust indicators */}
-            <div className="flex flex-wrap items-center gap-8 pt-4">
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 border-2 border-white" />
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 border-2 border-white" />
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-white" />
+              {/* Trust indicators */}
+              <div className="flex flex-wrap items-center gap-8 pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div
+                          key={i}
+                          className="w-12 h-12 rounded-full bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] border-4 border-slate-900 flex items-center justify-center text-white font-bold text-sm"
+                        >
+                          {i}K
                 </div>
-                <div className="text-sm">
-                  <div className="font-semibold text-slate-900">25,000+</div>
-                  <div className="text-slate-600">Learners trained</div>
+              ))}
             </div>
-          </div>
-
-              <div className="h-8 w-px bg-slate-200" />
-
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-sky-600" />
-                <div className="text-sm">
-                  <div className="font-semibold text-slate-900">120+</div>
-                  <div className="text-slate-600">Partner institutions</div>
-                  </div>
-                  </div>
+                  <div className="text-sm">
+                    <div className="font-bold text-white text-lg">25,000+</div>
+                    <div className="text-blue-200">Learners trained</div>
                 </div>
               </div>
 
-          {/* Right Side - Visual Feature Card */}
-          <div className="relative lg:pl-8">
-            {/* Main feature card */}
-            <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-900/20 border border-slate-200/50 p-8 lg:p-10 space-y-6 hover:shadow-3xl transition-shadow duration-300">
-              {/* Decorative gradient */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-sky-100 to-blue-100 rounded-3xl opacity-50 blur-2xl -z-10" />
-              
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Choose your path
+                <div className="h-12 w-px bg-white/20" />
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500">
+                    <CheckCircle2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-bold text-white text-lg">120+</div>
+                    <div className="text-blue-200">Partner institutions</div>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">
-                  What would you like to learn?
-                </h3>
+              </div>
+            </motion.div>
+
+            {/* Right Side - Visual Feature */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative hidden lg:block"
+            >
+              {/* Main feature card with floating effect */}
+              <motion.div
+                animate={{
+                  y: [0, -20, 0],
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className="relative"
+              >
+                <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl" />
+                  
+                  <div className="relative space-y-6">
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 px-4 py-2 text-sm font-bold text-white shadow-lg">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                      Active Learning Programs
+                  </div>
+                    
+                    <h3 className="text-2xl font-bold text-white">
+                      Choose Your Path
+                    </h3>
+
+                    <div className="space-y-4">
+                        {[
+                          { title: "Business & Finance", count: "15+", color: "from-blue-500 to-cyan-500", icon: "💼" },
+                          { title: "English & Communication", count: "12+", color: "from-cyan-500 to-blue-400", icon: "🗣️" },
+                          { title: "Computing & IT", count: "8+", color: "from-teal-500 to-emerald-500", icon: "💻" },
+                          { title: "Hospitality & Skills", count: "10+", color: "from-blue-600 to-cyan-600", icon: "✨" },
+                        ].map((item, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.5 + idx * 0.1 }}
+                          className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
+                        >
+                          <div className={`flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                            {item.icon}
+                  </div>
+                          <div className="flex-1">
+                            <h4 className="text-white font-semibold group-hover:text-[color:var(--brand-cyan)] transition-colors">
+                              {item.title}
+                            </h4>
+                            <p className="text-sm text-blue-200">{item.count} programmes</p>
+                </div>
+                          <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                        </motion.div>
+                      ))}
               </div>
 
-              {/* Feature list */}
-              <div className="space-y-4">
-                {[
-                  {
-                    title: "Business & Finance",
-                    description: "Accounting, bookkeeping, financial management and business administration",
-                    icon: "💼",
-                    color: "from-blue-500 to-sky-500"
-                  },
-                  {
-                    title: "English & Communication",
-                    description: "Cambridge-aligned English language and professional communication skills",
-                    icon: "🗣️",
-                    color: "from-purple-500 to-pink-500"
-                  },
-                  {
-                    title: "Computing & IT",
-                    description: "Digital skills, software applications and IT fundamentals",
-                    icon: "💻",
-                    color: "from-green-500 to-emerald-500"
-                  },
-                  {
-                    title: "Hospitality & Soft Skills",
-                    description: "Customer service, leadership and interpersonal effectiveness",
-                    icon: "✨",
-                    color: "from-orange-500 to-amber-500"
-                  },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="group flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-all duration-200 cursor-default"
-                  >
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-xl shadow-lg`}>
-                      {item.icon}
-                  </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-slate-900 mb-1">
-                        {item.title}
-                      </h4>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        {item.description}
+                    <div className="pt-4 border-t border-white/10">
+                      <p className="text-sm text-blue-100 text-center">
+                        Flexible delivery: <span className="text-white font-semibold">Guided</span> or <span className="text-white font-semibold">Self-paced</span>
                       </p>
                   </div>
                 </div>
-                ))}
               </div>
+              </motion.div>
 
-              {/* Bottom accent */}
-              <div className="pt-4 border-t border-slate-100">
-                <p className="text-xs text-slate-500 text-center">
-                  Flexible delivery: Guided cohorts or self-paced learning
-                </p>
-                </div>
-              </div>
-
-            {/* Floating accent card */}
-            <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-sky-600 to-blue-600 rounded-2xl shadow-xl shadow-sky-900/20 p-6 max-w-[240px] hidden lg:block">
-              <div className="flex items-center gap-3 text-white">
-                <Users className="w-8 h-8" />
-                  <div>
-                  <div className="text-2xl font-bold">40+</div>
-                  <div className="text-sm text-sky-100">Active programmes</div>
-                  </div>
-                </div>
-              </div>
+              {/* Floating accent cards */}
+              <motion.div
+                animate={{
+                  y: [0, 15, 0],
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-8 -left-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-6 shadow-2xl max-w-[200px]"
+              >
+                <div className="text-white">
+                  <div className="text-3xl font-bold">40+</div>
+                  <div className="text-sm text-white/90">Active Courses</div>
             </div>
+              </motion.div>
+
+              <motion.div
+                animate={{
+                  y: [0, -15, 0],
+                }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                className="absolute -top-8 -right-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl p-6 shadow-2xl"
+              >
+                <div className="text-white text-center">
+                  <div className="text-3xl font-bold">98%</div>
+                  <div className="text-sm text-white/90">Pass Rate</div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
         </div>
       </div>
+
     </section>
   );
 }

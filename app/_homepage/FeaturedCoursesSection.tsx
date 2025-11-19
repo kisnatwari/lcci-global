@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import CourseCard from "@/components/website/CourseCard";
 import { Course } from "@/types/course";
+import { Sparkles, ArrowRight } from "lucide-react";
 
 interface FeaturedCoursesSectionProps {
   courses: Course[];
@@ -25,56 +27,125 @@ export default function FeaturedCoursesSection({
       : courses.filter((c) => c.category === activeCategory);
 
   return (
-    <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-slate-50/50">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center mb-8 lg:mb-10">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-sky-600 mb-2">
-            Featured programmes
-          </p>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900 mb-3">
-            Explore popular LCCI courses
+    <section className="relative py-24 bg-slate-50">
+      
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+        {/* Section Header with dual layout */}
+        <div className="flex flex-col lg:flex-row lg:items-end gap-8 mb-12">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="flex-1"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[color:var(--brand-blue)]/10 to-[color:var(--brand-cyan)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
+              <Sparkles className="w-4 h-4" />
+              Featured Programmes
+          </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+              Popular Courses This Season
           </h2>
-          <p className="text-sm md:text-base text-slate-600">
-            Browse highlighted courses across hospitality, English, computing, soft skills
-            and more—curated from our guided and self-paced offerings.
-          </p>
-        </div>
+            <p className="text-lg text-slate-600 max-w-2xl">
+              Explore our most sought-after programmes across business, IT, languages and professional skills
+            </p>
+          </motion.div>
 
-        {/* Category tabs */}
-        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:ml-auto"
+          >
+            <div className="rounded-2xl border-2 border-[color:var(--brand-blue)]/20 bg-gradient-to-br from-white to-blue-50/50 p-6 shadow-lg">
+              <div className="text-sm font-semibold text-slate-500 mb-2">Delivery Modes</div>
+              <div className="flex items-center gap-2 text-slate-900 font-semibold">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Guided · Self-paced · Hybrid
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Category Pills with animation */}
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
           {categories.map((cat) => (
-            <button
+            <motion.button
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`px-5 md:px-6 py-2.5 rounded-full text-xs md:text-sm font-semibold transition-all border-2 ${
-                activeCategory === cat
-                  ? "bg-[color:var(--brand-blue)] text-white border-[color:var(--brand-blue)] shadow-lg shadow-[color:var(--brand-blue)]/30"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-[color:var(--brand-blue)]/30 hover:shadow-md"
-              }`}
+              whileTap={{ scale: 0.95 }}
+              className="relative overflow-hidden group"
             >
-              {cat}
-            </button>
+              <div
+                className={`relative z-10 px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+                  activeCategory === cat
+                    ? "text-white"
+                    : "text-slate-700"
+                }`}
+              >
+                {activeCategory === cat && (
+                  <motion.div
+                    layoutId="activeCategory"
+                    className="absolute inset-0 bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] rounded-2xl shadow-lg"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <div className={`absolute inset-0 rounded-2xl border-2 transition-colors ${
+                  activeCategory === cat
+                    ? "border-transparent"
+                    : "border-slate-200 group-hover:border-[color:var(--brand-blue)]/30"
+                }`} />
+                <div className={`absolute inset-0 rounded-2xl transition-colors ${
+                  activeCategory === cat
+                    ? "bg-transparent"
+                    : "bg-white group-hover:bg-gradient-to-r group-hover:from-blue-50 group-hover:to-cyan-50"
+                }`} />
+                <span className="relative z-10">{cat}</span>
+            </div>
+            </motion.button>
           ))}
         </div>
+        
+        {/* Courses Grid with stagger animation */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {filteredCourses.map((course, idx) => (
+              <motion.div
+                key={course.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <CourseCard course={course} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
 
-        {/* Courses grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredCourses.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
-
-        <div className="mt-10 flex justify-center">
+        {/* CTA Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-16 text-center"
+        >
           <Link
             href="/courses"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+            className="group inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 px-8 py-4 text-lg font-semibold text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
           >
-            View all courses
+            <span className="relative z-10">Explore All Courses</span>
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 }
-

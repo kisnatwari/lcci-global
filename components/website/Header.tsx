@@ -3,154 +3,209 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, ChevronRight, Sparkles } from "lucide-react";
 import Logo from "./Logo";
 import LoginModal from "./LoginModal";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/courses", label: "Courses" },
+  { href: "/about", label: "About" },
+  { href: "/contact-us", label: "Contact" },
+];
 
 export default function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/courses", label: "Courses" },
-    { href: "/about", label: "About" },
-    { href: "/contact-us", label: "Contact" },
-  ];
+  const isLinkActive = (href: string) => {
+    if (!pathname) return false;
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      <motion.header
+        initial={{ y: 0 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
           isScrolled
-            ? "bg-white/95 backdrop-blur-xl shadow-lg border-b border-[color:var(--brand-blue)]/20"
-            : "bg-white/90 backdrop-blur-md"
+            ? "bg-white shadow-2xl border-b-2 border-slate-100"
+            : "bg-transparent"
         }`}
       >
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex h-20 items-center justify-between">
+          <div className="flex items-center justify-between h-20 lg:h-24">
             {/* Logo */}
-            <Logo className="group" />
+            <Link href="/" className="relative z-10">
+              <Logo />
+            </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-2">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`relative px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                      isActive
-                        ? "text-[color:var(--brand-blue)] bg-[color:var(--brand-blue)]/10"
-                        : "text-gray-700 hover:text-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/5"
-                    }`}
-                  >
-                    {link.label}
-                    {isActive && (
-                      <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-[color:var(--brand-blue)] rounded-full"></span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* CTA Buttons */}
-            <div className="hidden md:flex items-center space-x-3">
-              <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="px-5 py-2.5 text-sm font-semibold text-gray-700 hover:text-[color:var(--brand-blue)] transition-colors"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="glossy-button relative px-7 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-              >
-                <span className="relative z-10">Get Started</span>
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-[color:var(--brand-blue)]/10 transition-colors"
-              aria-label="Toggle menu"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                {isMobileMenuOpen ? (
-                  <path d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="lg:hidden py-4 border-t border-gray-200 animate-fade-in-up">
-              <nav className="flex flex-col space-y-2">
+            {/* Desktop Navigation - Completely New Design */}
+            <nav className="hidden lg:flex items-center">
+              <div className={`flex items-center rounded-2xl transition-all duration-700 ${
+                isScrolled
+                  ? "bg-slate-50 px-2 py-2 gap-1"
+                  : "bg-white/10 backdrop-blur-xl border border-white/20 px-3 py-2.5 gap-2"
+              }`}>
                 {navLinks.map((link) => {
-                  const isActive = pathname === link.href;
+                  const isActive = isLinkActive(link.href);
                   return (
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`px-4 py-2 rounded-lg font-semibold ${
-                        isActive
-                        ? "text-[color:var(--brand-blue)] bg-[color:var(--brand-blue)]/10"
-                        : "text-gray-700 hover:text-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/5"
+                      className={`relative px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                        isScrolled
+                          ? isActive
+                            ? "bg-[color:var(--brand-blue)] text-white shadow-lg shadow-[color:var(--brand-blue)]/30"
+                            : "text-slate-700 hover:bg-white hover:shadow-md"
+                          : isActive
+                            ? "bg-white/30 text-white backdrop-blur-sm"
+                            : "text-white/90 hover:bg-white/20 hover:text-white"
                       }`}
                     >
                       {link.label}
                     </Link>
                   );
                 })}
-                <div className="pt-4 space-y-2">
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      setIsLoginModalOpen(true);
-                    }}
-                    className="block w-full px-4 py-2 text-center font-semibold text-gray-700 hover:text-[color:var(--brand-blue)] transition-colors"
-                  >
-                    Login
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      setIsLoginModalOpen(true);
-                    }}
-                    className="glossy-button block w-full px-4 py-2 text-center font-bold text-white rounded-xl shadow-lg relative"
-                  >
-                    <span className="relative z-10">Get Started</span>
-                  </button>
-                </div>
-              </nav>
+              </div>
+            </nav>
+
+            {/* CTA Buttons - New Design */}
+            <div className="hidden lg:flex items-center gap-3">
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                  isScrolled
+                    ? "text-slate-700 hover:bg-slate-100"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                Login
+              </button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setIsLoginModalOpen(true);
+                  // Set register mode when opening from Get Started
+                  setTimeout(() => {
+                    const event = new CustomEvent('openRegister');
+                    window.dispatchEvent(event);
+                  }, 100);
+                }}
+                className={`group relative px-6 py-3 rounded-xl font-bold text-sm overflow-hidden transition-all duration-300 ${
+                  isScrolled
+                    ? "bg-[color:var(--brand-blue)] text-white shadow-lg"
+                    : "bg-white text-[color:var(--brand-blue)] shadow-lg"
+                }`}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Get Started
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </motion.button>
             </div>
-          )}
+
+            {/* Mobile Menu Button */}
+            <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
+              <DrawerTrigger asChild>
+                <button
+                  className={`lg:hidden p-3 rounded-xl transition-all duration-300 ${
+                    isScrolled
+                      ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                      : "bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20"
+                  }`}
+                  aria-label="Menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              </DrawerTrigger>
+              <DrawerContent className="bg-white">
+                <DrawerHeader className="border-b border-slate-200 pb-4">
+                  <DrawerTitle>
+                    <div className="flex items-center gap-2 text-slate-900">
+                      <Sparkles className="w-5 h-5 text-[color:var(--brand-blue)]" />
+                      <span className="text-xl font-bold">Menu</span>
+                    </div>
+                  </DrawerTitle>
+                </DrawerHeader>
+
+                <div className="px-4 pb-8 max-h-[80vh] overflow-y-auto">
+                  {/* Mobile Menu Content */}
+                  <nav className="flex flex-col gap-2 mt-6">
+                    {navLinks.map((link) => {
+                      const isActive = isLinkActive(link.href);
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setMobileDrawerOpen(false)}
+                          className={`group flex items-center justify-between px-5 py-4 rounded-xl font-semibold transition-all ${
+                            isActive
+                              ? "bg-[color:var(--brand-blue)] text-white"
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span>{link.label}</span>
+                          <ChevronRight className={`w-5 h-5 transition-transform ${
+                            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                          } group-hover:translate-x-1`} />
+                        </Link>
+                      );
+                    })}
+                  </nav>
+
+                  {/* Mobile CTA Buttons */}
+                  <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setIsLoginModalOpen(true);
+                      }}
+                      className="w-full px-5 py-4 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all"
+                    >
+                      Login
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setIsLoginModalOpen(true);
+                        setTimeout(() => {
+                          const event = new CustomEvent('openRegister');
+                          window.dispatchEvent(event);
+                        }, 100);
+                      }}
+                      className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                    >
+                      Get Started
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
         </div>
-      </header>
-      
+
+      </motion.header>
+
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </>
   );

@@ -1,95 +1,152 @@
+"use client";
+
 import Link from "next/link";
-import { Clock, Users, Laptop2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Users, Laptop2, Zap, ArrowRight } from "lucide-react";
+
+const learningModes = [
+  {
+    title: "Guided Learning",
+    subtitle: "Perfect for institutions",
+    description: "Instructor-led cohorts with structured timetables, live sessions and dedicated support for schools and training centers.",
+    icon: Users,
+    features: [
+      "Live online sessions",
+      "Expert instructor support",
+      "Cohort-based learning",
+      "Regular assessments",
+    ],
+    href: "/courses?type=guided",
+    gradient: "from-[color:var(--brand-blue)] to-blue-600",
+    accentColor: "blue",
+  },
+  {
+    title: "Self-Paced Learning",
+    subtitle: "Flexible for professionals",
+    description: "Learn on your own schedule with on-demand content, downloadable resources and flexible deadlines that fit your life.",
+    icon: Laptop2,
+    features: [
+      "Learn anytime, anywhere",
+      "Flexible deadlines",
+      "Downloadable resources",
+      "Progress tracking",
+    ],
+    href: "/courses?type=self-paced",
+    gradient: "from-[color:var(--brand-cyan)] to-teal-500",
+    accentColor: "cyan",
+  },
+];
 
 export default function CourseTypesSection() {
   return (
-    <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
-      <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
-        {/* Section header */}
-        <div className="max-w-3xl mx-auto text-center mb-12">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-sky-600 mb-2">
-            Ways to learn
-          </p>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 mb-3">
-            Choose the learning style that fits you
+    <section className="relative py-24 bg-white">
+      
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-700 mb-6">
+            <Zap className="w-4 h-4" />
+            Learning Modes
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            Learn Your Way
           </h2>
-          <p className="text-sm md:text-base text-slate-600">
-            Study with structured, instructor-led cohorts or move at your own pace with
-            on-demand content—whichever suits your schedule best.
+          <p className="text-xl text-slate-600">
+            Choose the learning style that matches your goals and schedule
+          </p>
+        </motion.div>
+
+        {/* Learning Mode Cards */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {learningModes.map((mode, index) => {
+            const Icon = mode.icon;
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.2 }}
+                whileHover={{ y: -8 }}
+                className="group relative"
+              >
+                {/* Main Card */}
+                <div className="relative h-full bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                  {/* Gradient overlay on hover */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                  
+                  {/* Icon Badge */}
+                  <div className="relative inline-flex">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity`} />
+                    <div className={`relative flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${mode.gradient} shadow-lg`}>
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="mt-6 space-y-4">
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 mb-1">
+                        {mode.title}
+                      </h3>
+                      <p className="text-sm font-semibold text-slate-500">
+                        {mode.subtitle}
           </p>
         </div>
+        
+                    <p className="text-slate-600 leading-relaxed">
+                      {mode.description}
+                    </p>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {/* Guided Courses */}
-          <div className="group relative rounded-2xl bg-white border-2 border-slate-200 p-7 lg:p-8 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/30 transition-all duration-300 overflow-hidden">
-            <div className="absolute -top-10 -right-10 h-28 w-28 rounded-3xl bg-sky-100 blur-2xl opacity-70" />
-            <div className="relative space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
-                <Users className="w-3.5 h-3.5" />
-                Guided programmes
-              </div>
-              <h3 className="text-lg md:text-xl font-semibold text-slate-900">
-                Learn together with expert guidance
-              </h3>
-              <p className="text-sm text-slate-600">
-                Ideal for schools, colleges and organisations that prefer scheduled classes
-                and live facilitation.
-              </p>
-              <ul className="space-y-1.5 text-sm text-slate-700">
-                <li>• Instructor-led sessions with defined timetables</li>
-                <li>• Regular check-ins, assessments and feedback</li>
-                <li>• Cohort-based learning and collaboration</li>
-                <li>• Support for centres, coordinators and tutors</li>
-              </ul>
-              <Link
-                href="/courses?type=guided"
-                className="inline-flex items-center justify-center rounded-lg border border-sky-200 bg-white px-5 py-2.5 text-sm font-semibold text-sky-800 hover:bg-sky-50 transition-colors"
-              >
-                View guided courses
-              </Link>
-            </div>
+                    {/* Features List */}
+                    <div className="space-y-3 pt-2">
+                      {mode.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${mode.gradient} flex items-center justify-center`}>
+                            <div className="w-2 h-2 bg-white rounded-full" />
+                          </div>
+                          <span className="text-sm text-slate-700">{feature}</span>
+                        </div>
+              ))}
+                    </div>
+
+                    {/* CTA Button */}
+            <Link
+                      href={mode.href}
+                      className="group/btn inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+                      Explore Programs
+                      <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+            </Link>
           </div>
 
-          {/* Self-paced Courses */}
-          <div className="group relative rounded-2xl bg-white border-2 border-slate-200 p-7 lg:p-8 shadow-lg hover:shadow-2xl hover:border-[color:var(--brand-blue)]/30 transition-all duration-300 overflow-hidden">
-            <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-3xl bg-cyan-100 blur-2xl opacity-70" />
-            <div className="relative space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-sky-700">
-                <Laptop2 className="w-3.5 h-3.5" />
-                Self-paced courses
-              </div>
-              <h3 className="text-lg md:text-xl font-semibold text-slate-900">
-                Learn on your schedule, from anywhere
-              </h3>
-              <p className="text-sm text-slate-600">
-                Best for individual professionals who want flexibility to learn around
-                work and other commitments.
-              </p>
-              <ul className="space-y-1.5 text-sm text-slate-700">
-                <li>• Learn anytime, on any device</li>
-                <li>• Structured modules and downloadable resources</li>
-                <li>• Move faster or slower as you need</li>
-                <li>• Access to content updates during your enrolment</li>
-              </ul>
-              <Link
-                href="/courses?type=self-paced"
-                className="inline-flex items-center justify-center rounded-lg border border-sky-200 bg-white px-5 py-2.5 text-sm font-semibold text-sky-800 hover:bg-sky-50 transition-colors"
-              >
-                View self-paced courses
-              </Link>
-            </div>
+                  {/* Decorative corner element */}
+                  <div className="absolute top-0 right-0 w-32 h-32 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} opacity-10 rounded-bl-[100px]`} />
           </div>
         </div>
-
-        {/* Small footer hint */}
-        <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-500">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Switch between learning styles as your needs change.</span>
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Bottom Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center"
+        >
+          <p className="text-slate-600">
+            💡 <span className="font-semibold">Not sure which to choose?</span> Our advisors can help you find the perfect fit
+          </p>
+        </motion.div>
       </div>
     </section>
   );
 }
-
-
