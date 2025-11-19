@@ -122,7 +122,7 @@ type Course = {
   description: string;
   level: "beginner" | "intermediate" | "advanced";
   price: number;
-  duration: number;
+  duration: number; // Duration in days (from schema)
   createdAt: string;
   updatedAt: string;
   category: {
@@ -137,6 +137,39 @@ type Course = {
       lastName: string;
     };
   };
+  materials?: CourseMaterial[];
+  quizzes?: Quiz[];
+};
+
+type CourseMaterial = {
+  materialId: string;
+  courseId: string;
+  type: "video" | "pdf" | "doc" | "link";
+  title: string;
+  url: string;
+  orderIndex: number;
+  createdAt: string;
+};
+
+type Quiz = {
+  quizId: string;
+  courseId: string;
+  title: string;
+  description?: string;
+  createdAt: string;
+  questions?: QuizQuestion[];
+};
+
+type QuizQuestion = {
+  questionId: string;
+  quizId: string;
+  questionText: string;
+  options: Array<{
+    id: string;
+    text: string;
+    is_correct: boolean;
+  }>;
+  orderIndex: number;
 };
 
 export default function CoursesPage() {
@@ -438,7 +471,7 @@ export default function CoursesPage() {
                         ${course.price}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {course.duration} hrs
+                        {course.duration} days
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {getCreatorName(course.creator)}
@@ -622,7 +655,7 @@ export default function CoursesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="duration">Duration (hours) *</Label>
+                <Label htmlFor="duration">Duration (days) *</Label>
                 <Input
                   id="duration"
                   type="number"

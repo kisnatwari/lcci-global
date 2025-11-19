@@ -18,6 +18,7 @@ import {
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },
+  { href: "/student", label: "Student Hub" },
   { href: "/about", label: "About" },
   { href: "/contact-us", label: "Contact" },
 ];
@@ -27,8 +28,10 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -124,83 +127,98 @@ export default function Header() {
             </div>
 
             {/* Mobile Menu Button */}
-            <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
-              <DrawerTrigger asChild>
-                <button
-                  className={`lg:hidden p-3 rounded-xl transition-all duration-300 ${
-                    isScrolled
-                      ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
-                      : "bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20"
-                  }`}
-                  aria-label="Menu"
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
-              </DrawerTrigger>
-              <DrawerContent className="bg-white">
-                <DrawerHeader className="border-b border-slate-200 pb-4">
-                  <DrawerTitle>
-                    <div className="flex items-center gap-2 text-slate-900">
-                      <Sparkles className="w-5 h-5 text-[color:var(--brand-blue)]" />
-                      <span className="text-xl font-bold">Menu</span>
+            {mounted && (
+              <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
+                <DrawerTrigger asChild>
+                  <button
+                    className={`lg:hidden p-3 rounded-xl transition-all duration-300 ${
+                      isScrolled
+                        ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                        : "bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20"
+                    }`}
+                    aria-label="Menu"
+                  >
+                    <Menu className="w-6 h-6" />
+                  </button>
+                </DrawerTrigger>
+                <DrawerContent className="bg-white">
+                  <DrawerHeader className="border-b border-slate-200 pb-4">
+                    <DrawerTitle>
+                      <div className="flex items-center gap-2 text-slate-900">
+                        <Sparkles className="w-5 h-5 text-[color:var(--brand-blue)]" />
+                        <span className="text-xl font-bold">Menu</span>
+                      </div>
+                    </DrawerTitle>
+                  </DrawerHeader>
+
+                  <div className="px-4 pb-8 max-h-[80vh] overflow-y-auto">
+                    {/* Mobile Menu Content */}
+                    <nav className="flex flex-col gap-2 mt-6">
+                      {navLinks.map((link) => {
+                        const isActive = isLinkActive(link.href);
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setMobileDrawerOpen(false)}
+                            className={`group flex items-center justify-between px-5 py-4 rounded-xl font-semibold transition-all ${
+                              isActive
+                                ? "bg-[color:var(--brand-blue)] text-white"
+                                : "text-slate-700 hover:bg-slate-100"
+                            }`}
+                          >
+                            <span>{link.label}</span>
+                            <ChevronRight className={`w-5 h-5 transition-transform ${
+                              isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            } group-hover:translate-x-1`} />
+                          </Link>
+                        );
+                      })}
+                    </nav>
+
+                    {/* Mobile CTA Buttons */}
+                    <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
+                      <button
+                        onClick={() => {
+                          setMobileDrawerOpen(false);
+                          setIsLoginModalOpen(true);
+                        }}
+                        className="w-full px-5 py-4 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all"
+                      >
+                        Login
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMobileDrawerOpen(false);
+                          setIsLoginModalOpen(true);
+                          setTimeout(() => {
+                            const event = new CustomEvent('openRegister');
+                            window.dispatchEvent(event);
+                          }, 100);
+                        }}
+                        className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                      >
+                        Get Started
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
                     </div>
-                  </DrawerTitle>
-                </DrawerHeader>
-
-                <div className="px-4 pb-8 max-h-[80vh] overflow-y-auto">
-                  {/* Mobile Menu Content */}
-                  <nav className="flex flex-col gap-2 mt-6">
-                    {navLinks.map((link) => {
-                      const isActive = isLinkActive(link.href);
-                      return (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          onClick={() => setMobileDrawerOpen(false)}
-                          className={`group flex items-center justify-between px-5 py-4 rounded-xl font-semibold transition-all ${
-                            isActive
-                              ? "bg-[color:var(--brand-blue)] text-white"
-                              : "text-slate-700 hover:bg-slate-100"
-                          }`}
-                        >
-                          <span>{link.label}</span>
-                          <ChevronRight className={`w-5 h-5 transition-transform ${
-                            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                          } group-hover:translate-x-1`} />
-                        </Link>
-                      );
-                    })}
-                  </nav>
-
-                  {/* Mobile CTA Buttons */}
-                  <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
-                    <button
-                      onClick={() => {
-                        setMobileDrawerOpen(false);
-                        setIsLoginModalOpen(true);
-                      }}
-                      className="w-full px-5 py-4 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all"
-                    >
-                      Login
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMobileDrawerOpen(false);
-                        setIsLoginModalOpen(true);
-                        setTimeout(() => {
-                          const event = new CustomEvent('openRegister');
-                          window.dispatchEvent(event);
-                        }, 100);
-                      }}
-                      className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                    >
-                      Get Started
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
                   </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
+                </DrawerContent>
+              </Drawer>
+            )}
+            {!mounted && (
+              <button
+                className={`lg:hidden p-3 rounded-xl transition-all duration-300 ${
+                  isScrolled
+                    ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                    : "bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20"
+                }`}
+                aria-label="Menu"
+                onClick={() => setMobileDrawerOpen(true)}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
           </div>
         </div>
 

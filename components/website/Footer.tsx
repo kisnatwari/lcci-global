@@ -52,7 +52,7 @@ export default function Footer() {
                 { label: "About", href: "/about" },
                 { label: "Contact Us", href: "/contact-us" },
               ].map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="group inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"
@@ -80,7 +80,7 @@ export default function Footer() {
                 { label: "Business & Finance", href: "/courses" },
                 { label: "IT & Computing", href: "/courses" },
               ].map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="group inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"

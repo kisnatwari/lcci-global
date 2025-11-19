@@ -3,8 +3,27 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Play, CheckCircle2, Sparkles } from "lucide-react";
+import { useMemo } from "react";
 
 export default function HeroSection() {
+  // Generate stable particle positions that match server and client
+  const particles = useMemo(() => {
+    // Use a seeded random function for consistent results
+    let seed = 12345;
+    const seededRandom = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: seededRandom() * 100,
+      top: seededRandom() * 100,
+      duration: 3 + seededRandom() * 2,
+      delay: seededRandom() * 5,
+    }));
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-slate-900">
       {/* Spacer for fixed header */}
@@ -34,22 +53,22 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
         
         {/* Floating particles */}
-        {[...Array(20)].map((_, i) => (
+        {particles.map((particle) => (
           <motion.div
-            key={i}
+            key={particle.id}
             className="absolute w-1 h-1 bg-white rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
             }}
             animate={{
               y: [0, -30, 0],
               opacity: [0, 1, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: particle.duration,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: particle.delay,
             }}
           />
         ))}

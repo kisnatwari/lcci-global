@@ -1,9 +1,8 @@
-import Link from "next/link";
 import Image from "next/image";
 
 export default function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/" className={`flex items-center group ${className}`}>
+    <div className={`flex items-center group ${className}`}>
       <Image
         src="/logo.png"
         alt="LCCI Global Qualifications"
@@ -12,6 +11,6 @@ export default function Logo({ className = "" }: { className?: string }) {
         className="object-contain"
         priority
       />
-    </Link>
+    </div>
   );
 }
