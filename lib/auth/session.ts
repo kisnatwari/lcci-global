@@ -6,6 +6,8 @@ export interface SessionData {
   refreshToken: string;
   role: string;
   userId?: string;
+  userName?: string; // User's full name from login
+  userEmail?: string; // User's email from login
   expiresAt?: number;
 }
 

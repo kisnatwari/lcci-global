@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronRight, Sparkles } from "lucide-react";
+import { Menu, X, ChevronRight, Sparkles, LogOut, LayoutDashboard } from "lucide-react";
 import Logo from "./Logo";
 import LoginModal from "./LoginModal";
 import {
@@ -14,6 +14,18 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAuthSession, getUserRole, getAuthToken, clearAuthSession, refreshAccessToken, shouldRefreshToken } from "@/lib/auth";
+import { logout } from "@/lib/auth";
+import { isTokenExpired } from "@/lib/auth/token";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -25,17 +37,113 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | undefined>(undefined);
+
+  const checkAuthStatus = async () => {
+    const session = getAuthSession();
+    const token = getAuthToken();
+    
+    // Check if session exists and token is not expired
+    if (session && token) {
+      const tokenExpired = isTokenExpired(token);
+      
+      if (tokenExpired) {
+        // Token expired, try to refresh it
+        const newToken = await refreshAccessToken();
+        if (!newToken) {
+          // Refresh failed, clear session
+          setIsLoggedIn(false);
+          setUserRole(undefined);
+          clearAuthSession();
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userRole');
+          return;
+        }
+        // Token refreshed successfully, continue with updated session
+      } else if (shouldRefreshToken(token)) {
+        // Token is about to expire soon (within 2 minutes), refresh proactively
+        await refreshAccessToken();
+      }
+      
+      // Token is valid (either original or newly refreshed)
+      const role = getUserRole();
+      setIsLoggedIn(true);
+      setUserRole(role);
+    } else {
+      // No session or token
+      setIsLoggedIn(false);
+      setUserRole(undefined);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Check auth status on mount
+    checkAuthStatus();
+    
+    // Listen for login events (when user logs in via modal)
+    const handleLoginSuccess = () => {
+      checkAuthStatus();
+    };
+    window.addEventListener('loginSuccess', handleLoginSuccess);
+    
+    // Also check periodically (in case session changes elsewhere or token expires)
+    // Check every 30 seconds to catch token expiration
+    const interval = setInterval(checkAuthStatus, 30000);
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener('loginSuccess', handleLoginSuccess);
+      clearInterval(interval);
+    };
   }, []);
+
+  // Check auth status when pathname changes (e.g., after redirect)
+  useEffect(() => {
+    checkAuthStatus();
+  }, [pathname]);
+
+  const handleLogout = async () => {
+    await logout();
+    setIsLoggedIn(false);
+    setUserRole(undefined);
+    // Redirect to home with login query parameter to open modal
+    router.push('/?login=true');
+  };
+
+  const getDashboardPath = () => {
+    if (userRole === 'admin') return '/admin';
+    if (userRole === 'student' || userRole === 'learner') return '/student';
+    return '/student'; // default
+  };
+
+  const getDashboardLabel = () => {
+    if (userRole === 'admin') return 'Admin Dashboard';
+    if (userRole === 'student' || userRole === 'learner') return 'Student Dashboard';
+    return 'Dashboard';
+  };
+
+  // Get user info from session (stored from login response)
+  const session = getAuthSession();
+  const userInitials = session?.userName
+    ? session.userName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'U'
+    : 'U';
+  const userName = session?.userName || 'User';
 
   const isLinkActive = (href: string) => {
     if (!pathname) return false;
@@ -90,40 +198,83 @@ export default function Header() {
               </div>
             </nav>
 
-            {/* CTA Buttons - New Design */}
+            {/* CTA Buttons / User Menu - New Design */}
             <div className="hidden lg:flex items-center gap-3">
-              <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
-                  isScrolled
-                    ? "text-slate-700 hover:bg-slate-100"
-                    : "text-white hover:bg-white/10"
-                }`}
-              >
-                Login
-              </button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setIsLoginModalOpen(true);
-                  // Set register mode when opening from Get Started
-                  setTimeout(() => {
-                    const event = new CustomEvent('openRegister');
-                    window.dispatchEvent(event);
-                  }, 100);
-                }}
-                className={`group relative px-6 py-3 rounded-xl font-bold text-sm overflow-hidden transition-all duration-300 ${
-                  isScrolled
-                    ? "bg-[color:var(--brand-blue)] text-white shadow-lg"
-                    : "bg-white text-[color:var(--brand-blue)] shadow-lg"
-                }`}
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  Get Started
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </motion.button>
+              {isLoggedIn ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                        isScrolled
+                          ? "bg-slate-50 hover:bg-slate-100 text-slate-700"
+                          : "bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20"
+                      }`}
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-[color:var(--brand-blue)] text-white text-xs">
+                          {userInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden xl:block">{userName}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-semibold">{userName}</p>
+                        <p className="text-xs text-slate-500 capitalize">{userRole || 'User'}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={getDashboardPath()}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        {getDashboardLabel()}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsLoginModalOpen(true)}
+                    className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                      isScrolled
+                        ? "text-slate-700 hover:bg-slate-100"
+                        : "text-white hover:bg-white/10"
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setIsLoginModalOpen(true);
+                      // Set register mode when opening from Get Started
+                      setTimeout(() => {
+                        const event = new CustomEvent('openRegister');
+                        window.dispatchEvent(event);
+                      }, 100);
+                    }}
+                    className={`group relative px-6 py-3 rounded-xl font-bold text-sm overflow-hidden transition-all duration-300 ${
+                      isScrolled
+                        ? "bg-[color:var(--brand-blue)] text-white shadow-lg"
+                        : "bg-white text-[color:var(--brand-blue)] shadow-lg"
+                    }`}
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      Get Started
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </motion.button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -176,31 +327,67 @@ export default function Header() {
                       })}
                     </nav>
 
-                    {/* Mobile CTA Buttons */}
+                    {/* Mobile CTA Buttons / User Menu */}
                     <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
-                      <button
-                        onClick={() => {
-                          setMobileDrawerOpen(false);
-                          setIsLoginModalOpen(true);
-                        }}
-                        className="w-full px-5 py-4 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all"
-                      >
-                        Login
-                      </button>
-                      <button
-                        onClick={() => {
-                          setMobileDrawerOpen(false);
-                          setIsLoginModalOpen(true);
-                          setTimeout(() => {
-                            const event = new CustomEvent('openRegister');
-                            window.dispatchEvent(event);
-                          }, 100);
-                        }}
-                        className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                      >
-                        Get Started
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
+                      {isLoggedIn ? (
+                        <>
+                          <div className="flex items-center gap-3 px-5 py-4 rounded-xl bg-slate-50">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-[color:var(--brand-blue)] text-white">
+                                {userInitials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-slate-900">{userName}</p>
+                              <p className="text-xs text-slate-500 capitalize">{userRole || 'User'}</p>
+                            </div>
+                          </div>
+                          <Link
+                            href={getDashboardPath()}
+                            onClick={() => setMobileDrawerOpen(false)}
+                            className="w-full px-5 py-4 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                          >
+                            <LayoutDashboard className="w-5 h-5" />
+                            {getDashboardLabel()}
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setMobileDrawerOpen(false);
+                              handleLogout();
+                            }}
+                            className="w-full px-5 py-4 rounded-xl font-semibold text-red-600 border-2 border-red-200 hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                          >
+                            <LogOut className="w-5 h-5" />
+                            Logout
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setMobileDrawerOpen(false);
+                              setIsLoginModalOpen(true);
+                            }}
+                            className="w-full px-5 py-4 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all"
+                          >
+                            Login
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMobileDrawerOpen(false);
+                              setIsLoginModalOpen(true);
+                              setTimeout(() => {
+                                const event = new CustomEvent('openRegister');
+                                window.dispatchEvent(event);
+                              }, 100);
+                            }}
+                            className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                          >
+                            Get Started
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </DrawerContent>

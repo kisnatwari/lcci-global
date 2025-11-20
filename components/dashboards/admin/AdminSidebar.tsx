@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { apiClient } from "@/lib/api/client";
 import {
   LayoutDashboard,
   FolderTree,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 const menuItems = [
   {
@@ -75,6 +77,17 @@ const menuItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+
+  useEffect(() => {
+    // Test API call with authentication
+    apiClient.get("/api/profile/me")
+      .then(data => {
+        console.log("Profile data:", data);
+      })
+      .catch(error => {
+        console.error("Error fetching profile:", error);
+      });
+  }, []);
 
   return (
     <Sidebar className="border-r border-border/50 bg-gradient-to-b from-background via-background to-muted/30 relative overflow-hidden">

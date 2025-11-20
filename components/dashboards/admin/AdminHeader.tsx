@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -10,11 +12,75 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, LogOut, User, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { logout } from "@/lib/auth";
+import { logout, getAuthSession, getUserRole, getAuthToken, clearAuthSession, refreshAccessToken, shouldRefreshToken } from "@/lib/auth";
+import { isTokenExpired } from "@/lib/auth/token";
 
 export function AdminHeader() {
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | undefined>(undefined);
+
+  const checkAuthStatus = async () => {
+    const session = getAuthSession();
+    const token = getAuthToken();
+    
+    if (session && token) {
+      const tokenExpired = isTokenExpired(token);
+      
+      if (tokenExpired) {
+        const newToken = await refreshAccessToken();
+        if (!newToken) {
+          setUserRole(undefined);
+          clearAuthSession();
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userRole');
+          return;
+        }
+      } else if (shouldRefreshToken(token)) {
+        await refreshAccessToken();
+      }
+      
+      const role = getUserRole();
+      setUserRole(role);
+    } else {
+      setUserRole(undefined);
+    }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+    const interval = setInterval(checkAuthStatus, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    setUserRole(undefined);
+    router.push('/?login=true');
+  };
+
+  // Get user info from session (stored from login response)
+  const session = getAuthSession();
+  
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (session?.userName) {
+      return session.userName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return "AD"; // Default admin initials
+  };
+
+  // Get user display name
+  const getUserName = () => {
+    return session?.userName || "Admin";
+  };
   return (
     <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-gradient-to-r from-background via-background/95 to-muted/30 px-6 shrink-0 relative overflow-hidden w-full min-w-0">
       {/* Unique decorative background layers */}
@@ -70,25 +136,33 @@ export function AdminHeader() {
                 <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--brand-blue)]/5 to-[color:var(--brand-cyan)]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Avatar className="relative z-10 ring-2 ring-[color:var(--brand-blue)]/20 group-hover:ring-[color:var(--brand-blue)]/40 transition-all shadow-md">
                   <AvatarFallback className="bg-gradient-to-br from-[color:var(--brand-blue)] via-[color:var(--brand-cyan)] to-[color:var(--brand-blue)] text-white font-bold shadow-lg">
-                    AD
+                    {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-border/50 shadow-xl">
-              <DropdownMenuLabel className="font-semibold">My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-semibold">{getUserName()}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{userRole || 'Admin'}</p>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive cursor-pointer focus:text-destructive"
-                onClick={async () => {
-                  await logout();
-                  // Redirect after logout (component handles navigation)
-                  window.location.href = '/';
-                }}
+                onClick={handleLogout}
               >
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

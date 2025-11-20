@@ -131,6 +131,9 @@ export function isTokenExpired(token: string): boolean {
     if (!payload || !payload.exp) {
       return true;
     }
+
+    console.log('payload', payload);
+    console.log("token", token);
     
     const currentTime = Math.floor(Date.now() / 1000);
     return payload.exp < currentTime;

@@ -3,11 +3,15 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://147.
 export const ENDPOINTS = {
     auth: {
         login: () => "/api/auth/login",
-        refresh: () => "/api/auth/refresh",
+        register: () => "/api/auth/register",
+        refresh: () => "/api/auth/refresh-token",
         logout: () => "/api/auth/logout", // May or may not exist
     },
     profile: {
-        get: () => "/api/profile",
+        me: () => "/api/profile/me",
+        all: () => "/api/profile",
+        getById: (userId: string) => `/api/profile/${userId}`,
+        update: () => "/api/profile",
     },
     categories: {
         post: () => "/api/categories",            // POST: Create a new category
@@ -53,5 +57,8 @@ export const ENDPOINTS = {
         getById: (id: string) => `/api/quiz-questions/${id}`, // GET: Get question by ID
         update: (id: string) => `/api/quiz-questions/${id}`,  // PUT: Update a question
         delete: (id: string) => `/api/quiz-questions/${id}`,  // DELETE: Delete a question
+    },
+    upload: {
+        file: () => "/api/upload",
     },
 }

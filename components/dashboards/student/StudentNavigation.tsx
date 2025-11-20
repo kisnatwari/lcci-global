@@ -12,6 +12,7 @@ import {
   Menu,
   Sparkles,
   ChevronLeft,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,6 +35,10 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { getAuthSession, logout } from "@/lib/auth";
+import { apiClient, ENDPOINTS } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const navigationItems = [
   {
@@ -89,8 +94,63 @@ interface DesktopNavProps {
   onToggle: () => void;
 }
 
+interface ProfileData {
+  profileId: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  address: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  user: {
+    email: string;
+    username: string;
+    userType: string;
+    status: string;
+  };
+}
+
 export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProps) {
   const isActive = useActiveLink();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const {data} = await apiClient.get(ENDPOINTS.profile.me());
+        setProfile(data);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // Get user initials from username or email
+  const getUserInitials = () => {
+    if (!profile) return "U";
+    const name = profile.user.username || profile.user.email;
+    if (!name) return "U";
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (!profile) return "User";
+    if (profile.firstName && profile.lastName) {
+      return `${profile.firstName} ${profile.lastName}`;
+    }
+    return profile.user.username || profile.user.email || "User";
+  };
 
   return (
     <aside
@@ -144,10 +204,65 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
       </nav>
 
       {!collapsed && (
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Current streak</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">7 days</p>
-        </div>
+        <>
+          <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Current streak</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">7 days</p>
+          </div>
+
+          {/* User Account Menu */}
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-slate-100">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={profile?.avatarUrl || undefined} />
+                    <AvatarFallback className="bg-slate-900 text-white text-sm">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {isLoading ? "Loading..." : getDisplayName()}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">
+                      {isLoading ? "" : profile?.user.email}
+                    </p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-medium">
+                  {isLoading ? "Loading..." : getDisplayName()}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/student/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/student/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await logout();
+                    window.location.href = "/?login=true";
+                  }}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </>
       )}
     </aside>
   );
@@ -155,6 +270,45 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
 
 export function StudentMobileNavigation() {
   const isActive = useActiveLink();
+  const router = useRouter();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const {data} = await apiClient.get(ENDPOINTS.profile.me());
+        setProfile(data);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // Get user initials from username or email
+  const getUserInitials = () => {
+    if (!profile) return "U";
+    const name = profile.user.username || profile.user.email;
+    if (!name) return "U";
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (!profile) return "User";
+    if (profile.firstName && profile.lastName) {
+      return `${profile.firstName} ${profile.lastName}`;
+    }
+    return profile.user.username || profile.user.email || "User";
+  };
 
   return (
     <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm lg:hidden">
@@ -178,13 +332,20 @@ export function StudentMobileNavigation() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-200">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="/avatars/student.png" />
-                  <AvatarFallback className="bg-slate-900 text-white text-sm">JD</AvatarFallback>
+                  <AvatarImage src={profile?.avatarUrl || undefined} />
+                  <AvatarFallback className="bg-slate-900 text-white text-sm">
+                    {getUserInitials()}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="font-medium">John Doe</DropdownMenuLabel>
+              <DropdownMenuLabel className="font-medium">
+                {isLoading ? "Loading..." : getDisplayName()}
+              </DropdownMenuLabel>
+              {profile && (
+                <p className="px-2 py-1.5 text-xs text-slate-500">{profile.user.email}</p>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/student/profile">
@@ -197,6 +358,17 @@ export function StudentMobileNavigation() {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={async () => {
+                  await logout();
+                  router.push("/?login=true");
+                }}
+                className="text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

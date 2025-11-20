@@ -38,6 +38,9 @@ export {
 // Logout (client-side)
 export { logout } from './logout';
 
+// Token Refresh (client-side)
+export { refreshAccessToken, shouldRefreshToken } from './refresh';
+
 // Server-side functions - import directly from their files:
 // - getServerSession, requireAuth, requireRole: import from '@/lib/auth/server-auth'
 // - getServerSessionData, getServerAuthToken, etc.: import from '@/lib/auth/cookies-server'

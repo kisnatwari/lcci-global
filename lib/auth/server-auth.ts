@@ -65,7 +65,7 @@ export async function getServerSession(): Promise<ServerSession | null> {
 export async function requireAuth(): Promise<ServerSession> {
   const session = await getServerSession();
   if (!session) {
-    redirect('/login');
+    redirect('/?login=true');
   }
   return session;
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User2, GraduationCap, ShieldCheck, School, Mail, Lock, ArrowRight, Building2, IdCard, Loader2, AlertCircle } from "lucide-react";
+import { X, User2, GraduationCap, ShieldCheck, School, Mail, Lock, ArrowRight, Building2, IdCard, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import { setAuthSession } from "@/lib/auth";
 
@@ -13,11 +14,14 @@ interface LoginModalProps {
 
 type UserRole = "learner" | "cambridge" | "sqa" | "admin" | null;
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [isRegister, setIsRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Form fields
   const [email, setEmail] = useState("");
@@ -37,6 +41,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setIsRegister(false);
       setIsLoading(false);
       setError(null);
+      setSuccessMessage(null);
       setEmail("");
       setPassword("");
       setFullName("");
@@ -61,6 +66,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     return () => window.removeEventListener('openRegister', handleOpenRegister);
   }, []);
 
+  // Map frontend role to backend userType
+  const getUserType = (role: UserRole): string => {
+    switch (role) {
+      case "admin":
+        return "Admin";
+      case "learner":
+        return "Customer";
+      case "cambridge":
+      case "sqa":
+        return "Training_Site_Student";
+      default:
+        return "Customer";
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -68,33 +88,53 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     
     try {
       // Collect form data based on role
-      const formData: any = { role: selectedRole };
+      const formData: any = { 
+        userType: getUserType(selectedRole) // Backend expects userType only
+      };
       
       if (selectedRole === "learner") {
         if (isRegister) {
           // Registration endpoint for learners
           formData.email = email;
           formData.password = password;
-          formData.fullName = fullName;
-          // TODO: Use registration endpoint when available
-          // const response = await apiClient.post(ENDPOINTS.auth.register(), formData);
-          console.log("Register attempt:", formData);
-          // For now, just log it
-          setIsLoading(false);
-          return;
+          formData.username = fullName; // Send fullName as username
+          // userType already set above
+          
+          // Call registration endpoint
+          const registerResponse = await apiClient.post(ENDPOINTS.auth.register(), formData);
+          
+          // Handle successful registration
+          if (registerResponse.success) {
+            // Show success message and switch to login form
+            setSuccessMessage("Registration successful! Please login now.");
+            setIsRegister(false); // Switch to login mode
+            setIsLoading(false);
+            // Clear password field for security
+            setPassword("");
+            // Keep email filled for convenience
+            return;
+          } else {
+            setError(registerResponse.message || "Registration failed. Please try again.");
+            setIsLoading(false);
+            return;
+          }
         } else {
           // Login for learners
           formData.email = email;
           formData.password = password;
+          // userType already set above
         }
       } else if (selectedRole === "cambridge") {
         formData.schoolName = schoolName;
         formData.schoolCode = schoolCode;
+        // userType already set above
       } else if (selectedRole === "sqa") {
         formData.scnNumber = scnNumber;
+        // userType already set above
       } else if (selectedRole === "admin") {
         formData.email = email;
         formData.password = password;
+        // userType already set above
       }
       
       // Make API call
@@ -116,31 +156,47 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             // Ignore if can't extract userId
           }
 
+          // Extract user info from login response (name and email)
+          const userName = response.data.user?.name || response.data.name || response.data.fullName || undefined;
+          const userEmail = response.data.user?.email || response.data.email || undefined;
+
           setAuthSession(
             response.data.accessToken,
             response.data.refreshToken,
             selectedRole || 'user',
-            userId
+            userId,
+            userName,
+            userEmail
           );
         }
         
         console.log("Login successful:", response);
         
-        // Close modal and redirect based on role
+        // Dispatch login success event for header to update
+        window.dispatchEvent(new CustomEvent('loginSuccess'));
+        
+        // Close modal
         onClose();
         
-        // Redirect to appropriate dashboard based on role
+        // Check if there's a redirect query parameter
+        const redirectPath = searchParams?.get('redirect');
+        if (redirectPath) {
+          router.push(redirectPath);
+          return;
+        }
+        
+        // Redirect to appropriate dashboard based on role using SPA navigation
         const role = selectedRole?.toLowerCase();
         if (role === "admin") {
-          window.location.href = "/admin";
+          router.push("/admin");
         } else if (role === "learner" || role === "student") {
-          window.location.href = "/dashboard"; // TODO: Update when learner dashboard is ready
+          router.push("/student");
         } else if (role === "cambridge") {
-          window.location.href = "/dashboard"; // TODO: Update when Cambridge dashboard is ready
+          router.push("/dashboard"); // TODO: Update when Cambridge dashboard is ready
         } else if (role === "sqa") {
-          window.location.href = "/dashboard"; // TODO: Update when SQA dashboard is ready
+          router.push("/dashboard"); // TODO: Update when SQA dashboard is ready
         } else {
-          window.location.href = "/";
+          router.push("/");
         }
       } else {
         setError(response.message || "Login failed. Please try again.");
@@ -250,6 +306,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       onClick={() => {
                         setSelectedRole(null);
                         setIsRegister(false);
+                        setSuccessMessage(null);
                       }}
                       className="mb-6 text-sm text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-1"
                     >
@@ -274,23 +331,25 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       {selectedRole === "learner" && (
                         <>
                           {isRegister && (
-                            <div>
-                              <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
-                                Full Name
-                              </label>
-                              <div className="relative">
-                                <User2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                  type="text"
-                                  id="fullName"
-                                  value={fullName}
-                                  onChange={(e) => setFullName(e.target.value)}
-                                  className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
-                                  placeholder="John Doe"
-                                  required
-                                />
+                            <>
+                              <div>
+                                <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
+                                  Full Name
+                                </label>
+                                <div className="relative">
+                                  <User2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                  <input
+                                    type="text"
+                                    id="fullName"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                                    placeholder="John Doe"
+                                    required
+                                  />
+                                </div>
                               </div>
-                            </div>
+                            </>
                           )}
                           <div>
                             <label htmlFor="email" className="block text-sm font-bold text-slate-900 mb-2">
@@ -442,6 +501,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         </div>
                       )}
 
+                      {/* Success Message */}
+                      {successMessage && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+                          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                          <span>{successMessage}</span>
+                        </div>
+                      )}
+
                       {/* Error Message */}
                       {error && (
                         <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -458,7 +525,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         {isLoading ? (
                           <>
                             <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>Signing in...</span>
+                            <span>{isRegister && canRegister ? "Creating Account..." : "Signing in..."}</span>
                           </>
                         ) : (
                           <>
@@ -475,7 +542,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                           <>
                             Already have an account?{" "}
                             <button
-                              onClick={() => setIsRegister(false)}
+                              onClick={() => {
+                                setIsRegister(false);
+                                setSuccessMessage(null);
+                              }}
                               className="text-[color:var(--brand-blue)] font-semibold hover:underline"
                             >
                               Sign in
@@ -485,7 +555,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                           <>
                             Don't have an account?{" "}
                             <button
-                              onClick={() => setIsRegister(true)}
+                              onClick={() => {
+                                setIsRegister(true);
+                                setSuccessMessage(null);
+                              }}
                               className="text-[color:var(--brand-blue)] font-semibold hover:underline"
                             >
                               Register now
@@ -527,6 +600,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                             setSelectedRole(option.role);
                             setIsRegister(false);
                             setError(null);
+                            setSuccessMessage(null);
                           }}
                           className={`group relative rounded-2xl p-6 transition-all duration-300 text-center border-2 ${
                             isSelected
@@ -564,5 +638,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+  return (
+    <Suspense fallback={null}>
+      <LoginModalContent isOpen={isOpen} onClose={onClose} />
+    </Suspense>
   );
 }

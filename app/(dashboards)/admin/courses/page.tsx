@@ -387,7 +387,13 @@ export default function CoursesPage() {
 
   // Get creator full name
   const getCreatorName = (creator: Course["creator"]) => {
-    return `${creator.profile.firstName} ${creator.profile.lastName}`;
+    if (!creator?.profile) {
+      return "Unknown";
+    }
+    const firstName = creator.profile.firstName || "";
+    const lastName = creator.profile.lastName || "";
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || "Unknown";
   };
 
   return (

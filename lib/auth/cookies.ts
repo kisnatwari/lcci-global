@@ -21,12 +21,21 @@ const cookieOptions = {
 /**
  * Set encrypted session cookie (client-side)
  */
-export function setAuthSession(accessToken: string, refreshToken: string, role: string, userId?: string) {
+export function setAuthSession(
+  accessToken: string, 
+  refreshToken: string, 
+  role: string, 
+  userId?: string,
+  userName?: string,
+  userEmail?: string
+) {
   const sessionData: SessionData = {
     accessToken,
     refreshToken,
     role,
     userId,
+    userName,
+    userEmail,
     expiresAt: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60), // 7 days
   };
 
