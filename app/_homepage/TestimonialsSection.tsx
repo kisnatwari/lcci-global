@@ -14,10 +14,10 @@ const testimonials = [
     gradient: "from-[color:var(--brand-blue)] to-blue-600",
   },
   {
-    quote: "The self-paced computing course allowed me to upskill while working full-time. The certificate opened doors I never thought possible.",
+    quote: "The Executive Communication Lab helped me lead investor updates with confidence. The coaching and feedback changed how our clients perceive us.",
     name: "James Chen",
-    role: "IT Professional",
-    institution: "Diploma in Computing & IT",
+    role: "Regional Sales Lead",
+    institution: "Executive Communication Lab – Cohort 06",
     rating: 5,
     avatar: "JC",
     gradient: "from-blue-500 to-cyan-500",

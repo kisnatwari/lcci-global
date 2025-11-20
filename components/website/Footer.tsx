@@ -77,8 +77,8 @@ export default function Footer() {
               {[
                 { label: "Guided Courses", href: "/courses?type=guided" },
                 { label: "Self-Paced Courses", href: "/courses?type=self-paced" },
-                { label: "Business & Finance", href: "/courses" },
-                { label: "IT & Computing", href: "/courses" },
+                { label: "Communication Labs", href: "/courses" },
+                { label: "Leadership Tracks", href: "/courses" },
               ].map((link) => (
                 <li key={link.label}>
                   <Link

@@ -194,10 +194,10 @@ export default function HeroSection() {
 
                     <div className="space-y-4">
                         {[
-                          { title: "Business & Finance", count: "15+", color: "from-blue-500 to-cyan-500", icon: "💼" },
-                          { title: "English & Communication", count: "12+", color: "from-cyan-500 to-blue-400", icon: "🗣️" },
-                          { title: "Computing & IT", count: "8+", color: "from-teal-500 to-emerald-500", icon: "💻" },
-                          { title: "Hospitality & Skills", count: "10+", color: "from-blue-600 to-cyan-600", icon: "✨" },
+                          { title: "Communication Labs", count: "18+", color: "from-purple-500 to-pink-500", icon: "🗣️" },
+                          { title: "Leadership Tracks", count: "14+", color: "from-amber-500 to-orange-500", icon: "🧭" },
+                          { title: "Customer Experience", count: "9+", color: "from-emerald-500 to-teal-500", icon: "🤝" },
+                          { title: "Sales & Presentation", count: "12+", color: "from-blue-600 to-cyan-500", icon: "🎤" },
                         ].map((item, idx) => (
                         <motion.div
                           key={idx}

@@ -65,36 +65,36 @@ const initialQuizzes: Quiz[] = [
   {
     quizId: "quiz-1",
     courseId: "course-1",
-    title: "JavaScript Fundamentals Quiz",
-    description: "Test your knowledge of JavaScript basics including variables, functions, and control structures.",
+    title: "Communication Fundamentals Quiz",
+    description: "Check your mastery of clarity, brevity, tone and storytelling frameworks.",
     createdAt: "2025-11-19T10:00:00.000Z",
-    course: { courseId: "course-1", name: "Introduction to JavaScript" },
+    course: { courseId: "course-1", name: "Executive Communication Lab" },
     _count: { questions: 10 },
   },
   {
     quizId: "quiz-2",
     courseId: "course-1",
-    title: "Advanced JavaScript Concepts",
-    description: "Challenge yourself with advanced topics like closures, promises, and async/await.",
+    title: "Executive Storytelling Scenarios",
+    description: "Practice adapting stories for different audiences, mediums and time constraints.",
     createdAt: "2025-11-19T11:00:00.000Z",
-    course: { courseId: "course-1", name: "Introduction to JavaScript" },
+    course: { courseId: "course-1", name: "Executive Communication Lab" },
     _count: { questions: 15 },
   },
   {
     quizId: "quiz-3",
     courseId: "course-2",
-    title: "Business Strategy Assessment",
-    description: "Evaluate your understanding of strategic planning and business development.",
+    title: "Leadership Presence Assessment",
+    description: "Evaluate influence, coaching cadence and strategic decision habits.",
     createdAt: "2025-11-18T15:00:00.000Z",
-    course: { courseId: "course-2", name: "Advanced Business Management" },
+    course: { courseId: "course-2", name: "Leadership Presence Accelerator" },
     _count: { questions: 8 },
   },
 ];
 
 const initialCourses = [
-  { courseId: "course-1", name: "Introduction to JavaScript" },
-  { courseId: "course-2", name: "Advanced Business Management" },
-  { courseId: "course-3", name: "Professional English Communication" },
+  { courseId: "course-1", name: "Executive Communication Lab" },
+  { courseId: "course-2", name: "Leadership Presence Accelerator" },
+  { courseId: "course-3", name: "Customer Experience Excellence" },
 ];
 
 export default function QuizzesPage() {

@@ -35,35 +35,35 @@ const recentEnrollments = [
     enrollmentId: "enr-1",
     course: {
       courseId: "course-1",
-      name: "Introduction to JavaScript",
-      level: "beginner",
-      category: { name: "Programming" },
+      name: "Executive Communication Lab",
+      level: "intermediate",
+      category: { name: "Communication" },
     },
     progress: 75,
     lastAccessed: "2025-11-19T10:00:00.000Z",
     status: "in_progress",
-    nextLesson: "Functions and Scope",
+    nextLesson: "Delivering concise executive updates",
   },
   {
     enrollmentId: "enr-2",
     course: {
       courseId: "course-2",
-      name: "Advanced Business Management",
+      name: "Leadership Presence Accelerator",
       level: "advanced",
-      category: { name: "Business" },
+      category: { name: "Leadership" },
     },
     progress: 45,
     lastAccessed: "2025-11-18T15:30:00.000Z",
     status: "in_progress",
-    nextLesson: "Strategic Planning",
+    nextLesson: "Leading through coaching conversations",
   },
   {
     enrollmentId: "enr-3",
     course: {
       courseId: "course-3",
-      name: "Professional English Communication",
+      name: "Customer Experience Excellence",
       level: "intermediate",
-      category: { name: "Language" },
+      category: { name: "Customer Success" },
     },
     progress: 100,
     lastAccessed: "2025-11-17T09:15:00.000Z",
@@ -92,15 +92,15 @@ const recentAchievements = [
 const upcomingDeadlines = [
   {
     id: "deadline-1",
-    title: "Quiz: JavaScript Basics",
-    courseName: "Introduction to JavaScript",
+    title: "Quiz: Communication Fundamentals",
+    courseName: "Executive Communication Lab",
     dueDate: "2025-11-22T23:59:00.000Z",
     type: "quiz",
   },
   {
     id: "deadline-2",
-    title: "Assignment: Business Case Study",
-    courseName: "Advanced Business Management",
+    title: "Assignment: Leadership Action Plan",
+    courseName: "Leadership Presence Accelerator",
     dueDate: "2025-11-25T23:59:00.000Z",
     type: "assignment",
   },
@@ -168,7 +168,7 @@ export default function StudentDashboard() {
             </div>
             <div className="mt-6 rounded-xl bg-slate-50 p-4">
               <p className="text-xs uppercase text-slate-500 tracking-wide">Today&apos;s focus</p>
-              <p className="mt-2 text-sm font-medium text-slate-800">Continue “Introduction to JavaScript”</p>
+              <p className="mt-2 text-sm font-medium text-slate-800">Continue “Executive Communication Lab”</p>
             </div>
           </CardContent>
         </Card>

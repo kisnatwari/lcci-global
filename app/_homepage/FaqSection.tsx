@@ -6,7 +6,7 @@ import { HelpCircle } from "lucide-react";
 const faqs = [
   {
     q: "What qualifications does LCCI offer?",
-    a: "LCCI offers a comprehensive range of qualifications across Business, Accounting, Finance, IT & Computing, English for Business and Professional Skills. Our programmes span from foundational certificates to advanced diplomas, designed to meet the needs of learners at different stages of their career journey.",
+    a: "LCCI specialises in communication, leadership, customer experience and other soft-skills programmes. From executive communication labs to leadership presence accelerators and coaching certifications, our stackable pathways support learners throughout their professional journey.",
   },
   {
     q: "Are LCCI certificates recognized globally?",

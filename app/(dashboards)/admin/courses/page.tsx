@@ -43,18 +43,18 @@ import { apiClient, ENDPOINTS } from "@/lib/api";
 const categories = [
   {
     categoryId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    name: "Programming",
-    description: "Courses related to programming",
+    name: "Communication & Presence",
+    description: "Executive communication, presentation and storytelling",
   },
   {
     categoryId: "4fa85f64-5717-4562-b3fc-2c963f66afa7",
-    name: "Business & Finance",
-    description: "Courses covering business management",
+    name: "Leadership & Coaching",
+    description: "Leadership presence, influence and coaching capability",
   },
   {
     categoryId: "5fa85f64-5717-4562-b3fc-2c963f66afa8",
-    name: "English & Communication",
-    description: "Language and communication skills",
+    name: "Customer Experience",
+    description: "Service excellence and client experience programmes",
   },
 ];
 
@@ -80,11 +80,11 @@ const creators = [
 const initialCourses = [
   {
     courseId: "course-1",
-    name: "Introduction to JavaScript",
-    description: "Learn the fundamentals of JavaScript programming",
-    level: "beginner" as const,
-    price: 99,
-    duration: 40,
+    name: "Executive Communication Lab",
+    description: "Strengthen strategic communication, storytelling and executive presence.",
+    level: "intermediate" as const,
+    price: 125,
+    duration: 32,
     createdAt: "2025-11-18",
     updatedAt: "2025-11-18",
     category: categories[0],
@@ -92,11 +92,11 @@ const initialCourses = [
   },
   {
     courseId: "course-2",
-    name: "Advanced Business Management",
-    description: "Master advanced business management strategies and techniques",
+    name: "Leadership Presence Accelerator",
+    description: "Immersive leadership journey focusing on influence, coaching and decision making.",
     level: "advanced" as const,
-    price: 199,
-    duration: 60,
+    price: 210,
+    duration: 48,
     createdAt: "2025-11-17",
     updatedAt: "2025-11-17",
     category: categories[1],
@@ -104,11 +104,11 @@ const initialCourses = [
   },
   {
     courseId: "course-3",
-    name: "Professional English Communication",
-    description: "Enhance your professional English communication skills",
+    name: "Customer Experience Excellence",
+    description: "Design memorable service experiences and service recovery playbooks.",
     level: "intermediate" as const,
-    price: 149,
-    duration: 50,
+    price: 160,
+    duration: 36,
     createdAt: "2025-11-16",
     updatedAt: "2025-11-16",
     category: categories[2],
