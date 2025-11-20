@@ -15,7 +15,7 @@ import type { UserProfile } from './profile';
 export async function getServerProfile(): Promise<UserProfile | null> {
   try {
     const client = await getServerApiClient();
-    const response = await client.get(ENDPOINTS.profile.get());
+    const response = await client.get(ENDPOINTS.profile.me());
     return response.data || response;
   } catch (error) {
     console.error('Failed to get server profile:', error);

@@ -19,7 +19,7 @@ export interface UserProfile {
  */
 export async function getProfile(): Promise<UserProfile | null> {
   try {
-    const response = await apiClient.get(ENDPOINTS.profile.get());
+    const response = await apiClient.get(ENDPOINTS.profile.me());
     return response.data || response;
   } catch (error) {
     console.error('Failed to get profile:', error);
