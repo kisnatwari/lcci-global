@@ -36,7 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, Copy, BookOpen, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, BookOpen, Loader2, AlertCircle, CheckCircle, CheckCircle2 } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 // Static categories data (for dropdown)
@@ -141,6 +141,12 @@ type Course = {
   quizzes?: Quiz[];
 };
 
+type CourseDetail = Course & {
+  overview?: string | null;
+  curriculum?: string | null;
+  requirements?: string | null;
+};
+
 type CourseMaterial = {
   materialId: string;
   courseId: string;
@@ -195,6 +201,17 @@ export default function CoursesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isFetchingCourse, setIsFetchingCourse] = useState(false);
+  const [viewCourse, setViewCourse] = useState<CourseDetail | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Fetch data on mount
   useEffect(() => {
@@ -350,6 +367,23 @@ export default function CoursesPage() {
     }
   };
 
+  const handleViewDetails = async (courseId: string) => {
+    setIsViewDialogOpen(true);
+    setIsFetchingCourse(true);
+    setViewCourse(null);
+    setViewError(null);
+    try {
+      const response = await apiClient.get(ENDPOINTS.courses.getById(courseId));
+      const data = response.data || response;
+      setViewCourse(data);
+    } catch (err: any) {
+      console.error("Failed to fetch course details:", err);
+      setViewError(err.message || "Failed to load course details");
+    } finally {
+      setIsFetchingCourse(false);
+    }
+  };
+
   // Handle delete
   const handleDelete = async () => {
     if (!deletingCourse) return;
@@ -366,8 +400,8 @@ export default function CoursesPage() {
       // Close dialog
       setIsDeleteDialogOpen(false);
       setDeletingCourse(null);
-      
-      console.log("Course deleted successfully");
+      setError(null);
+      setSuccessMessage("Course deleted successfully!");
     } catch (err: any) {
       console.error("Failed to delete course:", err);
       setError(err.message || "Failed to delete course");
@@ -415,6 +449,30 @@ export default function CoursesPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Feedback Messages */}
+          {(successMessage || error) && (
+            <div className="space-y-3">
+              {successMessage && (
+                <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                  <CheckCircle className="mt-0.5 h-4 w-4 text-emerald-600" />
+                  <div>
+                    <p className="font-semibold">{successMessage}</p>
+                    <p className="text-xs text-emerald-700">Your changes have been saved successfully.</p>
+                  </div>
+                </div>
+              )}
+              {error && (
+                <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4" />
+                  <div>
+                    <p className="font-semibold">Action required</p>
+                    <p className="text-xs text-destructive">{error}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Search Section */}
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
@@ -505,24 +563,11 @@ export default function CoursesPage() {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => {
-                                // View action - can be implemented later
-                                console.log("View course:", course.courseId);
-                              }}
+                              onClick={() => handleViewDetails(course.courseId)}
                               className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                // Duplicate action - can be implemented later
-                                console.log("Duplicate course:", course.courseId);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicate
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -552,6 +597,114 @@ export default function CoursesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* View Details Dialog */}
+      <Dialog
+        open={isViewDialogOpen}
+        onOpenChange={(open) => {
+          setIsViewDialogOpen(open);
+          if (!open) {
+            setViewCourse(null);
+            setViewError(null);
+            setIsFetchingCourse(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Course details</DialogTitle>
+            <DialogDescription>
+              {viewCourse ? viewCourse.name : "Review course overview, curriculum and metadata"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isFetchingCourse ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Loading course details...
+            </div>
+          ) : viewError ? (
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              {viewError}
+            </div>
+          ) : viewCourse ? (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">{viewCourse.name}</h3>
+                <p className="text-sm text-slate-600 mt-1">{viewCourse.description}</p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                  <p className="text-xs uppercase text-slate-500">Category</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {viewCourse.category?.name || "—"}
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                  <p className="text-xs uppercase text-slate-500">Level</p>
+                  <p className="text-sm font-medium text-slate-900">{viewCourse.level}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                  <p className="text-xs uppercase text-slate-500">Duration</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {viewCourse.duration ? `${viewCourse.duration} days` : "—"}
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                  <p className="text-xs uppercase text-slate-500">Price</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {typeof viewCourse.price === "number" ? `NPR ${viewCourse.price}` : "—"}
+                  </p>
+                </div>
+              </div>
+
+              {viewCourse.overview && (
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-900 mb-1">Overview</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                    {viewCourse.overview}
+                  </p>
+                </div>
+              )}
+
+              {viewCourse.curriculum && (
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-900 mb-1">Curriculum</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                    {viewCourse.curriculum}
+                  </p>
+                </div>
+              )}
+
+              {viewCourse.requirements && (
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-900 mb-1">Requirements</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                    {viewCourse.requirements}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                  <p className="text-xs uppercase text-slate-500 mb-1">Creator</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {getCreatorName(viewCourse.creator)}
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                  <p className="text-xs uppercase text-slate-500 mb-1">Last updated</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {formatDate(viewCourse.updatedAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
