@@ -42,7 +42,9 @@ async function makeRequest(
         // Token expired, try to refresh
         const newToken = await refreshAccessToken();
         if (!newToken) {
-            throw new Error('Unauthorized');
+            const error: any = new Error('Unauthorized');
+            error.status = 401;
+            throw error;
         }
         // Update headers with new token
         const session = getAuthSession();
@@ -71,8 +73,10 @@ async function makeRequest(
             };
             return makeRequest(endpoint, retryOptions, 1);
         }
-        // Refresh failed, throw error
-        throw new Error('Unauthorized');
+        // Refresh failed, throw error with status code
+        const error: any = new Error('Unauthorized');
+        error.status = 401;
+        throw error;
     }
     
     return response;
@@ -86,7 +90,15 @@ export const apiClient = {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error: any = new Error(`HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            try {
+                const errorData = await response.json();
+                error.message = errorData.message || error.message;
+            } catch {
+                // If response is not JSON, use default message
+            }
+            throw error;
         }
         return response.json();
     },
@@ -99,7 +111,16 @@ export const apiClient = {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error: any = new Error(`HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            // Try to get error message from response body
+            try {
+                const errorData = await response.json();
+                error.message = errorData.message || error.message;
+            } catch {
+                // If response is not JSON, use default message
+            }
+            throw error;
         }
         return response.json();
     },
@@ -112,7 +133,15 @@ export const apiClient = {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error: any = new Error(`HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            try {
+                const errorData = await response.json();
+                error.message = errorData.message || error.message;
+            } catch {
+                // If response is not JSON, use default message
+            }
+            throw error;
         }
         return response.json();
     },
@@ -124,7 +153,15 @@ export const apiClient = {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error: any = new Error(`HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            try {
+                const errorData = await response.json();
+                error.message = errorData.message || error.message;
+            } catch {
+                // If response is not JSON, use default message
+            }
+            throw error;
         }
         if (response.status === 204) {
             return null;
@@ -164,15 +201,27 @@ export const apiClient = {
                 });
                 
                 if (!retryResponse.ok) {
-                    throw new Error(`HTTP error! status: ${retryResponse.status}`);
+                    const error: any = new Error(`HTTP error! status: ${retryResponse.status}`);
+                    error.status = retryResponse.status;
+                    throw error;
                 }
                 return retryResponse.json();
             }
-            throw new Error('Unauthorized');
+            const error: any = new Error('Unauthorized');
+            error.status = 401;
+            throw error;
         }
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const error: any = new Error(`HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            try {
+                const errorData = await response.json();
+                error.message = errorData.message || error.message;
+            } catch {
+                // If response is not JSON, use default message
+            }
+            throw error;
         }
         return response.json();
     },

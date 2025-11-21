@@ -423,6 +423,17 @@ export default function CategoriesPage() {
             </DialogDescription>
           </DialogHeader>
           
+          {/* Warning Message */}
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-sm mb-1">Warning: This will delete all related data</p>
+              <p className="text-sm text-amber-700">
+                Deleting this category will permanently remove all courses, materials, and records associated with it. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+          
           {/* Error Message in Delete Dialog */}
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">

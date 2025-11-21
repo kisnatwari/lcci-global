@@ -1,0 +1,357 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ======================================================
+// USERS & AUTH
+// ======================================================
+
+model User {
+  userId                 String     @id @default(cuid())
+  email                  String     @unique
+  username               String?
+  hashedPassword         String?
+  userType               UserType
+  status                 UserStatus
+  trainingCentreId       String?
+  centreUniqueIdentifier String?
+  passwordResetToken          String?    @unique
+  passwordResetExpiresAt      DateTime?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  profile             Profile?
+  coursesCreated      Course[]        @relation("CreatedBy")
+  quizAttempts        QuizAttempt[]
+  transactions        Transaction[]
+  enrollments         Enrollment[]
+  certificates        Certificate[]
+  blogsAuthored       CmsBlog[]
+  auditLogs           AuditLog[]
+  trainingCentre      TrainingCentre? @relation("CentreStudents", fields: [trainingCentreId], references: [centreId])
+}
+
+model Profile {
+  profileId String   @id @default(cuid())
+  userId    String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  address   String?
+  avatarUrl String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [userId])
+}
+
+enum UserType {
+  Admin
+  Customer
+  Training_Site_Student
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+// ======================================================
+// COURSE & CATEGORY MANAGEMENT
+// ======================================================
+
+model Category {
+  categoryId  String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  courses     Course[]
+}
+
+model Course {
+  courseId    String      @id @default(cuid())
+  categoryId  String
+  name        String
+  description String?
+  level       CourseLevel
+  price       Decimal
+  duration    Int? // Duration in days
+  createdBy   String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  category     Category         @relation(fields: [categoryId], references: [categoryId])
+  creator      User             @relation("CreatedBy", fields: [createdBy], references: [userId])
+  materials    CourseMaterial[]
+  quizzes      Quiz[]
+  transactions Transaction[]
+  enrollments  Enrollment[]
+  discounts    CourseDiscount[]
+  certificates Certificate[]
+}
+
+model CourseMaterial {
+  materialId String             @id @default(cuid())
+  courseId   String
+  type       CourseMaterialType
+  title      String
+  url        String
+  orderIndex Int
+  createdAt  DateTime           @default(now())
+  course     Course             @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+}
+
+enum CourseLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+enum CourseMaterialType {
+  video
+  pdf
+  doc
+  link
+}
+
+// ======================================================
+// QUIZZES & QUESTIONS
+// ======================================================
+
+model Quiz {
+  quizId      String   @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  course    Course         @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  questionId   String @id @default(cuid())
+  quizId       String
+  questionText String
+  options      Json // Array of { "id": "...", "text": "...", "is_correct": true|false }
+  orderIndex   Int
+
+  quiz    Quiz         @relation(fields: [quizId], references: [quizId])
+  answers QuizAnswer[]
+}
+
+model QuizAttempt {
+  attemptId  String            @id @default(cuid())
+  quizId     String
+  userId     String
+  startedAt  DateTime
+  finishedAt DateTime?
+  score      Decimal? // percentage or raw score
+  status     QuizAttemptStatus
+
+  quiz    Quiz         @relation(fields: [quizId], references: [quizId])
+  user    User         @relation(fields: [userId], references: [userId])
+  answers QuizAnswer[]
+}
+
+model QuizAnswer {
+  answerId         String   @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedOptionId String?
+  isCorrect        Boolean?
+  answeredAt       DateTime
+
+  attempt  QuizAttempt  @relation(fields: [attemptId], references: [attemptId])
+  question QuizQuestion @relation(fields: [questionId], references: [questionId])
+}
+
+enum QuizAttemptStatus {
+  in_progress
+  completed
+}
+
+// ======================================================
+// ENROLLMENT & TRANSACTIONS (Payments + Analytics)
+// ======================================================
+
+model Transaction {
+  transactionId  String            @id @default(cuid())
+  userId         String
+  courseId       String
+  paymentType    PaymentType
+  amount         Decimal
+  status         TransactionStatus
+  transactionRef String            @unique
+  metadata       Json? // Optional: raw gateway response or audit info
+  createdAt      DateTime          @default(now())
+
+  user       User        @relation(fields: [userId], references: [userId])
+  course     Course      @relation(fields: [courseId], references: [courseId])
+  enrollment Enrollment?
+}
+
+model Enrollment {
+  enrollmentId  String           @id @default(cuid())
+  userId        String
+  courseId      String
+  transactionId String           @unique
+  isLcci        Boolean          @default(false)
+  enrolledAt    DateTime         @default(now())
+  completedAt   DateTime?
+  progress      Int              @default(0)
+  status        EnrollmentStatus
+
+  user        User        @relation(fields: [userId], references: [userId])
+  course      Course      @relation(fields: [courseId], references: [courseId])
+  transaction Transaction @relation(fields: [transactionId], references: [transactionId])
+}
+
+model CourseDiscount {
+  discountId String       @id @default(cuid())
+  courseId   String
+  type       DiscountType
+  value      Decimal // percentage (0-100) or fixed currency amount
+  startsAt   DateTime
+  endsAt     DateTime
+  isActive   Boolean      @default(true)
+
+  course Course @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+}
+
+enum PaymentType {
+  Khalti
+}
+
+enum TransactionStatus {
+  pending
+  success
+  failed
+  refunded
+}
+
+enum EnrollmentStatus {
+  enrolled
+  completed
+  cancelled
+}
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+// ======================================================
+// CERTIFICATES
+// ======================================================
+
+model CertificateTemplate {
+  templateId      String        @id @default(cuid())
+  name            String
+  templateFileUrl String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  certificates    Certificate[]
+}
+
+model Certificate {
+  certificateId  String   @id @default(cuid())
+  userId         String
+  courseId       String
+  templateId     String
+  issuedAt       DateTime
+  certificateUrl String
+
+  user     User                @relation(fields: [userId], references: [userId])
+  course   Course              @relation(fields: [courseId], references: [courseId])
+  template CertificateTemplate @relation(fields: [templateId], references: [templateId])
+}
+
+// ======================================================
+// CMS: BANNERS, BLOGS, POLICIES
+// ======================================================
+
+model CmsBanner {
+  bannerId  String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  isActive  Boolean
+  createdAt DateTime @default(now())
+}
+
+model CmsBlog {
+  blogId      String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  content     String
+  authorId    String
+  status      BlogStatus
+  publishedAt DateTime?
+
+  author User @relation(fields: [authorId], references: [userId])
+}
+
+model CmsPolicy {
+  policyId    String     @id @default(cuid())
+  type        PolicyType
+  title       String
+  content     String
+  lastUpdated DateTime
+}
+
+enum BlogStatus {
+  draft
+  published
+}
+
+enum PolicyType {
+  terms
+  privacy
+  about
+}
+
+// ======================================================
+// TRAINING CENTRES (SQA / Cambridge)
+// ======================================================
+
+model TrainingCentre {
+  centreId    String                 @id @default(cuid())
+  name        String
+  description String?
+  category    TrainingCentreCategory
+  autoEnroll  Boolean                @default(false)
+  createdAt   DateTime               @default(now())
+
+  students User[] @relation("CentreStudents")
+}
+
+enum TrainingCentreCategory {
+  SQA
+  Cambridge
+}
+
+// ======================================================
+// LOGGING & AUDIT
+// ======================================================
+
+model AuditLog {
+  logId     String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId])
+}

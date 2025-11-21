@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,15 +22,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, BookOpen, Loader2, AlertCircle, CheckCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, BookOpen, Loader2, AlertCircle, CheckCircle, CheckCircle2, ImageIcon, FileText, HelpCircle } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 // Static categories data (for dropdown)
@@ -123,6 +116,7 @@ type Course = {
   level: "beginner" | "intermediate" | "advanced";
   price: number;
   duration: number; // Duration in days (from schema)
+  thumbnailUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   category: {
@@ -179,32 +173,17 @@ type QuizQuestion = {
 };
 
 export default function CoursesPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    level: "beginner" as "beginner" | "intermediate" | "advanced",
-    price: "",
-    duration: "",
-    categoryId: "",
-    creatorId: "",
-  });
 
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isFetchingCourse, setIsFetchingCourse] = useState(false);
-  const [viewCourse, setViewCourse] = useState<CourseDetail | null>(null);
-  const [viewError, setViewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (successMessage) {
@@ -216,7 +195,6 @@ export default function CoursesPage() {
   // Fetch data on mount
   useEffect(() => {
     fetchCourses();
-    fetchCategories();
   }, []);
 
   // Fetch courses from API
@@ -243,25 +221,6 @@ export default function CoursesPage() {
     }
   };
 
-  // Fetch categories from API
-  const fetchCategories = async () => {
-    try {
-      const response = await apiClient.get(ENDPOINTS.categories.get());
-      if (response.success && response.data && Array.isArray(response.data.categories)) {
-        setCategories(response.data.categories);
-      } else if (response.data && Array.isArray(response.data.categories)) {
-        setCategories(response.data.categories);
-      } else if (Array.isArray(response)) {
-        setCategories(response);
-      } else {
-        setCategories([]);
-      }
-    } catch (err: any) {
-      console.error("Failed to fetch categories:", err);
-      setCategories([]);
-    }
-  };
-
   // Filter courses based on search
   const filteredCourses = courses.filter(
     (course) =>
@@ -269,120 +228,6 @@ export default function CoursesPage() {
       (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (course.category && course.category.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  // Handle create/edit dialog open
-  const handleOpenDialog = (course?: Course) => {
-    setError(null);
-    setSuccessMessage(null);
-    if (course) {
-      setEditingCourse(course);
-      setFormData({
-        name: course.name || "",
-        description: course.description || "",
-        level: course.level,
-        price: course.price?.toString() || "",
-        duration: course.duration?.toString() || "",
-        categoryId: course.category?.categoryId || "",
-        creatorId: course.creator?.userId || "",
-      });
-    } else {
-      setEditingCourse(null);
-      setFormData({
-        name: "",
-        description: "",
-        level: "beginner",
-        price: "",
-        duration: "",
-        categoryId: "",
-        creatorId: "",
-      });
-    }
-    setIsDialogOpen(true);
-  };
-
-  // Handle save (create or update)
-  const handleSave = async () => {
-    if (!formData.name || !formData.name.trim()) {
-      setError("Course name is required");
-      return;
-    }
-
-    if (!formData.categoryId) {
-      setError("Category is required");
-      return;
-    }
-
-    setIsSaving(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      const payload = {
-        name: formData.name.trim(),
-        description: (formData.description && formData.description.trim()) || undefined,
-        level: formData.level,
-        price: parseFloat(formData.price) || 0,
-        duration: parseInt(formData.duration) || 0,
-        categoryId: formData.categoryId,
-      };
-
-      if (editingCourse) {
-        // Update existing course
-        const response = await apiClient.put(ENDPOINTS.courses.update(editingCourse.courseId), payload);
-        console.log("Update response:", response);
-        setSuccessMessage("Course updated successfully!");
-      } else {
-        // Create new course
-        const response = await apiClient.post(ENDPOINTS.courses.post(), payload);
-        console.log("Create response:", response);
-        setSuccessMessage("Course created successfully!");
-      }
-
-      // Refresh the list
-      await fetchCourses();
-
-      // Close dialog after a short delay to show success message
-      setTimeout(() => {
-        setIsDialogOpen(false);
-        setEditingCourse(null);
-        setFormData({
-          name: "",
-          description: "",
-          level: "beginner",
-          price: "",
-          duration: "",
-          categoryId: "",
-          creatorId: "",
-        });
-        setSuccessMessage(null);
-      }, 1000);
-    } catch (err: any) {
-      console.error("Failed to save course:", err);
-      const errorMessage = err.message || 
-                          (err.response?.data?.message) ||
-                          (editingCourse ? "Failed to update course" : "Failed to create course");
-      setError(errorMessage);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleViewDetails = async (courseId: string) => {
-    setIsViewDialogOpen(true);
-    setIsFetchingCourse(true);
-    setViewCourse(null);
-    setViewError(null);
-    try {
-      const response = await apiClient.get(ENDPOINTS.courses.getById(courseId));
-      const data = response.data || response;
-      setViewCourse(data);
-    } catch (err: any) {
-      console.error("Failed to fetch course details:", err);
-      setViewError(err.message || "Failed to load course details");
-    } finally {
-      setIsFetchingCourse(false);
-    }
-  };
 
   // Handle delete
   const handleDelete = async () => {
@@ -442,7 +287,7 @@ export default function CoursesPage() {
                 Manage courses and their details
               </CardDescription>
             </div>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Button onClick={() => router.push("/admin/courses/new")} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Course
             </Button>
@@ -492,101 +337,121 @@ export default function CoursesPage() {
 
           {/* Table Section */}
           {filteredCourses.length > 0 ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Creator</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCourses.map((course) => (
-                    <TableRow key={course.courseId}>
-                      <TableCell>
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-(--brand-blue)/10 text-(--brand-blue)">
-                          <BookOpen className="h-4 w-4" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{course.name}</div>
-                          <div className="text-sm text-muted-foreground line-clamp-1 max-w-md">
-                            {course.description}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">{course.category.name}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted capitalize">
-                          {course.level}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        ${course.price}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {course.duration} days
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {getCreatorName(course.creator)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(course.updatedAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                              onClick={() => handleOpenDialog(course)}
-                              className="cursor-pointer"
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleViewDetails(course.courseId)}
-                              className="cursor-pointer"
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setDeletingCourse(course);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                              className="cursor-pointer text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+            <div className="rounded-md border overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[640px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[64px] px-3"></TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead className="text-center">Stats</TableHead>
+                      <TableHead className="text-center hidden lg:table-cell">Creator</TableHead>
+                      <TableHead className="text-center hidden xl:table-cell">Updated</TableHead>
+                      <TableHead className="text-right w-28">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCourses.map((course) => (
+                      <TableRow key={course.courseId}>
+                        <TableCell className="px-3">
+                          {course.thumbnailUrl ? (
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200">
+                              <Image
+                                src={course.thumbnailUrl}
+                                alt={course.name}
+                                fill
+                                className="object-cover"
+                                sizes="40px"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 text-slate-400">
+                              <ImageIcon className="h-5 w-5" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="space-y-1">
+                          <div className="font-medium">{course.name}</div>
+                          <p className="text-xs text-muted-foreground line-clamp-2 max-w-xl">{course.description}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-[0.7rem]">
+                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800">
+                              {course.category.name}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-muted capitalize text-[0.65rem] font-semibold">
+                              {course.level}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center space-y-1">
+                          <div className="font-semibold">{course.price != null ? `NPR ${Number(course.price).toLocaleString()}` : "—"}</div>
+                          <div className="text-xs text-muted-foreground">{course.duration} days</div>
+                        </TableCell>
+                        <TableCell className="text-center text-sm text-muted-foreground hidden lg:table-cell">
+                          {getCreatorName(course.creator)}
+                        </TableCell>
+                        <TableCell className="text-center text-sm text-muted-foreground hidden xl:table-cell">
+                          {formatDate(course.updatedAt)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/admin/courses/${course.courseId}/edit`)}
+                                className="cursor-pointer"
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/admin/courses/${course.courseId}`)}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/admin/courses/${course.courseId}/materials`)}
+                                className="cursor-pointer"
+                              >
+                                <FileText className="mr-2 h-4 w-4" />
+                                Manage Materials
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/admin/courses/${course.courseId}/quizzes`)}
+                                className="cursor-pointer"
+                              >
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                Manage Quizzes
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setDeletingCourse(course);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                className="cursor-pointer text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ) : (
             <div className="text-center py-12 border rounded-md">
@@ -597,254 +462,6 @@ export default function CoursesPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* View Details Dialog */}
-      <Dialog
-        open={isViewDialogOpen}
-        onOpenChange={(open) => {
-          setIsViewDialogOpen(open);
-          if (!open) {
-            setViewCourse(null);
-            setViewError(null);
-            setIsFetchingCourse(false);
-          }
-        }}
-      >
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Course details</DialogTitle>
-            <DialogDescription>
-              {viewCourse ? viewCourse.name : "Review course overview, curriculum and metadata"}
-            </DialogDescription>
-          </DialogHeader>
-
-          {isFetchingCourse ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Loading course details...
-            </div>
-          ) : viewError ? (
-            <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              {viewError}
-            </div>
-          ) : viewCourse ? (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">{viewCourse.name}</h3>
-                <p className="text-sm text-slate-600 mt-1">{viewCourse.description}</p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                  <p className="text-xs uppercase text-slate-500">Category</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {viewCourse.category?.name || "—"}
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                  <p className="text-xs uppercase text-slate-500">Level</p>
-                  <p className="text-sm font-medium text-slate-900">{viewCourse.level}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                  <p className="text-xs uppercase text-slate-500">Duration</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {viewCourse.duration ? `${viewCourse.duration} days` : "—"}
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                  <p className="text-xs uppercase text-slate-500">Price</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {typeof viewCourse.price === "number" ? `NPR ${viewCourse.price}` : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {viewCourse.overview && (
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-900 mb-1">Overview</h4>
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                    {viewCourse.overview}
-                  </p>
-                </div>
-              )}
-
-              {viewCourse.curriculum && (
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-900 mb-1">Curriculum</h4>
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                    {viewCourse.curriculum}
-                  </p>
-                </div>
-              )}
-
-              {viewCourse.requirements && (
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-900 mb-1">Requirements</h4>
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                    {viewCourse.requirements}
-                  </p>
-                </div>
-              )}
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                  <p className="text-xs uppercase text-slate-500 mb-1">Creator</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {getCreatorName(viewCourse.creator)}
-                  </p>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                  <p className="text-xs uppercase text-slate-500 mb-1">Last updated</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {formatDate(viewCourse.updatedAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
-
-      {/* Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingCourse ? "Edit Course" : "Create New Course"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingCourse
-                ? "Update the course information below."
-                : "Fill in the details to create a new course."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter course name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
-                <Select
-                  value={formData.categoryId}
-                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.categoryId} value={category.categoryId}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter course description"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="level">Level *</Label>
-                <Select
-                  value={formData.level}
-                  onValueChange={(value: "beginner" | "intermediate" | "advanced") =>
-                    setFormData({ ...formData, level: value })
-                  }
-                >
-                  <SelectTrigger id="level">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beginner">Beginner</SelectItem>
-                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                    <SelectItem value="advanced">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="creator">Creator *</Label>
-                <Select
-                  value={formData.creatorId}
-                  onValueChange={(value) => setFormData({ ...formData, creatorId: value })}
-                >
-                  <SelectTrigger id="creator">
-                    <SelectValue placeholder="Select creator" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {creators.map((creator) => (
-                      <SelectItem key={creator.userId} value={creator.userId}>
-                        {getCreatorName(creator)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price">Price ($) *</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="duration">Duration (days) *</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  min="0"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={
-                !formData.name.trim() ||
-                !formData.categoryId ||
-                !formData.creatorId ||
-                !formData.price ||
-                !formData.duration
-              }
-            >
-              {editingCourse ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

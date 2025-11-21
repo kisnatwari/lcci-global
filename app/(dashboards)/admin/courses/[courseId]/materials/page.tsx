@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, MoreVertical, Search, FileText, Pencil, Eye, Copy, Trash2, Loader2, AlertCircle, CheckCircle2, Video, FileImage, Link, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Plus, MoreVertical, Search, FileText, Pencil, Eye, Trash2, Loader2, AlertCircle, CheckCircle2, Video, FileImage, Link, ArrowUp, ArrowDown, BookOpen } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type CourseMaterial = {
@@ -39,55 +39,27 @@ type CourseMaterial = {
   url: string;
   orderIndex: number;
   createdAt: string;
-  course?: {
-    courseId: string;
-    name: string;
-  };
 };
 
-// Static data for development
-const initialMaterials: CourseMaterial[] = [
-  {
-    materialId: "mat-1",
-    courseId: "course-1",
-    type: "video",
-    title: "Executive Communication Foundations",
-    url: "https://example.com/video1.mp4",
-    orderIndex: 1,
-    createdAt: "2025-11-19T10:00:00.000Z",
-    course: { courseId: "course-1", name: "Executive Communication Lab" },
-  },
-  {
-    materialId: "mat-2",
-    courseId: "course-1",
-    type: "pdf",
-    title: "Communication Playbook & Templates",
-    url: "https://example.com/communication-playbook.pdf",
-    orderIndex: 2,
-    createdAt: "2025-11-19T10:30:00.000Z",
-    course: { courseId: "course-1", name: "Executive Communication Lab" },
-  },
-  {
-    materialId: "mat-3",
-    courseId: "course-2",
-    type: "link",
-    title: "Leadership Presence Field Guide",
-    url: "https://example.com/leadership-presence",
-    orderIndex: 1,
-    createdAt: "2025-11-18T15:00:00.000Z",
-    course: { courseId: "course-2", name: "Leadership Presence Accelerator" },
-  },
-];
+type Course = {
+  courseId: string;
+  name: string;
+  description?: string;
+  thumbnailUrl?: string | null;
+  category?: {
+    categoryId: string;
+    name: string;
+  };
+  level?: "beginner" | "intermediate" | "advanced";
+};
 
-const initialCourses = [
-  { courseId: "course-1", name: "Executive Communication Lab" },
-  { courseId: "course-2", name: "Leadership Presence Accelerator" },
-  { courseId: "course-3", name: "Customer Experience Excellence" },
-];
+export default function CourseMaterialsPage() {
+  const router = useRouter();
+  const params = useParams();
+  const courseId = params.courseId as string;
 
-export default function MaterialsPage() {
-  const [materials, setMaterials] = useState<CourseMaterial[]>(initialMaterials);
-  const [courses, setCourses] = useState<any[]>(initialCourses);
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
+  const [course, setCourse] = useState<Course | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -97,7 +69,6 @@ export default function MaterialsPage() {
     title: "",
     url: "",
     type: "video" as "video" | "pdf" | "doc" | "link",
-    courseId: "",
     orderIndex: "",
   });
 
@@ -107,22 +78,48 @@ export default function MaterialsPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   // Fetch data on mount
   useEffect(() => {
+    fetchCourse();
     fetchMaterials();
-    fetchCourses();
-  }, []);
+  }, [courseId]);
+
+  // Fetch course details
+  const fetchCourse = async () => {
+    try {
+      const response = await apiClient.get(ENDPOINTS.courses.getById(courseId));
+      const data = response.data || response;
+      setCourse({
+        courseId: data.courseId,
+        name: data.name,
+        description: data.description,
+        thumbnailUrl: data.thumbnailUrl,
+        category: data.category,
+        level: data.level,
+      });
+    } catch (err: any) {
+      console.error("Failed to fetch course:", err);
+    }
+  };
 
   // Fetch materials from API
   const fetchMaterials = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINTS.materials.get());
-      if (response.success && response.data && Array.isArray(response.data.materials)) {
-        setMaterials(response.data.materials);
-      } else if (response.data && Array.isArray(response.data.materials)) {
-        setMaterials(response.data.materials);
+      const response = await apiClient.get(ENDPOINTS.materials.getByCourse(courseId));
+      // Handle response structure: { success: true, data: [...], ... }
+      if (response.success && Array.isArray(response.data)) {
+        setMaterials(response.data);
+      } else if (response.data && Array.isArray(response.data)) {
+        setMaterials(response.data);
       } else if (Array.isArray(response)) {
         setMaterials(response);
       } else {
@@ -137,31 +134,11 @@ export default function MaterialsPage() {
     }
   };
 
-  // Fetch courses from API
-  const fetchCourses = async () => {
-    try {
-      const response = await apiClient.get(ENDPOINTS.courses.get());
-      if (response.success && response.data && Array.isArray(response.data.courses)) {
-        setCourses(response.data.courses);
-      } else if (response.data && Array.isArray(response.data.courses)) {
-        setCourses(response.data.courses);
-      } else if (Array.isArray(response)) {
-        setCourses(response);
-      } else {
-        setCourses([]);
-      }
-    } catch (err: any) {
-      console.error("Failed to fetch courses:", err);
-      setCourses([]);
-    }
-  };
-
   // Filter materials based on search
   const filteredMaterials = materials.filter(
     (material) =>
       material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      material.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (material.course && material.course.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      material.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle create/edit dialog open
@@ -174,7 +151,6 @@ export default function MaterialsPage() {
         title: material.title || "",
         url: material.url || "",
         type: material.type,
-        courseId: material.courseId,
         orderIndex: material.orderIndex.toString(),
       });
     } else {
@@ -183,7 +159,6 @@ export default function MaterialsPage() {
         title: "",
         url: "",
         type: "video",
-        courseId: "",
         orderIndex: "",
       });
     }
@@ -202,11 +177,6 @@ export default function MaterialsPage() {
       return;
     }
 
-    if (!formData.courseId) {
-      setError("Course is required");
-      return;
-    }
-
     setIsSaving(true);
     setError(null);
     setSuccessMessage(null);
@@ -221,11 +191,11 @@ export default function MaterialsPage() {
 
       if (editingMaterial) {
         // Update existing material
-        await apiClient.put(ENDPOINTS.materials.update(formData.courseId, editingMaterial.materialId), payload);
+        await apiClient.put(ENDPOINTS.materials.update(courseId, editingMaterial.materialId), payload);
         setSuccessMessage("Material updated successfully!");
       } else {
         // Create new material
-        await apiClient.post(ENDPOINTS.materials.post(formData.courseId), payload);
+        await apiClient.post(ENDPOINTS.materials.post(courseId), payload);
         setSuccessMessage("Material created successfully!");
       }
 
@@ -240,7 +210,6 @@ export default function MaterialsPage() {
           title: "",
           url: "",
           type: "video",
-          courseId: "",
           orderIndex: "",
         });
         setSuccessMessage(null);
@@ -262,7 +231,7 @@ export default function MaterialsPage() {
 
     try {
       // Delete material
-      await apiClient.delete(ENDPOINTS.materials.delete(deletingMaterial.courseId, deletingMaterial.materialId));
+      await apiClient.delete(ENDPOINTS.materials.delete(courseId, deletingMaterial.materialId));
       
       // Refresh materials list
       await fetchMaterials();
@@ -284,27 +253,53 @@ export default function MaterialsPage() {
   };
 
   // Handle reorder
-  const handleReorder = (materialId: string, direction: "up" | "down") => {
+  const handleReorder = async (materialId: string, direction: "up" | "down") => {
     const material = materials.find(m => m.materialId === materialId);
     if (!material) return;
 
-    const sameCourse = materials.filter(m => m.courseId === material.courseId);
-    const currentIndex = sameCourse.findIndex(m => m.materialId === materialId);
+    const sortedMaterials = [...materials].sort((a, b) => a.orderIndex - b.orderIndex);
+    const currentIndex = sortedMaterials.findIndex(m => m.materialId === materialId);
     
     if (direction === "up" && currentIndex > 0) {
-      const targetMaterial = sameCourse[currentIndex - 1];
-      setMaterials(materials.map(m => {
-        if (m.materialId === materialId) return { ...m, orderIndex: targetMaterial.orderIndex };
-        if (m.materialId === targetMaterial.materialId) return { ...m, orderIndex: material.orderIndex };
-        return m;
-      }));
-    } else if (direction === "down" && currentIndex < sameCourse.length - 1) {
-      const targetMaterial = sameCourse[currentIndex + 1];
-      setMaterials(materials.map(m => {
-        if (m.materialId === materialId) return { ...m, orderIndex: targetMaterial.orderIndex };
-        if (m.materialId === targetMaterial.materialId) return { ...m, orderIndex: material.orderIndex };
-        return m;
-      }));
+      const targetMaterial = sortedMaterials[currentIndex - 1];
+      const newOrderIndex = targetMaterial.orderIndex;
+      const oldOrderIndex = material.orderIndex;
+
+      try {
+        // Swap order indices
+        await apiClient.put(ENDPOINTS.materials.update(courseId, materialId), {
+          ...material,
+          orderIndex: newOrderIndex,
+        });
+        await apiClient.put(ENDPOINTS.materials.update(courseId, targetMaterial.materialId), {
+          ...targetMaterial,
+          orderIndex: oldOrderIndex,
+        });
+        await fetchMaterials();
+      } catch (err: any) {
+        console.error("Failed to reorder material:", err);
+        setError("Failed to reorder material");
+      }
+    } else if (direction === "down" && currentIndex < sortedMaterials.length - 1) {
+      const targetMaterial = sortedMaterials[currentIndex + 1];
+      const newOrderIndex = targetMaterial.orderIndex;
+      const oldOrderIndex = material.orderIndex;
+
+      try {
+        // Swap order indices
+        await apiClient.put(ENDPOINTS.materials.update(courseId, materialId), {
+          ...material,
+          orderIndex: newOrderIndex,
+        });
+        await apiClient.put(ENDPOINTS.materials.update(courseId, targetMaterial.materialId), {
+          ...targetMaterial,
+          orderIndex: oldOrderIndex,
+        });
+        await fetchMaterials();
+      } catch (err: any) {
+        console.error("Failed to reorder material:", err);
+        setError("Failed to reorder material");
+      }
     }
   };
 
@@ -330,23 +325,35 @@ export default function MaterialsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <Button
+            variant="ghost"
+            onClick={() => router.push(`/admin/courses/${courseId}`)}
+            className="mb-4 text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Course
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Course Materials
+            </h1>
+            <p className="text-sm text-slate-600 mt-1">
+              {course ? `Managing materials for: ${course.name}` : "Loading course..."}
+            </p>
+          </div>
+        </div>
+        <Button onClick={() => handleOpenDialog()} className="gap-2 shrink-0">
+          <Plus className="h-4 w-4" />
+          Add Material
+        </Button>
+      </div>
+
       {/* Main Card with all content */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <CardTitle className="text-2xl">Course Materials</CardTitle>
-              <CardDescription className="mt-1">
-                Manage course materials including videos, PDFs, documents, and links
-              </CardDescription>
-            </div>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Material
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* Feedback Messages */}
           {(successMessage || error) && (
             <div className="space-y-3">
@@ -405,7 +412,6 @@ export default function MaterialsPage() {
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Course</TableHead>
                     <TableHead>Order</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -417,7 +423,7 @@ export default function MaterialsPage() {
                     .map((material) => (
                     <TableRow key={material.materialId}>
                       <TableCell>
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-(--brand-blue)/10 text-(--brand-blue)">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)]">
                           {getMaterialIcon(material.type)}
                         </div>
                       </TableCell>
@@ -433,9 +439,6 @@ export default function MaterialsPage() {
                         <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted capitalize">
                           {material.type}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {material.course?.name || "Unknown Course"}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -522,37 +525,61 @@ export default function MaterialsPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingMaterial ? "Edit Material" : "Create New Material"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingMaterial
-                ? "Update the material information below."
-                : "Fill in the details to create a new material."}
-            </DialogDescription>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-4 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[color:var(--brand-blue)]/10">
+                {editingMaterial ? (
+                  <Pencil className="w-6 h-6 text-[color:var(--brand-blue)]" />
+                ) : (
+                  <Plus className="w-6 h-6 text-[color:var(--brand-blue)]" />
+                )}
+              </div>
+              <div className="flex-1">
+                <DialogTitle className="text-2xl font-bold text-slate-900">
+                  {editingMaterial ? "Edit Material" : "Create New Material"}
+                </DialogTitle>
+                <DialogDescription className="mt-1.5 text-slate-600">
+                  {editingMaterial
+                    ? "Update the material information below."
+                    : "Fill in the details to create a new material for this course."}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          
+          <div className="space-y-6 py-6">
             {/* Error Message */}
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border-2 border-red-200 text-red-700">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Error</p>
+                  <p className="text-sm mt-1">{error}</p>
+                </div>
               </div>
             )}
 
             {/* Success Message */}
             {successMessage && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>{successMessage}</span>
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border-2 border-emerald-200 text-emerald-700">
+                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Success</p>
+                  <p className="text-sm mt-1">{successMessage}</p>
+                </div>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Form Fields */}
+            <div className="space-y-6">
+              {/* Title Field */}
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-slate-500" />
+                  Material Title
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -560,82 +587,137 @@ export default function MaterialsPage() {
                     setFormData({ ...formData, title: e.target.value });
                     setError(null);
                   }}
-                  placeholder="Enter material title"
+                  placeholder="e.g., Introduction to Leadership Communication"
                   disabled={isSaving}
+                  className="h-11 text-base"
                 />
+                <p className="text-xs text-slate-500">Enter a descriptive title for this material</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">Type *</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value: "video" | "pdf" | "doc" | "link") =>
-                    setFormData({ ...formData, type: value })
-                  }
-                  disabled={isSaving}
-                >
-                  <SelectTrigger id="type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="video">Video</SelectItem>
-                    <SelectItem value="pdf">PDF</SelectItem>
-                    <SelectItem value="doc">Document</SelectItem>
-                    <SelectItem value="link">Link</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="url">URL *</Label>
-              <Input
-                id="url"
-                type="url"
-                value={formData.url}
-                onChange={(e) => {
-                  setFormData({ ...formData, url: e.target.value });
-                  setError(null);
-                }}
-                placeholder="Enter material URL"
-                disabled={isSaving}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+              {/* Material Type Selection - Icon Cards */}
               <div className="space-y-2">
-                <Label htmlFor="course">Course *</Label>
-                <Select
-                  value={formData.courseId}
-                  onValueChange={(value) => setFormData({ ...formData, courseId: value })}
-                  disabled={isSaving}
-                >
-                  <SelectTrigger id="course">
-                    <SelectValue placeholder="Select course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course.courseId} value={course.courseId}>
-                        {course.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  Material Type
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { value: "video" as const, label: "Video", icon: Video, color: "blue" },
+                    { value: "pdf" as const, label: "PDF", icon: FileText, color: "red" },
+                    { value: "doc" as const, label: "Document", icon: FileImage, color: "purple" },
+                    { value: "link" as const, label: "Link", icon: Link, color: "green" },
+                  ].map((type) => {
+                    const isSelected = formData.type === type.value;
+                    const Icon = type.icon;
+                    
+                    let borderBgClasses = "";
+                    let iconBgClasses = "";
+                    let textClasses = "";
+                    let checkBgClasses = "";
+                    
+                    if (type.color === "blue") {
+                      borderBgClasses = isSelected ? "border-[color:var(--brand-blue)] bg-[color:var(--brand-blue)]/5" : "border-slate-300 hover:border-[color:var(--brand-blue)]/50";
+                      iconBgClasses = isSelected ? "bg-[color:var(--brand-blue)] text-white" : "bg-blue-100 text-blue-600";
+                      textClasses = isSelected ? "text-[color:var(--brand-blue)]" : "text-slate-900";
+                      checkBgClasses = "bg-[color:var(--brand-blue)]";
+                    } else if (type.color === "red") {
+                      borderBgClasses = isSelected ? "border-red-500 bg-red-50" : "border-slate-300 hover:border-red-300";
+                      iconBgClasses = isSelected ? "bg-red-500 text-white" : "bg-red-100 text-red-600";
+                      textClasses = isSelected ? "text-red-700" : "text-slate-900";
+                      checkBgClasses = "bg-red-500";
+                    } else if (type.color === "purple") {
+                      borderBgClasses = isSelected ? "border-purple-500 bg-purple-50" : "border-slate-300 hover:border-purple-300";
+                      iconBgClasses = isSelected ? "bg-purple-500 text-white" : "bg-purple-100 text-purple-600";
+                      textClasses = isSelected ? "text-purple-700" : "text-slate-900";
+                      checkBgClasses = "bg-purple-500";
+                    } else if (type.color === "green") {
+                      borderBgClasses = isSelected ? "border-green-500 bg-green-50" : "border-slate-300 hover:border-green-300";
+                      iconBgClasses = isSelected ? "bg-green-500 text-white" : "bg-green-100 text-green-600";
+                      textClasses = isSelected ? "text-green-700" : "text-slate-900";
+                      checkBgClasses = "bg-green-500";
+                    }
+                    
+                    return (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => {
+                          if (!isSaving) {
+                            setFormData({ ...formData, type: type.value });
+                            setError(null);
+                          }
+                        }}
+                        disabled={isSaving}
+                        className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${borderBgClasses} ${
+                          isSaving ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:shadow-sm"
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className={`absolute top-2 right-2 w-4 h-4 rounded-full ${checkBgClasses} flex items-center justify-center`}>
+                            <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 transition-colors ${iconBgClasses}`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <span className={`font-semibold text-xs text-center ${textClasses}`}>
+                            {type.label}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Order Index */}
               <div className="space-y-2">
-                <Label htmlFor="orderIndex">Order Index</Label>
+
+                <div className="space-y-2">
+                  <Label htmlFor="orderIndex" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    Order Index
+                  </Label>
+                  <Input
+                    id="orderIndex"
+                    type="number"
+                    min="1"
+                    value={formData.orderIndex}
+                    onChange={(e) => setFormData({ ...formData, orderIndex: e.target.value })}
+                    placeholder="Auto-assigned"
+                    disabled={isSaving}
+                    className="h-11 text-base"
+                  />
+                  <p className="text-xs text-slate-500">Lower numbers appear first</p>
+                </div>
+              </div>
+
+              {/* URL Field */}
+              <div className="space-y-2">
+                <Label htmlFor="url" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <Link className="w-4 h-4 text-slate-500" />
+                  Material URL
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
-                  id="orderIndex"
-                  type="number"
-                  min="1"
-                  value={formData.orderIndex}
-                  onChange={(e) => setFormData({ ...formData, orderIndex: e.target.value })}
-                  placeholder="Auto-assigned if empty"
+                  id="url"
+                  type="url"
+                  value={formData.url}
+                  onChange={(e) => {
+                    setFormData({ ...formData, url: e.target.value });
+                    setError(null);
+                  }}
+                  placeholder="https://example.com/material"
                   disabled={isSaving}
+                  className="h-11 text-base font-mono"
                 />
+                <p className="text-xs text-slate-500">Enter the full URL to access this material</p>
               </div>
             </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="pt-4 border-t border-slate-200 gap-3">
             <Button 
               variant="outline" 
               onClick={() => {
@@ -644,12 +726,14 @@ export default function MaterialsPage() {
                 setSuccessMessage(null);
               }}
               disabled={isSaving}
+              className="h-11 px-6"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={!formData.title.trim() || !formData.url.trim() || !formData.courseId || isSaving}
+              disabled={!formData.title.trim() || !formData.url.trim() || isSaving}
+              className="h-11 px-6 bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white font-semibold"
             >
               {isSaving ? (
                 <>
@@ -657,7 +741,19 @@ export default function MaterialsPage() {
                   {editingMaterial ? "Updating..." : "Creating..."}
                 </>
               ) : (
-                editingMaterial ? "Update" : "Create"
+                <>
+                  {editingMaterial ? (
+                    <>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Update Material
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Material
+                    </>
+                  )}
+                </>
               )}
             </Button>
           </DialogFooter>
@@ -713,3 +809,4 @@ export default function MaterialsPage() {
     </div>
   );
 }
+

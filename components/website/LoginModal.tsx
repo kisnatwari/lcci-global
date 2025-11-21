@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User2, GraduationCap, ShieldCheck, School, Mail, Lock, ArrowRight, Building2, IdCard, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
-import { setAuthSession } from "@/lib/auth";
+import { setAuthSession, decodeToken } from "@/lib/auth";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -84,15 +84,23 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!selectedRole) {
+      setError("Please select a role to continue.");
+      return;
+    }
+
     setIsLoading(true);
+    const roleChoice = selectedRole;
+    const backendRole = getUserType(roleChoice);
     
     try {
       // Collect form data based on role
       const formData: any = { 
-        userType: getUserType(selectedRole) // Backend expects userType only
+        userType: backendRole // Backend expects userType only
       };
       
-      if (selectedRole === "learner") {
+      if (roleChoice === "learner") {
         if (isRegister) {
           // Registration endpoint for learners
           formData.email = email;
@@ -124,14 +132,14 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
           formData.password = password;
           // userType already set above
         }
-      } else if (selectedRole === "cambridge") {
+      } else if (roleChoice === "cambridge") {
         formData.schoolName = schoolName;
         formData.schoolCode = schoolCode;
         // userType already set above
-      } else if (selectedRole === "sqa") {
+      } else if (roleChoice === "sqa") {
         formData.scnNumber = scnNumber;
         // userType already set above
-      } else if (selectedRole === "admin") {
+      } else if (roleChoice === "admin") {
         formData.email = email;
         formData.password = password;
         // userType already set above
@@ -144,17 +152,20 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
       if (response.success && response.data) {
         // Store encrypted session in cookie
         if (response.data.accessToken && response.data.refreshToken) {
-          // Extract userId from token if available
-          let userId: string | undefined;
-          try {
-            const tokenParts = response.data.accessToken.split('.');
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              userId = payload.sub;
-            }
-          } catch (e) {
-            // Ignore if can't extract userId
+          const tokenPayload = decodeToken(response.data.accessToken);
+          const tokenRole = tokenPayload?.role;
+
+          if (!tokenPayload || !tokenRole) {
+            setError("Unable to verify credentials. Please try again.");
+            return;
           }
+
+          if (tokenRole !== backendRole) {
+            setError("Invalid credentials.");
+            return;
+          }
+
+          const userId = tokenPayload.sub;
 
           // Extract user info from login response (name and email)
           const userName = response.data.user?.name || response.data.name || response.data.fullName || undefined;
@@ -163,14 +174,12 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
           setAuthSession(
             response.data.accessToken,
             response.data.refreshToken,
-            selectedRole || 'user',
+            roleChoice,
             userId,
             userName,
             userEmail
           );
         }
-        
-        console.log("Login successful:", response);
         
         // Dispatch login success event for header to update
         window.dispatchEvent(new CustomEvent('loginSuccess'));
@@ -186,7 +195,7 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
         }
         
         // Redirect to appropriate dashboard based on role using SPA navigation
-        const role = selectedRole?.toLowerCase();
+        const role = roleChoice.toLowerCase();
         if (role === "admin") {
           router.push("/admin");
         } else if (role === "learner" || role === "student") {
@@ -203,7 +212,13 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message || "An error occurred. Please try again.");
+      
+      // Handle 401 Unauthorized - invalid credentials
+      if (err.status === 401 || err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+        setError("Invalid credentials.");
+      } else {
+        setError(err.message || "An error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

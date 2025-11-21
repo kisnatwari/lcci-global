@@ -19,9 +19,6 @@ import {
   Settings,
   LogOut,
   Building2,
-  FileText,
-  HelpCircle,
-  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,21 +39,6 @@ const menuItems = [
     title: "Courses",
     icon: BookOpen,
     href: "/admin/courses",
-  },
-  {
-    title: "Course Materials",
-    icon: FileText,
-    href: "/admin/materials",
-  },
-  {
-    title: "Quizzes",
-    icon: HelpCircle,
-    href: "/admin/quizzes",
-  },
-  {
-    title: "Quiz Questions",
-    icon: MessageSquare,
-    href: "/admin/quiz-questions",
   },
   {
     title: "Training Centres",

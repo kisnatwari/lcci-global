@@ -35,28 +35,28 @@ export const ENDPOINTS = {
         delete: (id: string) => `/api/training-centres/${id}`,  // DELETE: Delete a training centre
     },
     materials: {
-        post: () => "/api/materials",             // POST: Create a new material
+        post: (courseId: string) => `/api/courses/${courseId}/materials`, // POST: Create a new material for a course
         get: () => "/api/materials",              // GET: List all materials
         getByCourse: (courseId: string) => `/api/courses/${courseId}/materials`, // GET: Materials by course
-        getById: (id: string) => `/api/materials/${id}`, // GET: Get material by ID
-        update: (id: string) => `/api/materials/${id}`,  // PUT: Update a material
-        delete: (id: string) => `/api/materials/${id}`,  // DELETE: Delete a material
+        getById: (courseId: string, materialId: string) => `/api/courses/${courseId}/materials/${materialId}`, // GET: Get material by ID
+        update: (courseId: string, materialId: string) => `/api/courses/${courseId}/materials/${materialId}`,  // PUT: Update a material
+        delete: (courseId: string, materialId: string) => `/api/courses/${courseId}/materials/${materialId}`,  // DELETE: Delete a material
     },
     quizzes: {
-        post: () => "/api/quizzes",               // POST: Create a new quiz
+        post: (courseId: string) => `/api/courses/${courseId}/quizzes`, // POST: Create a new quiz for a course
         get: () => "/api/quizzes",                // GET: List all quizzes
         getByCourse: (courseId: string) => `/api/courses/${courseId}/quizzes`, // GET: Quizzes by course
-        getById: (id: string) => `/api/quizzes/${id}`, // GET: Get quiz by ID
-        update: (id: string) => `/api/quizzes/${id}`,  // PUT: Update a quiz
-        delete: (id: string) => `/api/quizzes/${id}`,  // DELETE: Delete a quiz
+        getById: (courseId: string, quizId: string) => `/api/courses/${courseId}/quizzes/${quizId}`, // GET: Get quiz by ID
+        update: (courseId: string, quizId: string) => `/api/courses/${courseId}/quizzes/${quizId}`,  // PUT: Update a quiz
+        delete: (courseId: string, quizId: string) => `/api/courses/${courseId}/quizzes/${quizId}`,  // DELETE: Delete a quiz
     },
     quizQuestions: {
-        post: () => "/api/quiz-questions",        // POST: Create a new question
+        post: (quizId: string) => `/api/quizzes/${quizId}/questions`, // POST: Create a new question for a quiz
         get: () => "/api/quiz-questions",         // GET: List all questions
         getByQuiz: (quizId: string) => `/api/quizzes/${quizId}/questions`, // GET: Questions by quiz
-        getById: (id: string) => `/api/quiz-questions/${id}`, // GET: Get question by ID
-        update: (id: string) => `/api/quiz-questions/${id}`,  // PUT: Update a question
-        delete: (id: string) => `/api/quiz-questions/${id}`,  // DELETE: Delete a question
+        getById: (quizId: string, questionId: string) => `/api/quizzes/${quizId}/questions/${questionId}`, // GET: Get question by ID
+        update: (quizId: string, questionId: string) => `/api/quizzes/${quizId}/questions/${questionId}`,  // PUT: Update a question
+        delete: (quizId: string, questionId: string) => `/api/quizzes/${quizId}/questions/${questionId}`,  // DELETE: Delete a question
     },
     upload: {
         file: () => "/api/upload",
