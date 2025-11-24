@@ -16,6 +16,10 @@ export async function getServerProfile(): Promise<UserProfile | null> {
   try {
     const client = await getServerApiClient();
     const response = await client.get(ENDPOINTS.profile.me());
+    // Handle API response format: { success, message, data: { ... } }
+    if (response.success && response.data) {
+      return response.data;
+    }
     return response.data || response;
   } catch (error) {
     console.error('Failed to get server profile:', error);

@@ -302,10 +302,11 @@ export default function CourseViewPage() {
                     </div>
                     <h2 className="text-xl font-bold text-slate-900">Curriculum</h2>
                   </div>
-                  <div className="pl-13">
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                      {course.curriculum}
-                    </p>
+                  <div className="pl-13 prose prose-slate max-w-none">
+                    <div 
+                      className="text-slate-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: course.curriculum }}
+                    />
                   </div>
                 </CardContent>
               </Card>

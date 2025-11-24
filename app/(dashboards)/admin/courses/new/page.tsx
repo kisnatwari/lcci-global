@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, BookOpen, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon, FolderTree, Users, Briefcase, Target, TrendingUp, Award, Star } from "lucide-react";
+import { ArrowLeft, BookOpen, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon, FolderTree, Users, Briefcase, Target, TrendingUp, Award, Star, GraduationCap, School } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Category = {
   categoryId: string;
@@ -33,9 +35,12 @@ export default function NewCoursePage() {
     curriculum: "",
     requirements: "",
     level: "beginner" as "beginner" | "intermediate" | "advanced",
+    type: "Guided" as "Guided" | "SelfPaced",
     price: "",
     duration: "",
     thumbnailUrl: "https://themystickeys.com/wp-content/uploads/2025/07/8-1-559x373.jpg",
+    autoEnrollFor: [] as string[],
+    lcciGQCreditPoints: "",
   });
 
   useEffect(() => {
@@ -85,12 +90,15 @@ export default function NewCoursePage() {
         categoryId: formData.categoryId,
         description: (formData.description && formData.description.trim()) || undefined,
         overview: (formData.overview && formData.overview.trim()) || undefined,
-        curriculum: (formData.curriculum && formData.curriculum.trim()) || undefined,
+        curriculum: formData.curriculum || undefined,
         requirements: (formData.requirements && formData.requirements.trim()) || undefined,
         level: formData.level,
+        type: formData.type,
         price: parseFloat(formData.price) || 0,
         duration: parseInt(formData.duration) || 0,
         thumbnailUrl: formData.thumbnailUrl,
+        autoEnrollFor: formData.autoEnrollFor.length > 0 ? formData.autoEnrollFor : undefined,
+        lcciGQCreditPoints: parseInt(formData.lcciGQCreditPoints) || 0,
       };
 
       const response = await apiClient.post(ENDPOINTS.courses.post(), payload);
@@ -338,6 +346,69 @@ export default function NewCoursePage() {
                     </div>
                   </div>
 
+                  {/* Type Selection - Full Row */}
+                  <div className="space-y-2.5">
+                    <Label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                      Course Type <span className="text-red-500 font-bold">*</span>
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { value: "Guided", label: "Guided", icon: Users, color: "emerald" },
+                        { value: "SelfPaced", label: "Self-Paced", icon: BookOpen, color: "blue" },
+                      ].map((type) => {
+                        const isSelected = formData.type === type.value;
+                        const Icon = type.icon;
+                        
+                        let borderBgClasses = "";
+                        let iconBgClasses = "";
+                        let textClasses = "";
+                        let checkBgClasses = "";
+                        
+                        if (type.color === "emerald") {
+                          borderBgClasses = isSelected ? "border-emerald-500 bg-emerald-50" : "border-slate-300 hover:border-emerald-300";
+                          iconBgClasses = isSelected ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-600";
+                          textClasses = isSelected ? "text-emerald-700" : "text-slate-900";
+                          checkBgClasses = "bg-emerald-500";
+                        } else if (type.color === "blue") {
+                          borderBgClasses = isSelected ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-blue-300";
+                          iconBgClasses = isSelected ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600";
+                          textClasses = isSelected ? "text-blue-700" : "text-slate-900";
+                          checkBgClasses = "bg-blue-500";
+                        }
+                        
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => {
+                              if (!isSaving) {
+                                setFormData({ ...formData, type: type.value as "Guided" | "SelfPaced" });
+                              }
+                            }}
+                            disabled={isSaving}
+                            className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${borderBgClasses} ${
+                              isSaving ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:shadow-sm"
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className={`absolute top-2 right-2 w-4 h-4 rounded-full ${checkBgClasses} flex items-center justify-center`}>
+                                <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3">
+                              <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 transition-colors ${iconBgClasses}`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <span className={`font-semibold text-sm ${textClasses}`}>
+                                {type.label}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="space-y-2.5">
                     <Label htmlFor="description" className="text-sm font-semibold text-slate-800">
                       Description
@@ -370,7 +441,7 @@ export default function NewCoursePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2.5">
                     <Label htmlFor="price" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                       Price (NPR) <span className="text-red-500 font-bold">*</span>
@@ -413,6 +484,90 @@ export default function NewCoursePage() {
                     />
                     <p className="text-xs text-slate-500 font-medium">Total course duration in days</p>
                   </div>
+
+                  <div className="space-y-2.5">
+                    <Label htmlFor="lcciGQCreditPoints" className="text-sm font-semibold text-slate-800">
+                      LCCI GQ Credit Points
+                    </Label>
+                    <Input
+                      id="lcciGQCreditPoints"
+                      type="number"
+                      min="0"
+                      value={formData.lcciGQCreditPoints}
+                      onChange={(e) => {
+                        setFormData({ ...formData, lcciGQCreditPoints: e.target.value });
+                        setError(null);
+                      }}
+                      placeholder="0"
+                      disabled={isSaving}
+                      className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
+                    />
+                    <p className="text-xs text-slate-500 font-medium">Credit points for this course</p>
+                  </div>
+                </div>
+
+                {/* Auto Enroll For */}
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-semibold text-slate-800">
+                    Auto Enroll For
+                  </Label>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="autoEnrollSQA"
+                        checked={formData.autoEnrollFor.includes("SQA")}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData({
+                              ...formData,
+                              autoEnrollFor: [...formData.autoEnrollFor, "SQA"],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              autoEnrollFor: formData.autoEnrollFor.filter((item) => item !== "SQA"),
+                            });
+                          }
+                        }}
+                        disabled={isSaving}
+                      />
+                      <Label
+                        htmlFor="autoEnrollSQA"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                      >
+                        <School className="w-4 h-4 text-slate-600" />
+                        SQA
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="autoEnrollCambridge"
+                        checked={formData.autoEnrollFor.includes("Cambridge")}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData({
+                              ...formData,
+                              autoEnrollFor: [...formData.autoEnrollFor, "Cambridge"],
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              autoEnrollFor: formData.autoEnrollFor.filter((item) => item !== "Cambridge"),
+                            });
+                          }
+                        }}
+                        disabled={isSaving}
+                      />
+                      <Label
+                        htmlFor="autoEnrollCambridge"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                      >
+                        <GraduationCap className="w-4 h-4 text-slate-600" />
+                        Cambridge
+                      </Label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">Automatically enroll students from these programs</p>
                 </div>
               </CardContent>
             </Card>
@@ -451,16 +606,13 @@ export default function NewCoursePage() {
                     <Label htmlFor="curriculum" className="text-sm font-semibold text-slate-800">
                       Curriculum
                     </Label>
-                    <Textarea
-                      id="curriculum"
-                      value={formData.curriculum}
-                      onChange={(e) => setFormData({ ...formData, curriculum: e.target.value })}
-                      placeholder="Outline the course curriculum, modules, and topics covered..."
-                      rows={10}
+                    <RichTextEditor
+                      content={formData.curriculum}
+                      onChange={(content) => setFormData({ ...formData, curriculum: content })}
+                      placeholder="Outline the course curriculum, modules, and topics covered. You can add tables, images, links, and format text..."
                       disabled={isSaving}
-                      className="resize-none border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
                     />
-                    <p className="text-xs text-slate-500 font-medium">Course structure, modules, and topics</p>
+                    <p className="text-xs text-slate-500 font-medium">Course structure, modules, and topics. Supports rich text, tables, images, and links.</p>
                   </div>
 
                   <div className="space-y-2.5">

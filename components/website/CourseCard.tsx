@@ -1,10 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Course } from "@/types/course";
 import { Clock, User2, ArrowRight, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EnrollmentDialog } from "@/components/website/EnrollmentDialog";
+import { getAuthSession, getUserRole } from "@/lib/auth";
+import LoginModal from "@/components/website/LoginModal";
 
 interface CourseCardProps {
   course: Course;
@@ -25,7 +31,12 @@ const getCourseImage = (course: Course) => {
 };
 
 export default function CourseCard({ course }: CourseCardProps) {
-  const imageUrl = getCourseImage(course);
+  const router = useRouter();
+  const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  // Use course.image if available, otherwise fallback to hardcoded map
+  const imageUrl = course.image || getCourseImage(course);
   const hasImage = !!imageUrl;
 
   const typeGradient =
@@ -33,13 +44,47 @@ export default function CourseCard({ course }: CourseCardProps) {
       ? "from-emerald-500 to-teal-500"
       : "from-blue-500 to-cyan-500";
 
+  // Check if user is logged in
+  const isLoggedIn = () => {
+    const session = getAuthSession();
+    const role = getUserRole();
+    // Only allow learners/students to enroll
+    return session && (role === "learner" || role === "Customer" || role === "Training_Site_Student");
+  };
+
+  const handleEnrollClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn()) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    setIsEnrollDialogOpen(true);
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if clicking on the card itself, not on buttons or links
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('[role="button"]')
+    ) {
+      return;
+    }
+    router.push(`/courses/${course.id}`);
+  };
+
   return (
-    <Link href={`/courses/${course.id}`}>
+    <>
       <motion.div
         whileHover={{ y: -8, scale: 1.02 }}
         className="group h-full"
       >
-        <div className="relative h-full bg-white rounded-3xl border-2 border-slate-200 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col">
+        <div
+          onClick={handleCardClick}
+          className="relative h-full bg-white rounded-3xl border-2 border-slate-200 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
+        >
           {/* Image Header */}
           <div className="relative h-48 overflow-hidden">
             {hasImage ? (
@@ -111,7 +156,7 @@ export default function CourseCard({ course }: CourseCardProps) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               {course.price ? (
                 <span className="text-lg font-bold text-slate-900">
                   {course.price}
@@ -121,9 +166,22 @@ export default function CourseCard({ course }: CourseCardProps) {
                   Contact for pricing
                 </span>
               )}
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-blue)] group-hover:gap-3 transition-all">
-                <span>Learn more</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleEnrollClick}
+                  size="sm"
+                  className="bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white"
+                >
+                  Enroll
+                </Button>
+                <Link
+                  href={`/courses/${course.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-blue)] group-hover:gap-3 transition-all"
+                >
+                  <span>Learn more</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
           </div>
@@ -132,6 +190,17 @@ export default function CourseCard({ course }: CourseCardProps) {
           <div className={`absolute inset-0 bg-gradient-to-br ${typeGradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`} />
         </div>
       </motion.div>
-    </Link>
+
+      {/* Enrollment Dialog */}
+      <EnrollmentDialog
+        courseId={course.id}
+        courseTitle={course.title}
+        isOpen={isEnrollDialogOpen}
+        onOpenChange={setIsEnrollDialogOpen}
+      />
+
+      {/* Login Modal */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+    </>
   );
 }

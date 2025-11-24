@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, LogOut, User, Settings } from "lucide-react";
+import { Search, LogOut, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { logout, getAuthSession, getUserRole, getAuthToken, clearAuthSession, refreshAccessToken, shouldRefreshToken } from "@/lib/auth";
 import { isTokenExpired } from "@/lib/auth/token";
@@ -122,13 +122,6 @@ export function AdminHeader() {
         
         {/* Enhanced action buttons */}
         <div className="flex items-center gap-2">
-          {/* Notification button with unique design */}
-          <button className="relative rounded-lg p-2.5 hover:bg-accent/80 transition-all group border border-transparent hover:border-[color:var(--brand-blue)]/20">
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[color:var(--brand-blue)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Bell className="h-5 w-5 relative z-10 group-hover:scale-110 group-hover:rotate-12 transition-transform" />
-            <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background shadow-sm animate-pulse" />
-          </button>
-          
           {/* Enhanced user menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -149,13 +142,12 @@ export function AdminHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => router.push('/admin/profile')}
+              >
                 <User className="mr-2 h-4 w-4" />
                 Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

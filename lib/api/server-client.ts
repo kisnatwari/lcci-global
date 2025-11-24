@@ -38,6 +38,13 @@ export async function getServerApiClient() {
                 cache: 'no-store', // Always fetch fresh data on server
             });
             
+            let responseData: any;
+            try {
+                responseData = await response.json();
+            } catch (e) {
+                // Response is not JSON
+            }
+            
             if (response.status === 401) {
                 throw new Error('Unauthorized');
             }
@@ -45,7 +52,7 @@ export async function getServerApiClient() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json();
+            return responseData;
         },
         
         post: async (endpoint: string, data?: any) => {
@@ -56,6 +63,13 @@ export async function getServerApiClient() {
                 cache: 'no-store',
             });
             
+            let responseData: any;
+            try {
+                responseData = await response.json();
+            } catch (e) {
+                // Response is not JSON
+            }
+            
             if (response.status === 401) {
                 throw new Error('Unauthorized');
             }
@@ -63,7 +77,7 @@ export async function getServerApiClient() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json();
+            return responseData;
         },
         
         put: async (endpoint: string, data?: any) => {
@@ -74,6 +88,13 @@ export async function getServerApiClient() {
                 cache: 'no-store',
             });
             
+            let responseData: any;
+            try {
+                responseData = await response.json();
+            } catch (e) {
+                // Response is not JSON
+            }
+            
             if (response.status === 401) {
                 throw new Error('Unauthorized');
             }
@@ -81,7 +102,7 @@ export async function getServerApiClient() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json();
+            return responseData;
         },
         
         delete: async (endpoint: string) => {
@@ -91,6 +112,15 @@ export async function getServerApiClient() {
                 cache: 'no-store',
             });
             
+            let responseData: any = null;
+            try {
+                if (response.status !== 204) {
+                    responseData = await response.json();
+                }
+            } catch (e) {
+                // Response is not JSON
+            }
+            
             if (response.status === 401) {
                 throw new Error('Unauthorized');
             }
@@ -98,7 +128,7 @@ export async function getServerApiClient() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json();
+            return responseData;
         },
     };
 }

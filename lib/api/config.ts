@@ -61,4 +61,16 @@ export const ENDPOINTS = {
     upload: {
         file: () => "/api/upload",
     },
+    enrollments: {
+        post: () => "/api/enrollments",           // POST: Create a new enrollment
+        get: () => "/api/enrollments",            // GET: List all enrollments (for current user)
+        getById: (id: string) => `/api/enrollments/${id}`, // GET: Get enrollment by ID
+    },
+    promoCodes: {
+        post: () => "/api/promo-codes",           // POST: Create a new promo code
+        get: () => "/api/promo-codes",            // GET: List all promo codes
+        getById: (id: string) => `/api/promo-codes/${id}`, // GET: Get promo code by ID
+        update: (id: string) => `/api/promo-codes/${id}`,  // PUT: Update a promo code
+        delete: (id: string) => `/api/promo-codes/${id}`,  // DELETE: Delete a promo code
+    },
 }

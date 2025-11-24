@@ -87,20 +87,27 @@ export const apiClient = {
         const response = await makeRequest(endpoint, {
             method: 'GET',
             headers: getAuthHeaders(),
-        });
+        }, 0);
+        
+        let responseData: any;
+        try {
+            responseData = await response.json();
+        } catch (e) {
+            // Response is not JSON
+        }
         
         if (!response.ok) {
             const error: any = new Error(`HTTP error! status: ${response.status}`);
             error.status = response.status;
             try {
-                const errorData = await response.json();
+                const errorData = responseData || await response.json();
                 error.message = errorData.message || error.message;
             } catch {
                 // If response is not JSON, use default message
             }
             throw error;
         }
-        return response.json();
+        return responseData;
     },
     
     post: async (endpoint: string, data?: any) => {
@@ -108,21 +115,28 @@ export const apiClient = {
             method: 'POST',
             headers: getAuthHeaders(),
             body: data ? JSON.stringify(data) : undefined,
-        });
+        }, 0);
+        
+        let responseData: any;
+        try {
+            responseData = await response.json();
+        } catch (e) {
+            // Response is not JSON
+        }
         
         if (!response.ok) {
             const error: any = new Error(`HTTP error! status: ${response.status}`);
             error.status = response.status;
             // Try to get error message from response body
             try {
-                const errorData = await response.json();
+                const errorData = responseData || await response.json();
                 error.message = errorData.message || error.message;
             } catch {
                 // If response is not JSON, use default message
             }
             throw error;
         }
-        return response.json();
+        return responseData;
     },
     
     put: async (endpoint: string, data?: any) => {
@@ -130,33 +144,49 @@ export const apiClient = {
             method: 'PUT',
             headers: getAuthHeaders(),
             body: data ? JSON.stringify(data) : undefined,
-        });
+        }, 0);
+        
+        let responseData: any;
+        try {
+            responseData = await response.json();
+        } catch (e) {
+            // Response is not JSON
+        }
         
         if (!response.ok) {
             const error: any = new Error(`HTTP error! status: ${response.status}`);
             error.status = response.status;
             try {
-                const errorData = await response.json();
+                const errorData = responseData || await response.json();
                 error.message = errorData.message || error.message;
             } catch {
                 // If response is not JSON, use default message
             }
             throw error;
         }
-        return response.json();
+        return responseData;
     },
     
     delete: async (endpoint: string) => {
         const response = await makeRequest(endpoint, {
             method: 'DELETE',
             headers: getAuthHeaders(),
-        });
+        }, 0);
+        
+        let responseData: any = null;
+        try {
+            if (response.status !== 204) {
+                responseData = await response.json();
+            }
+        } catch (e) {
+            // Response is not JSON
+        }
         
         if (!response.ok) {
             const error: any = new Error(`HTTP error! status: ${response.status}`);
             error.status = response.status;
             try {
-                const errorData = await response.json();
+                const errorData = responseData || await response.json();
                 error.message = errorData.message || error.message;
             } catch {
                 // If response is not JSON, use default message
@@ -166,7 +196,7 @@ export const apiClient = {
         if (response.status === 204) {
             return null;
         }
-        return response.json();
+        return responseData;
     },
     
     upload: async (endpoint: string, file: File) => {

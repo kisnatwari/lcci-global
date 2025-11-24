@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/website/Header";
 import Footer from "@/components/website/Footer";
@@ -16,14 +16,31 @@ import TestimonialsSection from "../_homepage/TestimonialsSection";
 import FaqSection from "../_homepage/FaqSection";
 import CTASection from "../_homepage/CTASection";
 import { getFeaturedCourses } from "@/lib/courses";
-import { useState } from "react";
+import { Course } from "@/types/course";
 
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const featuredCourses = getFeaturedCourses();
+  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const redirectPath = searchParams.get('redirect');
+
+  // Fetch featured courses on mount
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const courses = await getFeaturedCourses();
+        setFeaturedCourses(courses);
+      } catch (error) {
+        console.error("Failed to load featured courses:", error);
+        setFeaturedCourses([]);
+      } finally {
+        setIsLoadingCourses(false);
+      }
+    };
+    loadCourses();
+  }, []);
 
   useEffect(() => {
     // Check if login query parameter is present

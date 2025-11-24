@@ -95,20 +95,23 @@ interface DesktopNavProps {
 }
 
 interface ProfileData {
-  profileId: string;
   userId: string;
-  firstName: string | null;
-  lastName: string | null;
-  phone: string | null;
-  address: string | null;
-  avatarUrl: string | null;
-  bio: string | null;
-  user: {
-    email: string;
-    username: string;
-    userType: string;
-    status: string;
-  };
+  email: string;
+  username: string;
+  userType: string;
+  status: string;
+  trainingCentreId: string | null;
+  lcciGQCreditPoints: number;
+  createdAt: string;
+  updatedAt: string;
+  profile: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    address: string;
+    avatarUrl: string;
+    bio: string;
+  } | null;
 }
 
 export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProps) {
@@ -119,8 +122,10 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const {data} = await apiClient.get(ENDPOINTS.profile.me());
-        setProfile(data);
+        const response = await apiClient.get(ENDPOINTS.profile.me());
+        // Handle API response format: { success, message, data: { ... } }
+        const profileData = response.success && response.data ? response.data : response.data || response;
+        setProfile(profileData);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
       } finally {
@@ -134,7 +139,11 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
   // Get user initials from username or email
   const getUserInitials = () => {
     if (!profile) return "U";
-    const name = profile.user.username || profile.user.email;
+    // Try profile name first, then username, then email
+    if (profile.profile?.firstName && profile.profile?.lastName) {
+      return `${profile.profile.firstName[0]}${profile.profile.lastName[0]}`.toUpperCase();
+    }
+    const name = profile.username || profile.email;
     if (!name) return "U";
     const parts = name.split(" ");
     if (parts.length >= 2) {
@@ -146,10 +155,10 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
   // Get display name
   const getDisplayName = () => {
     if (!profile) return "User";
-    if (profile.firstName && profile.lastName) {
-      return `${profile.firstName} ${profile.lastName}`;
+    if (profile.profile?.firstName && profile.profile?.lastName) {
+      return `${profile.profile.firstName} ${profile.profile.lastName}`;
     }
-    return profile.user.username || profile.user.email || "User";
+    return profile.username || profile.email || "User";
   };
 
   return (
@@ -216,7 +225,7 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
               <DropdownMenuTrigger asChild>
                 <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-slate-100">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={profile?.avatarUrl || undefined} />
+                    <AvatarImage src={profile?.profile?.avatarUrl || undefined} />
                     <AvatarFallback className="bg-slate-900 text-white text-sm">
                       {getUserInitials()}
                     </AvatarFallback>
@@ -226,7 +235,7 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
                       {isLoading ? "Loading..." : getDisplayName()}
                     </p>
                     <p className="text-xs text-slate-500 truncate">
-                      {isLoading ? "" : profile?.user.email}
+                      {isLoading ? "" : profile?.email}
                     </p>
                   </div>
                 </button>
@@ -277,8 +286,10 @@ export function StudentMobileNavigation() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const {data} = await apiClient.get(ENDPOINTS.profile.me());
-        setProfile(data);
+        const response = await apiClient.get(ENDPOINTS.profile.me());
+        // Handle API response format: { success, message, data: { ... } }
+        const profileData = response.success && response.data ? response.data : response.data || response;
+        setProfile(profileData);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
       } finally {
@@ -292,7 +303,11 @@ export function StudentMobileNavigation() {
   // Get user initials from username or email
   const getUserInitials = () => {
     if (!profile) return "U";
-    const name = profile.user.username || profile.user.email;
+    // Try profile name first, then username, then email
+    if (profile.profile?.firstName && profile.profile?.lastName) {
+      return `${profile.profile.firstName[0]}${profile.profile.lastName[0]}`.toUpperCase();
+    }
+    const name = profile.username || profile.email;
     if (!name) return "U";
     const parts = name.split(" ");
     if (parts.length >= 2) {
@@ -304,10 +319,10 @@ export function StudentMobileNavigation() {
   // Get display name
   const getDisplayName = () => {
     if (!profile) return "User";
-    if (profile.firstName && profile.lastName) {
-      return `${profile.firstName} ${profile.lastName}`;
+    if (profile.profile?.firstName && profile.profile?.lastName) {
+      return `${profile.profile.firstName} ${profile.profile.lastName}`;
     }
-    return profile.user.username || profile.user.email || "User";
+    return profile.username || profile.email || "User";
   };
 
   return (
@@ -332,7 +347,7 @@ export function StudentMobileNavigation() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-10 w-10 rounded-full border border-slate-200">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={profile?.avatarUrl || undefined} />
+                  <AvatarImage src={profile?.profile?.avatarUrl || undefined} />
                   <AvatarFallback className="bg-slate-900 text-white text-sm">
                     {getUserInitials()}
                   </AvatarFallback>
@@ -344,7 +359,7 @@ export function StudentMobileNavigation() {
                 {isLoading ? "Loading..." : getDisplayName()}
               </DropdownMenuLabel>
               {profile && (
-                <p className="px-2 py-1.5 text-xs text-slate-500">{profile.user.email}</p>
+                <p className="px-2 py-1.5 text-xs text-slate-500">{profile.email}</p>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>

@@ -16,13 +16,14 @@ import {
   FolderTree,
   Users,
   BookOpen,
-  Settings,
   LogOut,
   Building2,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { logout } from "@/lib/auth";
 
 const menuItems = [
   {
@@ -46,19 +47,20 @@ const menuItems = [
     href: "/admin/training-centres",
   },
   {
+    title: "Promo Codes",
+    icon: Tag,
+    href: "/admin/promo-codes",
+  },
+  {
     title: "Users",
     icon: Users,
     href: "/admin/users",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    href: "/admin/settings",
   },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     // Test API call with authentication
@@ -70,6 +72,11 @@ export function AdminSidebar() {
         console.error("Error fetching profile:", error);
       });
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/?login=true");
+  };
 
   return (
     <Sidebar className="border-r border-border/50 bg-gradient-to-b from-background via-background to-muted/30 relative overflow-hidden">
@@ -168,12 +175,13 @@ export function AdminSidebar() {
         <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--brand-blue)]/5 via-transparent to-transparent" />
         <SidebarMenu className="p-4">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="relative group overflow-hidden text-destructive hover:text-destructive">
-              <Link href="/" className="relative z-10">
-                <div className="absolute inset-0 bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <LogOut className="relative z-10" />
-                <span className="relative z-10 font-medium">Logout</span>
-              </Link>
+            <SidebarMenuButton 
+              onClick={handleLogout}
+              className="relative group overflow-hidden text-destructive hover:text-destructive w-full"
+            >
+              <div className="absolute inset-0 bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <LogOut className="relative z-10" />
+              <span className="relative z-10 font-medium">Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

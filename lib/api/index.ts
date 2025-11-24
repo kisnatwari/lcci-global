@@ -20,6 +20,28 @@ export {
   type UserProfile,
 } from './profile';
 
+// Enrollments API (client-side only)
+export {
+  enrollInCourse,
+  getUserEnrollments,
+  getEnrollmentById,
+  type Enrollment,
+  type EnrollmentPayload,
+} from './enrollments';
+
+// Promo Codes API (client-side only)
+export {
+  getPromoCodes,
+  getPromoCodeById,
+  createPromoCode,
+  updatePromoCode,
+  deletePromoCode,
+  type PromoCode,
+  type DiscountType,
+  type CreatePromoCodePayload,
+  type UpdatePromoCodePayload,
+} from './promo-codes';
+
 // Server-side functions - import directly from their files:
 // - getServerApiClient: import from '@/lib/api/server-client'
 // - getServerProfile: import from '@/lib/api/profile-server'
