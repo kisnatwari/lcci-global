@@ -4,6 +4,7 @@ export const ENDPOINTS = {
     auth: {
         login: () => "/api/auth/login",
         register: () => "/api/auth/register",
+        registerRequestOtp: () => "/api/auth/register/request-otp",
         refresh: () => "/api/auth/refresh-token",
         logout: () => "/api/auth/logout", // May or may not exist
     },
@@ -63,8 +64,11 @@ export const ENDPOINTS = {
     },
     enrollments: {
         post: () => "/api/enrollments",           // POST: Create a new enrollment
-        get: () => "/api/enrollments",            // GET: List all enrollments (for current user)
+        get: () => "/api/enrollments",            // GET: List all enrollments (Admin only)
+        getMe: () => "/api/enrollments/me",       // GET: List my enrollments (authenticated user)
         getById: (id: string) => `/api/enrollments/${id}`, // GET: Get enrollment by ID
+        markMaterialComplete: (enrollmentId: string) => `/api/enrollments/${enrollmentId}/completions/materials`, // POST: Mark material as complete
+        markQuizComplete: (enrollmentId: string) => `/api/enrollments/${enrollmentId}/completions/quizzes`, // POST: Mark quiz as complete
     },
     promoCodes: {
         post: () => "/api/promo-codes",           // POST: Create a new promo code
@@ -72,5 +76,9 @@ export const ENDPOINTS = {
         getById: (id: string) => `/api/promo-codes/${id}`, // GET: Get promo code by ID
         update: (id: string) => `/api/promo-codes/${id}`,  // PUT: Update a promo code
         delete: (id: string) => `/api/promo-codes/${id}`,  // DELETE: Delete a promo code
+    },
+    certificates: {
+        getById: (id: string) => `/api/certificates/${id}`, // GET: Get certificate by ID
+        getByUser: (userId: string) => `/api/certificates/user/${userId}`, // GET: List certificates for a user
     },
 }

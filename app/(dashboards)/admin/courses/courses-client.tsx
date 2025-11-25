@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,12 +42,12 @@ type Course = {
   thumbnailUrl?: string | null;
   createdAt: string;
   updatedAt: string;
-  category: {
+  category?: {
     categoryId: string;
     name: string;
     description: string;
   };
-  creator: {
+  creator?: {
     userId: string;
     profile: {
       firstName: string;
@@ -239,7 +239,7 @@ export function CoursesPageClient({ initialCourses, error: initialError }: Cours
                         <TableCell className="px-3">
                           {course.thumbnailUrl ? (
                             <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200">
-                              <Image
+                              <SafeImage
                                 src={course.thumbnailUrl}
                                 alt={course.name}
                                 fill
@@ -258,7 +258,7 @@ export function CoursesPageClient({ initialCourses, error: initialError }: Cours
                           <p className="text-xs text-muted-foreground line-clamp-2 max-w-xl">{course.description}</p>
                           <div className="flex flex-wrap items-center gap-2 text-[0.7rem]">
                             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800">
-                              {course.category.name}
+                              {course?.category?.name || "—"}
                             </span>
                             <span className="px-2 py-0.5 rounded-full bg-muted capitalize text-[0.65rem] font-semibold">
                               {course.level}

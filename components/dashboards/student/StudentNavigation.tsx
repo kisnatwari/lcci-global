@@ -3,10 +3,7 @@
 import {
   LayoutDashboard,
   BookOpen,
-  Trophy,
-  Target,
   Award,
-  BarChart3,
   User,
   Settings,
   Menu,
@@ -54,28 +51,10 @@ const navigationItems = [
     href: "/student/enrollments",
   },
   {
-    id: "achievements",
-    label: "Achievements",
-    icon: Trophy,
-    href: "/student/achievements",
-  },
-  {
-    id: "progress",
-    label: "Progress",
-    icon: Target,
-    href: "/student/progress",
-  },
-  {
     id: "certificates",
     label: "Certificates",
     icon: Award,
     href: "/student/certificates",
-  },
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: BarChart3,
-    href: "/student/analytics",
   },
 ];
 

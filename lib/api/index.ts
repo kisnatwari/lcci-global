@@ -24,9 +24,14 @@ export {
 export {
   enrollInCourse,
   getUserEnrollments,
+  getAllEnrollments,
   getEnrollmentById,
+  markMaterialComplete,
+  markQuizComplete,
   type Enrollment,
   type EnrollmentPayload,
+  type MaterialCompletionPayload,
+  type QuizCompletionPayload,
 } from './enrollments';
 
 // Promo Codes API (client-side only)
@@ -41,6 +46,48 @@ export {
   type CreatePromoCodePayload,
   type UpdatePromoCodePayload,
 } from './promo-codes';
+
+// Auth API (client-side only)
+export {
+  requestRegistrationOtp,
+  register,
+  type RequestOtpPayload,
+  type RegisterPayload,
+} from './auth';
+
+// Training Centres API (client-side only)
+export {
+  getTrainingCentres,
+  type TrainingCentre,
+  type TrainingCentreCategory,
+} from './training-centres';
+
+// Materials API (client-side only)
+export {
+  getCourseMaterials,
+  getMaterialById,
+  createMaterial,
+  updateMaterial,
+  deleteMaterial,
+  type CourseMaterial,
+  type CreateMaterialPayload,
+  type UpdateMaterialPayload,
+} from './materials';
+
+// Quizzes API (client-side only)
+export {
+  getCourseQuizzes,
+  getQuizById,
+  type Quiz,
+  type QuizQuestion,
+} from './quizzes';
+
+// Certificates API (client-side only)
+export {
+  getCertificateById,
+  getUserCertificates,
+  type Certificate,
+} from './certificates';
 
 // Server-side functions - import directly from their files:
 // - getServerApiClient: import from '@/lib/api/server-client'

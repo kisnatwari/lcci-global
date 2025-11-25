@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
-import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
+import { Mail, Phone, MapPin, ArrowRight, ShieldCheck } from "lucide-react";
+import AdminLoginModal from "./AdminLoginModal";
 
 export default function Footer() {
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+
   return (
-    <footer className="relative bg-slate-900 text-white">
+    <>
+      <footer className="relative bg-slate-900 text-white">
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Main Footer Content */}
@@ -146,17 +151,27 @@ export default function Footer() {
             <p className="text-blue-200 text-sm">
               © {new Date().getFullYear()} LCCI Global Qualifications PVT.LTD. All rights reserved.
             </p>
-            <div className="flex gap-6 text-sm">
+            <div className="flex gap-6 text-sm items-center">
               <a href="#" className="text-blue-200 hover:text-white transition-colors">
                 Privacy Policy
               </a>
               <a href="#" className="text-blue-200 hover:text-white transition-colors">
                 Terms of Service
               </a>
+              <button
+                onClick={() => setIsAdminLoginOpen(true)}
+                className="inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Admin Login
+              </button>
           </div>
         </div>
         </div>
       </div>
     </footer>
+    
+    <AdminLoginModal isOpen={isAdminLoginOpen} onClose={() => setIsAdminLoginOpen(false)} />
+    </>
   );
 }

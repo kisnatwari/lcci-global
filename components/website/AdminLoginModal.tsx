@@ -1,24 +1,22 @@
 "use client";
 
 import { useState, useEffect, FormEvent, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Lock, ArrowRight, Loader2, AlertCircle, CheckCircle, ShieldCheck } from "lucide-react";
+import { X, Mail, Lock, ArrowRight, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import { setAuthSession, decodeToken } from "@/lib/auth";
 
-interface LoginModalProps {
+interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenRegister?: () => void; // Callback to open registration modal
 }
 
-function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps) {
+function AdminLoginModalContent({ isOpen, onClose }: AdminLoginModalProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Form fields
   const [email, setEmail] = useState("");
@@ -32,7 +30,6 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
       // Reset form when modal closes
       setIsLoading(false);
       setError(null);
-      setSuccessMessage(null);
       setEmail("");
       setPassword("");
     }
@@ -41,20 +38,6 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
       document.body.style.overflow = "";
     };
   }, [isOpen]);
-
-  // Map backend role to frontend role for redirect
-  const getFrontendRole = (backendRole: string): string => {
-    // All learners (Customer, Training_Site_Student) are treated as "learner"
-    if (backendRole === "Customer" || backendRole === "Training_Site_Student") {
-      return "learner";
-    }
-    // Admin stays as admin
-    if (backendRole === "Admin") {
-      return "admin";
-    }
-    // Default to learner
-    return "learner";
-  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -68,7 +51,7 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
     setIsLoading(true);
     
     try {
-      // Login with email and password only (no userType)
+      // Login with email and password
       const formData = {
         email: email.trim(),
         password: password,
@@ -90,24 +73,23 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
             return;
           }
 
-          // Check if user is admin - admins should use admin login page
-          if (tokenRole === "Admin") {
-            setError("Please use the admin login page to sign in.");
+          // Check if user is admin
+          if (tokenRole !== "Admin") {
+            setError("Access denied. Admin credentials required.");
             setIsLoading(false);
             return;
           }
 
           const userId = tokenPayload.sub;
-          const frontendRole = getFrontendRole(tokenRole);
 
-          // Extract user info from login response (name and email)
+          // Extract user info from login response
           const userName = response.data.user?.name || response.data.name || response.data.fullName || undefined;
           const userEmail = response.data.user?.email || response.data.email || email;
 
           setAuthSession(
             response.data.accessToken,
             response.data.refreshToken,
-            frontendRole,
+            "admin",
             userId,
             userName,
             userEmail
@@ -127,8 +109,8 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
           return;
         }
         
-        // All learners redirect to student dashboard
-        router.push("/student");
+        // Redirect to admin dashboard
+        router.push("/admin");
       } else {
         setError(response.message || "Login failed. Please try again.");
       }
@@ -145,7 +127,6 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
       setIsLoading(false);
     }
   };
-
 
   return (
     <AnimatePresence>
@@ -182,17 +163,17 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
             </button>
 
             <div className="p-8 lg:p-12">
-              <div className="flex flex-col max-w-md mx-auto">
+              <div className="flex flex-col">
                 <div className="mb-8">
                   <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
                     <ShieldCheck className="w-4 h-4" />
-                    Secure Login
+                    Admin Login
                   </div>
                   <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
-                    Welcome Back
+                    Admin Portal
                   </h2>
                   <p className="text-slate-600">
-                    Sign in to your account
+                    Sign in to access the admin dashboard
                   </p>
                 </div>
 
@@ -209,7 +190,7 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
-                        placeholder="your.email@example.com"
+                        placeholder="admin@example.com"
                         required
                       />
                     </div>
@@ -242,14 +223,6 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
                     </a>
                   </div>
 
-                  {/* Success Message */}
-                  {successMessage && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
-                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                      <span>{successMessage}</span>
-                    </div>
-                  )}
-
                   {/* Error Message */}
                   {error && (
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -276,21 +249,6 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
                     )}
                   </button>
                 </form>
-
-                <div className="mt-6 text-center text-sm text-slate-600">
-                  Don't have an account?{" "}
-                  <button
-                    onClick={() => {
-                      onClose();
-                      if (onOpenRegister) {
-                        onOpenRegister();
-                      }
-                    }}
-                    className="text-[color:var(--brand-blue)] font-semibold hover:underline"
-                  >
-                    Register now
-                  </button>
-                </div>
               </div>
             </div>
           </motion.div>
@@ -300,10 +258,11 @@ function LoginModalContent({ isOpen, onClose, onOpenRegister }: LoginModalProps)
   );
 }
 
-export default function LoginModal({ isOpen, onClose, onOpenRegister }: LoginModalProps) {
+export default function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProps) {
   return (
     <Suspense fallback={null}>
-      <LoginModalContent isOpen={isOpen} onClose={onClose} onOpenRegister={onOpenRegister} />
+      <AdminLoginModalContent isOpen={isOpen} onClose={onClose} />
     </Suspense>
   );
 }
+

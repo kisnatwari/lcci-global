@@ -1,0 +1,544 @@
+"use client";
+
+import { useState, useEffect, FormEvent, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, User2, Mail, Lock, ArrowRight, IdCard, Loader2, AlertCircle, CheckCircle, School, GraduationCap, ShieldCheck } from "lucide-react";
+import { requestRegistrationOtp, register } from "@/lib/api";
+import { setAuthSession, decodeToken } from "@/lib/auth";
+
+interface RegistrationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  preSelectedCentreType?: "SQA" | "Cambridge" | null; // Pre-select training centre type
+}
+
+function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = null }: RegistrationModalProps) {
+  const router = useRouter();
+  const [registrationStep, setRegistrationStep] = useState<1 | 2>(1); // Step 1: Request OTP (for regular) or Direct registration (for training centre), Step 2: Complete registration with OTP
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Form fields
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [otp, setOtp] = useState("");
+  const [centreUniqueIdentifier, setCentreUniqueIdentifier] = useState<string | null>(preSelectedCentreType || null);
+  const [trainingCentreId, setTrainingCentreId] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      // Reset form when modal closes
+      setRegistrationStep(1);
+      setIsLoading(false);
+      setError(null);
+      setSuccessMessage(null);
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      setOtp("");
+      setCentreUniqueIdentifier(preSelectedCentreType || null);
+      setTrainingCentreId("");
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, preSelectedCentreType]);
+
+  // Update centreUniqueIdentifier when preSelectedCentreType changes
+  useEffect(() => {
+    if (isOpen) {
+      setCentreUniqueIdentifier(preSelectedCentreType || null);
+    }
+  }, [isOpen, preSelectedCentreType]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Check if training centre is selected - if yes, skip OTP
+    const isTrainingCentreStudent = centreUniqueIdentifier && (centreUniqueIdentifier === "SQA" || centreUniqueIdentifier === "Cambridge");
+    
+    if (registrationStep === 1) {
+      // Step 1: Request OTP (only for regular students) OR Direct registration (for training centre students)
+      if (isTrainingCentreStudent) {
+        // Training centre students skip OTP - go directly to registration
+        // Validate required fields
+        if (!email || !password || !fullName) {
+          setError("Please fill in all required fields.");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Training centre ID must be provided
+        if (!trainingCentreId.trim()) {
+          setError("Please enter your training centre ID.");
+          setIsLoading(false);
+          return;
+        }
+        
+        setIsLoading(true);
+        
+        // Register directly without OTP
+        // For training centre students, centreUniqueIdentifier should contain the training centre ID value
+        const registerPayload = {
+          email,
+          password,
+          userType: "Training_Site_Student",
+          username: fullName,
+          centreUniqueIdentifier: trainingCentreId.trim(), // Send the training centre ID as centreUniqueIdentifier (not trainingCentreId)
+          otp: "", // Empty OTP for training centre students
+        };
+        
+        try {
+          const registerResponse = await register(registerPayload);
+          
+          // Handle successful registration
+          if (registerResponse.success) {
+            // Show success message and close modal
+            setSuccessMessage("Registration successful! Please login now.");
+            setIsLoading(false);
+            // Clear sensitive fields
+            setPassword("");
+            setOtp("");
+            setCentreUniqueIdentifier(null);
+            setTrainingCentreId("");
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+              onClose();
+            }, 2000);
+            return;
+          } else {
+            setError(registerResponse.message || "Registration failed. Please try again.");
+            setIsLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          setError(err.message || "Registration failed. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // Regular students - Request OTP
+        if (!email) {
+          setError("Please enter your email address.");
+          setIsLoading(false);
+          return;
+        }
+        
+        setIsLoading(true);
+        
+        try {
+          const otpResponse = await requestRegistrationOtp({ email });
+          
+          if (otpResponse.success) {
+            setSuccessMessage("OTP has been sent to your email. Please check your inbox.");
+            setRegistrationStep(2);
+            setIsLoading(false);
+            return;
+          } else {
+            setError(otpResponse.message || "Failed to send OTP. Please try again.");
+            setIsLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          setError(err.message || "Failed to send OTP. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+      }
+    } else {
+      // Step 2: Complete registration with OTP (only for regular students)
+      if (!password || !fullName || !otp) {
+        setError("Please fill in all required fields.");
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      // Regular students don't need training centre
+      const registerPayload = {
+        email,
+        password,
+        userType: "Customer",
+        username: fullName,
+        centreUniqueIdentifier: null,
+        trainingCentreId: null,
+        otp,
+      };
+      
+      try {
+        const registerResponse = await register(registerPayload);
+        
+        // Handle successful registration
+        if (registerResponse.success) {
+          // Show success message and close modal
+          setSuccessMessage("Registration successful! Please login now.");
+          setIsLoading(false);
+          // Clear sensitive fields
+          setPassword("");
+          setOtp("");
+          setCentreUniqueIdentifier(null);
+          setTrainingCentreId("");
+          
+          // Close modal after 2 seconds
+          setTimeout(() => {
+            onClose();
+          }, 2000);
+          return;
+        } else {
+          setError(registerResponse.message || "Registration failed. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+      } catch (err: any) {
+        setError(err.message || "Registration failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+    }
+  };
+
+  const isTrainingCentreStudent = centreUniqueIdentifier && (centreUniqueIdentifier === "SQA" || centreUniqueIdentifier === "Cambridge");
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
+            onClick={onClose}
+          />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          >
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5 text-slate-700" />
+            </button>
+
+            <div className="p-8 lg:p-12 overflow-y-auto max-h-[90vh]">
+              <div className="flex flex-col">
+                <div className="mb-8">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
+                    <ShieldCheck className="w-4 h-4" />
+                    Registration
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+                    Create Account
+                  </h2>
+                  <p className="text-slate-600">
+                    {centreUniqueIdentifier 
+                      ? `Register as ${centreUniqueIdentifier} Student`
+                      : "Register as a learner"}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Show training centre info if pre-selected, otherwise hide it completely for regular users */}
+                  {centreUniqueIdentifier && (
+                    <div className="p-4 rounded-xl border-2 border-[color:var(--brand-blue)] bg-[color:var(--brand-blue)]/10">
+                      <div className="flex items-center gap-3 mb-2">
+                        {centreUniqueIdentifier === "SQA" ? (
+                          <School className="w-6 h-6 text-[color:var(--brand-blue)]" />
+                        ) : (
+                          <GraduationCap className="w-6 h-6 text-[color:var(--brand-blue)]" />
+                        )}
+                        <span className="text-sm font-bold text-[color:var(--brand-blue)]">
+                          {centreUniqueIdentifier} Student Registration
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Training centre students can register directly without OTP verification.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Conditional form based on training centre selection */}
+                  {isTrainingCentreStudent ? (
+                    // Training Centre Registration - Direct (No OTP)
+                    <>
+                      <div>
+                        <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
+                          Full Name
+                        </label>
+                        <div className="relative">
+                          <User2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="text"
+                            id="fullName"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="John Doe"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-bold text-slate-900 mb-2">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="your.email@example.com"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="password" className="block text-sm font-bold text-slate-900 mb-2">
+                          Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="••••••••"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="trainingCentreId" className="block text-sm font-bold text-slate-900 mb-2">
+                          Training Centre ID
+                        </label>
+                        <div className="relative">
+                          <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="text"
+                            id="trainingCentreId"
+                            value={trainingCentreId}
+                            onChange={(e) => setTrainingCentreId(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="Enter your training centre ID"
+                            required
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-slate-500">
+                          Enter your training centre ID provided by your institution.
+                        </p>
+                      </div>
+                    </>
+                  ) : registrationStep === 1 ? (
+                    // Regular Registration - Step 1: Request OTP
+                    <div>
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-bold text-slate-900 mb-2">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="your.email@example.com"
+                            required
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-slate-500">
+                          We'll send you a verification code to confirm your email.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    // Regular Registration - Step 2: Complete registration with OTP
+                    <>
+                      <div>
+                        <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
+                          Full Name
+                        </label>
+                        <div className="relative">
+                          <User2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="text"
+                            id="fullName"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="John Doe"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="email-display" className="block text-sm font-bold text-slate-900 mb-2">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="email"
+                            id="email-display"
+                            value={email}
+                            disabled
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="password" className="block text-sm font-bold text-slate-900 mb-2">
+                          Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="••••••••"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="otp" className="block text-sm font-bold text-slate-900 mb-2">
+                          Verification Code (OTP)
+                        </label>
+                        <div className="relative">
+                          <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="text"
+                            id="otp"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="Enter 6-digit code"
+                            required
+                            maxLength={6}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-slate-500">
+                          Check your email for the verification code.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Success Message */}
+                  {successMessage && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm">
+                      <CheckCircle className="w-4 h-4 shrink-0" />
+                      <span>{successMessage}</span>
+                    </div>
+                  )}
+
+                  {/* Error Message */}
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="group w-full px-6 py-4 rounded-xl bg-[color:var(--brand-blue)] text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>
+                          {isTrainingCentreStudent
+                            ? "Creating Account..."
+                            : registrationStep === 1
+                            ? "Sending OTP..."
+                            : "Creating Account..."}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          {isTrainingCentreStudent
+                            ? "Create Account"
+                            : registrationStep === 1
+                            ? "Request OTP"
+                            : "Create Account"}
+                        </span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-6 text-center text-sm text-slate-600">
+                  {!isTrainingCentreStudent && registrationStep === 2 && (
+                    <button
+                      onClick={() => {
+                        setRegistrationStep(1);
+                        setOtp("");
+                        setSuccessMessage(null);
+                        setError(null);
+                      }}
+                      className="text-[color:var(--brand-blue)] font-semibold hover:underline mb-2 block"
+                    >
+                      ← Back to email
+                    </button>
+                  )}
+                  Already have an account?{" "}
+                  <button
+                    onClick={onClose}
+                    className="text-[color:var(--brand-blue)] font-semibold hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export default function RegistrationModal({ isOpen, onClose, preSelectedCentreType }: RegistrationModalProps) {
+  return (
+    <Suspense fallback={null}>
+      <RegistrationModalContent isOpen={isOpen} onClose={onClose} preSelectedCentreType={preSelectedCentreType} />
+    </Suspense>
+  );
+}
+

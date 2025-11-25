@@ -1,12 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  StudentDesktopNavigation,
-  StudentMobileNavigation,
-} from "@/components/dashboards/student/StudentNavigation";
+import { StudentTopNavigation } from "@/components/dashboards/student/StudentTopNav";
 import { ProfileCompletionModal } from "@/components/dashboards/student/ProfileCompletionModal";
-import { cn } from "@/lib/utils";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 interface ProfileData {
@@ -27,7 +23,6 @@ export default function StudentDashboardClient({
 }: {
   children: React.ReactNode;
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
@@ -78,22 +73,9 @@ export default function StudentDashboardClient({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-        <StudentMobileNavigation />
-        <div className="mt-6 flex gap-6">
-          <aside
-            className={cn(
-              "hidden shrink-0 transition-[width] duration-200 lg:block",
-              isCollapsed ? "w-20" : "w-64"
-            )}
-          >
-            <StudentDesktopNavigation
-              collapsed={isCollapsed}
-              onToggle={() => setIsCollapsed((prev) => !prev)}
-            />
-          </aside>
-          <main className="flex-1 space-y-8">{children}</main>
-        </div>
+      <StudentTopNavigation />
+      <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <main className="space-y-8">{children}</main>
       </div>
 
       {/* Profile Completion Modal */}

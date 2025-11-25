@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,115 +17,48 @@ import {
   Eye,
   Calendar,
   Star,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
-
-// Static data for demo
-const enrollments = [
-  {
-    enrollmentId: "enr-1",
-    course: {
-      courseId: "course-1",
-      name: "Executive Communication Lab",
-      level: "intermediate",
-      category: { name: "Communication" },
-      price: 125,
-    },
-    progress: 75,
-    status: "in_progress",
-    enrolledAt: "2025-11-01T10:00:00.000Z",
-    lastAccessed: "2025-11-19T10:00:00.000Z",
-    completedAt: null,
-    score: null,
-    certificateUrl: null,
-    nextLesson: "Lead with the bottom line",
-  },
-  {
-    enrollmentId: "enr-2",
-    course: {
-      courseId: "course-2",
-      name: "Leadership Presence Accelerator",
-      level: "advanced",
-      category: { name: "Leadership" },
-      price: 210,
-    },
-    progress: 45,
-    status: "in_progress",
-    enrolledAt: "2025-10-15T14:30:00.000Z",
-    lastAccessed: "2025-11-18T15:30:00.000Z",
-    completedAt: null,
-    score: null,
-    certificateUrl: null,
-    nextLesson: "Coaching cadence debrief",
-  },
-  {
-    enrollmentId: "enr-3",
-    course: {
-      courseId: "course-3",
-      name: "Customer Experience Excellence",
-      level: "intermediate",
-      category: { name: "Customer Success" },
-      price: 160,
-    },
-    progress: 100,
-    status: "completed",
-    enrolledAt: "2025-09-20T09:15:00.000Z",
-    lastAccessed: "2025-11-17T09:15:00.000Z",
-    completedAt: "2025-11-17T09:15:00.000Z",
-    score: 92,
-    certificateUrl: "/certificates/cert-123.pdf",
-    nextLesson: null,
-  },
-  {
-    enrollmentId: "enr-4",
-    course: {
-      courseId: "course-4",
-      name: "Sales Storytelling Masterclass",
-      level: "advanced",
-      category: { name: "Sales Enablement" },
-      price: 175,
-    },
-    progress: 0,
-    status: "enrolled",
-    enrolledAt: "2025-11-18T16:45:00.000Z",
-    lastAccessed: null,
-    completedAt: null,
-    score: null,
-    certificateUrl: null,
-    nextLesson: "Discovery-to-story mapping",
-  },
-  {
-    enrollmentId: "enr-5",
-    course: {
-      courseId: "course-5",
-      name: "Presentation & Presence Studio",
-      level: "intermediate",
-      category: { name: "Communication" },
-      price: 140,
-    },
-    progress: 60,
-    status: "in_progress",
-    enrolledAt: "2025-10-25T11:20:00.000Z",
-    lastAccessed: "2025-11-16T13:45:00.000Z",
-    completedAt: null,
-    score: null,
-    certificateUrl: null,
-    nextLesson: "Storyboard your narrative arc",
-  },
-];
+import { getUserEnrollments, type Enrollment } from "@/lib/api/enrollments";
 
 export default function StudentEnrollmentsPage() {
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
 
+  useEffect(() => {
+    fetchEnrollments();
+  }, []);
+
+  const fetchEnrollments = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getUserEnrollments();
+      setEnrollments(data);
+    } catch (err: any) {
+      console.error("Failed to fetch enrollments:", err);
+      setError(err.message || "Failed to load enrollments. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Filter enrollments
   const filteredEnrollments = enrollments.filter((enrollment) => {
-    const matchesSearch = enrollment.course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enrollment.course.category.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const courseName = enrollment.course?.name || enrollment.course?.title || "";
+    const categoryName = enrollment.course?.category?.name || "";
+    const matchesSearch = courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      categoryName.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || enrollment.status === statusFilter;
-    const matchesLevel = levelFilter === "all" || enrollment.course.level === levelFilter;
+    const courseLevel = enrollment.course?.level || "";
+    const matchesLevel = levelFilter === "all" || courseLevel === levelFilter;
 
     return matchesSearch && matchesStatus && matchesLevel;
   });
@@ -172,6 +105,52 @@ export default function StudentEnrollmentsPage() {
       default: return status;
     }
   };
+
+  // Calculate progress percentage from enrollment data
+  const getProgress = (enrollment: Enrollment): number => {
+    if (enrollment.progress !== undefined) {
+      return enrollment.progress;
+    }
+    // If no progress field, calculate based on completion status
+    if (enrollment.status === "completed") return 100;
+    if (enrollment.status === "in_progress") return 50;
+    return 0;
+  };
+
+  // Get enrollment ID (handle both id and enrollmentId)
+  const getEnrollmentId = (enrollment: Enrollment): string => {
+    return enrollment.enrollmentId || enrollment.id;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-[color:var(--brand-blue)]" />
+          <p className="text-slate-600">Loading enrollments...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="p-8">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <div>
+              <h3 className="font-semibold text-red-900">Error loading enrollments</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <Button onClick={fetchEnrollments} className="mt-4" variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -232,109 +211,115 @@ export default function StudentEnrollmentsPage() {
 
       {/* Enrollments Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredEnrollments.map((enrollment) => (
-          <Card
-            key={enrollment.enrollmentId}
-            className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm transition-colors hover:border-sky-200"
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="mb-2 text-lg font-semibold text-slate-900">
-                    {enrollment.course.name}
-                  </CardTitle>
-                  <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                    <Badge variant="outline" className="text-xs">
-                      {enrollment.course.category.name}
-                    </Badge>
-                    <Badge variant="secondary" className="capitalize">
-                      {enrollment.course.level}
-                    </Badge>
-                    <Badge variant="secondary" className={getStatusColor(enrollment.status)}>
-                      {getStatusText(enrollment.status)}
-                    </Badge>
+        {filteredEnrollments.map((enrollment) => {
+          console.log(enrollment);
+          const enrollmentId = getEnrollmentId(enrollment);
+          const progress = getProgress(enrollment);
+          const courseName = enrollment.course?.name || enrollment.course?.title || "Untitled Course";
+          const categoryName = enrollment.course?.category?.name || "Uncategorized";
+          const courseLevel = enrollment.course?.level || "";
+          const status = enrollment.status || (enrollment.completedAt ? "completed" : "enrolled");
+
+          return (
+            <Card
+              key={enrollmentId}
+              className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm transition-colors hover:border-sky-200"
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="mb-2 text-lg font-semibold text-slate-900">
+                      {courseName}
+                    </CardTitle>
+                    <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      <Badge variant="outline" className="text-xs">
+                        {categoryName}
+                      </Badge>
+                      {courseLevel && (
+                        <Badge variant="secondary" className="capitalize">
+                          {courseLevel}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className={getStatusColor(status)}>
+                        {getStatusText(status)}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="ml-2">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-sky-600">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
                   </div>
                 </div>
-                <div className="ml-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-sky-600">
-                    <BookOpen className="h-5 w-5" />
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Progress */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Progress</span>
-                  <span className="font-semibold text-slate-900">
-                    {enrollment.progress}%
-                  </span>
-                </div>
-                <Progress value={enrollment.progress} />
-              </div>
-
-              {/* Course Info */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-slate-500">Enrolled</span>
-                  <p className="font-medium text-slate-900">
-                    {formatDate(enrollment.enrolledAt)}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-slate-500">Last access</span>
-                  <p className="font-medium text-slate-900">
-                    {getTimeAgo(enrollment.lastAccessed)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Score & Certificate */}
-              {enrollment.status === "completed" && enrollment.score && (
-                <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-emerald-500" />
-                    <span className="text-sm font-medium text-emerald-700">
-                      Score: {enrollment.score}%
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Progress */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Progress</span>
+                    <span className="font-semibold text-slate-900">
+                      {progress}%
                     </span>
                   </div>
-                  {enrollment.certificateUrl && (
-                    <Button size="sm" variant="outline" className="text-xs">
-                      <Eye className="h-3 w-3 mr-1" />
-                      Certificate
-                    </Button>
-                  )}
+                  <Progress value={progress} />
                 </div>
-              )}
 
-              {/* Next Lesson */}
-              {enrollment.nextLesson && (
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Clock className="h-4 w-4 text-slate-400" />
-                  <span>Next: {enrollment.nextLesson}</span>
+                {/* Course Info */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-500">Enrolled</span>
+                    <p className="font-medium text-slate-900">
+                      {formatDate(enrollment.enrolledAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Last access</span>
+                    <p className="font-medium text-slate-900">
+                      {getTimeAgo(enrollment.lastAccessed || null)}
+                    </p>
+                  </div>
                 </div>
-              )}
 
-              {/* Action Button */}
-              <Button asChild variant="outline" className="w-full">
-                <Link href={`/student/enrollments/${enrollment.enrollmentId}`}>
-                  {enrollment.status === "completed" ? (
-                    <>
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Course
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      Continue Learning
-                    </>
-                  )}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                {/* Score & Certificate */}
+                {status === "completed" && enrollment.score && (
+                  <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-emerald-500" />
+                      <span className="text-sm font-medium text-emerald-700">
+                        Score: {enrollment.score}%
+                      </span>
+                    </div>
+                    {enrollment.certificateUrl && (
+                      <Button size="sm" variant="outline" className="text-xs" asChild>
+                        <a href={enrollment.certificateUrl} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-3 w-3 mr-1" />
+                          Certificate
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Button */}
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={`/student/enrollments/${enrollmentId}`}>
+                    {status === "completed" ? (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Course
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Continue Learning
+                      </>
+                    )}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Empty State */}

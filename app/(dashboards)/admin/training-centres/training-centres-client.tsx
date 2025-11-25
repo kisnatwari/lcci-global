@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School } from "lucide-react";
+import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type TrainingCentreCategory = "SQA" | "Cambridge";
@@ -67,6 +67,7 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (successMessage) {
@@ -226,6 +227,17 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
     });
   };
 
+  // Copy unique identifier to clipboard
+  const handleCopyIdentifier = async (identifier: string, centreId: string) => {
+    try {
+      await navigator.clipboard.writeText(identifier);
+      setCopiedId(centreId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Main Card with all content */}
@@ -311,7 +323,27 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                           <Building2 className="h-4 w-4" />
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{centre.name}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{centre.name}</div>
+                        {centre.centreUniqueIdentifier && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="font-mono text-xs text-muted-foreground">{centre.centreUniqueIdentifier}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 p-0 hover:bg-muted"
+                              onClick={() => handleCopyIdentifier(centre.centreUniqueIdentifier!, centre.centreId)}
+                              title="Copy identifier"
+                            >
+                              {copiedId === centre.centreId ? (
+                                <Check className="h-3 w-3 text-green-600" />
+                              ) : (
+                                <Copy className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground max-w-md">
                         {centre.description || <span className="text-muted-foreground/50">No description</span>}
                       </TableCell>

@@ -214,11 +214,10 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900">Curriculum</h2>
                   </div>
-                  <div className="prose prose-slate max-w-none">
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                      {fullCourseDetails.curriculum}
-                    </p>
-                  </div>
+                  <div 
+                    className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-700 prose-strong:text-slate-900 prose-a:text-[color:var(--brand-blue)] prose-a:no-underline hover:prose-a:underline prose-ul:text-slate-700 prose-ol:text-slate-700 prose-li:text-slate-700 prose-img:rounded-lg prose-table:w-full prose-th:bg-slate-100 prose-th:text-slate-900 prose-td:text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: fullCourseDetails.curriculum }}
+                  />
                 </div>
               )}
 

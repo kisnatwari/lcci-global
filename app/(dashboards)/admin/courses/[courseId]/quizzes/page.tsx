@@ -38,6 +38,17 @@ type Quiz = {
   title: string;
   description?: string;
   createdAt: string;
+  questions?: Array<{
+    questionId: string;
+    questionText: string;
+    orderIndex?: number;
+    options?: Array<{
+      id: string;
+      text: string;
+      is_correct?: boolean;
+      isCorrect?: boolean;
+    } | string>;
+  }>;
   _count?: {
     questions: number;
   };
@@ -58,8 +69,10 @@ export default function CourseQuizzesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [deletingQuiz, setDeletingQuiz] = useState<Quiz | null>(null);
+  const [viewingQuiz, setViewingQuiz] = useState<Quiz | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -109,11 +122,18 @@ export default function CourseQuizzesPage() {
     setError(null);
     try {
       const response = await apiClient.get(ENDPOINTS.quizzes.getByCourse(courseId));
-      if (response.success && response.data && Array.isArray(response.data.quizzes)) {
+      // Handle different response structures
+      if (response.success && Array.isArray(response.data)) {
+        // API returns: { success: true, data: [...] }
+        setQuizzes(response.data);
+      } else if (response.success && response.data && Array.isArray(response.data.quizzes)) {
+        // Alternative structure: { success: true, data: { quizzes: [...] } }
         setQuizzes(response.data.quizzes);
-      } else if (response.data && Array.isArray(response.data.quizzes)) {
-        setQuizzes(response.data.quizzes);
+      } else if (Array.isArray(response.data)) {
+        // Direct array in data
+        setQuizzes(response.data);
       } else if (Array.isArray(response)) {
+        // Response is directly an array
         setQuizzes(response);
       } else {
         setQuizzes([]);
@@ -447,7 +467,7 @@ export default function CourseQuizzesPage() {
                       <TableCell>
                         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-muted rounded-full">
                           <MessageSquare className="h-3 w-3" />
-                          {quiz._count?.questions || 0}
+                          {quiz.questions?.length || quiz._count?.questions || 0}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -465,6 +485,16 @@ export default function CourseQuizzesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setViewingQuiz(quiz);
+                                setIsViewDialogOpen(true);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Quiz
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleOpenDialog(quiz)}
                               className="cursor-pointer"
@@ -728,6 +758,113 @@ export default function CourseQuizzesPage() {
                   )}
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Quiz Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="w-[95vw] md:max-w-[650px] lg:max-w-[900px] xl:max-w-[1200px] 2xl:max-w-[1400px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-xl font-bold text-slate-900">
+              {viewingQuiz?.title || "Quiz Details"}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600">
+              {viewingQuiz?.description || "View quiz information and questions"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingQuiz && (
+            <div className="space-y-3">
+              {/* Basic Info - Compact */}
+              <div className="grid grid-cols-2 gap-3 text-sm pb-2 border-b border-slate-200">
+                <div>
+                  <span className="text-slate-500">Questions:</span>
+                  <span className="ml-2 font-semibold text-slate-900">
+                    {viewingQuiz.questions?.length || 0}
+                  </span>
+                </div>
+                {viewingQuiz.createdAt && (
+                  <div>
+                    <span className="text-slate-500">Created:</span>
+                    <span className="ml-2 text-slate-700">{formatDate(viewingQuiz.createdAt)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Questions - Compact Grid Layout */}
+              {viewingQuiz.questions && viewingQuiz.questions.length > 0 ? (
+                <div className="space-y-2.5">
+                  {viewingQuiz.questions
+                    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                    .map((question, index) => (
+                      <div key={question.questionId || index} className="p-3 border border-slate-200 rounded-lg bg-white">
+                        <div className="flex items-start gap-2 mb-2">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)] text-xs font-semibold shrink-0 mt-0.5">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm font-medium text-slate-900 flex-1 leading-snug">
+                            {question.questionText}
+                          </p>
+                        </div>
+
+                        {/* Options - Grid Layout for Larger Screens */}
+                        {question.options && question.options.length > 0 && (
+                          <div className="ml-8 grid grid-cols-1 lg:grid-cols-2 gap-1.5">
+                            {question.options.map((option: any, optIndex: number) => {
+                              const isCorrect = option.is_correct === true || option.isCorrect === true;
+                              return (
+                                <div
+                                  key={option.id || optIndex}
+                                  className={`flex items-center gap-1.5 p-1.5 rounded ${
+                                    isCorrect
+                                      ? 'bg-green-50 border border-green-200'
+                                      : 'bg-slate-50'
+                                  }`}
+                                >
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+                                    isCorrect
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-slate-300 text-slate-700'
+                                  }`}>
+                                    {String.fromCharCode(65 + optIndex)}
+                                  </span>
+                                  <span className={`text-xs flex-1 ${
+                                    isCorrect ? 'text-green-900 font-medium' : 'text-slate-700'
+                                  }`}>
+                                    {option.text || option}
+                                  </span>
+                                  {isCorrect && (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg bg-slate-50">
+                  <MessageSquare className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No questions available</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="pt-4 border-t border-slate-200">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsViewDialogOpen(false);
+                setViewingQuiz(null);
+              }}
+              className="h-10 px-6"
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

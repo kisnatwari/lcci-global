@@ -28,18 +28,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Plus, MoreVertical, Search, FileText, Pencil, Eye, Trash2, Loader2, AlertCircle, CheckCircle2, Video, FileImage, Link, ArrowUp, ArrowDown, BookOpen } from "lucide-react";
+import { ArrowLeft, Plus, MoreVertical, Search, FileText, Pencil, Eye, Trash2, Loader2, AlertCircle, CheckCircle2, Video, FileImage, Link, ArrowUp, ArrowDown, BookOpen, Upload, X as XIcon } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
+import { getCourseMaterials, createMaterial, updateMaterial, deleteMaterial, type CourseMaterial, type CreateMaterialPayload } from "@/lib/api/materials";
 
-type CourseMaterial = {
-  materialId: string;
-  courseId: string;
-  type: "video" | "pdf" | "doc" | "link";
-  title: string;
-  url: string;
-  orderIndex: number;
-  createdAt: string;
-};
+// CourseMaterial type is now imported from API
 
 type Course = {
   courseId: string;
@@ -67,10 +60,13 @@ export default function CourseMaterialsPage() {
   const [deletingMaterial, setDeletingMaterial] = useState<CourseMaterial | null>(null);
   const [formData, setFormData] = useState({
     title: "",
-    url: "",
+    description: "",
+    fileUrl: "",
     type: "video" as "video" | "pdf" | "doc" | "link",
     orderIndex: "",
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
@@ -114,17 +110,8 @@ export default function CourseMaterialsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINTS.materials.getByCourse(courseId));
-      // Handle response structure: { success: true, data: [...], ... }
-      if (response.success && Array.isArray(response.data)) {
-        setMaterials(response.data);
-      } else if (response.data && Array.isArray(response.data)) {
-        setMaterials(response.data);
-      } else if (Array.isArray(response)) {
-        setMaterials(response);
-      } else {
-        setMaterials([]);
-      }
+      const data = await getCourseMaterials(courseId);
+      setMaterials(data);
     } catch (err: any) {
       console.error("Failed to fetch materials:", err);
       setError(err.message || "Failed to load materials");
@@ -141,23 +128,59 @@ export default function CourseMaterialsPage() {
       material.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    setError(null);
+    
+    try {
+      const response = await apiClient.upload(ENDPOINTS.upload.file(), file);
+      
+      if (response.url) {
+        setFormData({ ...formData, fileUrl: response.url });
+        setUploadedFileName(response.fileName || file.name);
+        setSuccessMessage("File uploaded successfully!");
+      } else {
+        setError("Upload failed: No URL returned");
+      }
+    } catch (err: any) {
+      console.error("File upload error:", err);
+      setError(err.message || "Failed to upload file. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Handle file input change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    // Reset input so same file can be selected again
+    e.target.value = "";
+  };
+
   // Handle create/edit dialog open
   const handleOpenDialog = (material?: CourseMaterial) => {
     setError(null);
     setSuccessMessage(null);
+    setUploadedFileName(null);
     if (material) {
       setEditingMaterial(material);
       setFormData({
         title: material.title || "",
-        url: material.url || "",
+        description: material.description || "",
+        fileUrl: material.fileUrl || "",
         type: material.type,
-        orderIndex: material.orderIndex.toString(),
+        orderIndex: material.orderIndex?.toString() || "",
       });
     } else {
       setEditingMaterial(null);
       setFormData({
         title: "",
-        url: "",
+        description: "",
+        fileUrl: "",
         type: "video",
         orderIndex: "",
       });
@@ -172,8 +195,8 @@ export default function CourseMaterialsPage() {
       return;
     }
 
-    if (!formData.url || !formData.url.trim()) {
-      setError("Material URL is required");
+    if (!formData.fileUrl || !formData.fileUrl.trim()) {
+      setError("Material file URL is required");
       return;
     }
 
@@ -182,20 +205,20 @@ export default function CourseMaterialsPage() {
     setSuccessMessage(null);
 
     try {
-      const payload = {
+      const payload: CreateMaterialPayload = {
         title: formData.title.trim(),
-        url: formData.url.trim(),
+        description: formData.description.trim() || undefined,
+        fileUrl: formData.fileUrl.trim(),
         type: formData.type,
-        orderIndex: parseInt(formData.orderIndex) || materials.length + 1,
       };
 
       if (editingMaterial) {
         // Update existing material
-        await apiClient.put(ENDPOINTS.materials.update(courseId, editingMaterial.materialId), payload);
+        await updateMaterial(courseId, editingMaterial.materialId, payload);
         setSuccessMessage("Material updated successfully!");
       } else {
         // Create new material
-        await apiClient.post(ENDPOINTS.materials.post(courseId), payload);
+        await createMaterial(courseId, payload);
         setSuccessMessage("Material created successfully!");
       }
 
@@ -208,10 +231,12 @@ export default function CourseMaterialsPage() {
         setEditingMaterial(null);
         setFormData({
           title: "",
-          url: "",
+          description: "",
+          fileUrl: "",
           type: "video",
           orderIndex: "",
         });
+        setUploadedFileName(null);
         setSuccessMessage(null);
       }, 1000);
     } catch (err: any) {
@@ -231,7 +256,7 @@ export default function CourseMaterialsPage() {
 
     try {
       // Delete material
-      await apiClient.delete(ENDPOINTS.materials.delete(courseId, deletingMaterial.materialId));
+      await deleteMaterial(courseId, deletingMaterial.materialId);
       
       // Refresh materials list
       await fetchMaterials();
@@ -257,7 +282,7 @@ export default function CourseMaterialsPage() {
     const material = materials.find(m => m.materialId === materialId);
     if (!material) return;
 
-    const sortedMaterials = [...materials].sort((a, b) => a.orderIndex - b.orderIndex);
+    const sortedMaterials = [...materials].sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
     const currentIndex = sortedMaterials.findIndex(m => m.materialId === materialId);
     
     if (direction === "up" && currentIndex > 0) {
@@ -267,12 +292,10 @@ export default function CourseMaterialsPage() {
 
       try {
         // Swap order indices
-        await apiClient.put(ENDPOINTS.materials.update(courseId, materialId), {
-          ...material,
+        await updateMaterial(courseId, materialId, {
           orderIndex: newOrderIndex,
         });
-        await apiClient.put(ENDPOINTS.materials.update(courseId, targetMaterial.materialId), {
-          ...targetMaterial,
+        await updateMaterial(courseId, targetMaterial.materialId, {
           orderIndex: oldOrderIndex,
         });
         await fetchMaterials();
@@ -287,12 +310,10 @@ export default function CourseMaterialsPage() {
 
       try {
         // Swap order indices
-        await apiClient.put(ENDPOINTS.materials.update(courseId, materialId), {
-          ...material,
+        await updateMaterial(courseId, materialId, {
           orderIndex: newOrderIndex,
         });
-        await apiClient.put(ENDPOINTS.materials.update(courseId, targetMaterial.materialId), {
-          ...targetMaterial,
+        await updateMaterial(courseId, targetMaterial.materialId, {
           orderIndex: oldOrderIndex,
         });
         await fetchMaterials();
@@ -419,7 +440,7 @@ export default function CourseMaterialsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredMaterials
-                    .sort((a, b) => a.orderIndex - b.orderIndex)
+                    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
                     .map((material) => (
                     <TableRow key={material.materialId}>
                       <TableCell>
@@ -430,8 +451,13 @@ export default function CourseMaterialsPage() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{material.title}</div>
-                          <div className="text-sm text-muted-foreground truncate max-w-xs">
-                            {material.url}
+                          {material.description && (
+                            <div className="text-sm text-muted-foreground line-clamp-1 max-w-xs">
+                              {material.description}
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground truncate max-w-xs mt-1">
+                            {material.fileUrl}
                           </div>
                         </div>
                       </TableCell>
@@ -464,7 +490,7 @@ export default function CourseMaterialsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(material.createdAt)}
+                        {material.createdAt ? formatDate(material.createdAt) : "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -486,7 +512,7 @@ export default function CourseMaterialsPage() {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => window.open(material.url, '_blank')}
+                              onClick={() => window.open(material.fileUrl, '_blank')}
                               className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
@@ -594,6 +620,26 @@ export default function CourseMaterialsPage() {
                 <p className="text-xs text-slate-500">Enter a descriptive title for this material</p>
               </div>
 
+              {/* Description Field */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-slate-500" />
+                  Description
+                </Label>
+                <Input
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: e.target.value });
+                    setError(null);
+                  }}
+                  placeholder="e.g., PDF covering basics of financial management"
+                  disabled={isSaving}
+                  className="h-11 text-base"
+                />
+                <p className="text-xs text-slate-500">Optional description for this material</p>
+              </div>
+
               {/* Material Type Selection - Icon Cards */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -643,7 +689,13 @@ export default function CourseMaterialsPage() {
                         type="button"
                         onClick={() => {
                           if (!isSaving) {
-                            setFormData({ ...formData, type: type.value });
+                            // Clear uploaded file when changing type
+                            if (formData.type !== type.value) {
+                              setUploadedFileName(null);
+                              setFormData({ ...formData, type: type.value, fileUrl: "" });
+                            } else {
+                              setFormData({ ...formData, type: type.value });
+                            }
                             setError(null);
                           }
                         }}
@@ -693,26 +745,99 @@ export default function CourseMaterialsPage() {
                 </div>
               </div>
 
-              {/* URL Field */}
+              {/* URL Field with File Upload */}
               <div className="space-y-2">
                 <Label htmlFor="url" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                   <Link className="w-4 h-4 text-slate-500" />
                   Material URL
                   <span className="text-red-500">*</span>
                 </Label>
+                
+                {/* File Upload Section */}
+                {formData.type !== "link" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <label
+                        htmlFor="file-upload"
+                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed transition-all cursor-pointer ${
+                          isUploading
+                            ? "border-slate-300 bg-slate-50 cursor-not-allowed"
+                            : "border-[color:var(--brand-blue)]/30 bg-[color:var(--brand-blue)]/5 hover:border-[color:var(--brand-blue)]/50 hover:bg-[color:var(--brand-blue)]/10"
+                        }`}
+                      >
+                        <input
+                          id="file-upload"
+                          type="file"
+                          onChange={handleFileChange}
+                          disabled={isUploading || isSaving}
+                          className="hidden"
+                          accept={
+                            formData.type === "video"
+                              ? "video/*"
+                              : formData.type === "pdf"
+                              ? "application/pdf"
+                              : formData.type === "doc"
+                              ? ".doc,.docx,.txt"
+                              : "*"
+                          }
+                        />
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-[color:var(--brand-blue)]" />
+                            <span className="text-sm font-medium text-slate-700">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 text-[color:var(--brand-blue)]" />
+                            <span className="text-sm font-medium text-[color:var(--brand-blue)]">
+                              Upload File
+                            </span>
+                          </>
+                        )}
+                      </label>
+                      {uploadedFileName && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm font-medium text-emerald-700 truncate max-w-xs">
+                            {uploadedFileName}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUploadedFileName(null);
+                              setFormData({ ...formData, fileUrl: "" });
+                            }}
+                            className="ml-1 p-1 hover:bg-emerald-100 rounded"
+                          >
+                            <XIcon className="w-3 h-3 text-emerald-600" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Upload a file or enter URL manually below
+                    </p>
+                  </div>
+                )}
+                
+                {/* File URL Input */}
                 <Input
-                  id="url"
+                  id="fileUrl"
                   type="url"
-                  value={formData.url}
+                  value={formData.fileUrl}
                   onChange={(e) => {
-                    setFormData({ ...formData, url: e.target.value });
+                    setFormData({ ...formData, fileUrl: e.target.value });
                     setError(null);
                   }}
-                  placeholder="https://example.com/material"
+                  placeholder={formData.type === "link" ? "https://example.com/material" : "Upload file or enter URL"}
                   disabled={isSaving}
                   className="h-11 text-base font-mono"
                 />
-                <p className="text-xs text-slate-500">Enter the full URL to access this material</p>
+                <p className="text-xs text-slate-500">
+                  {formData.type === "link"
+                    ? "Enter the full URL to access this material"
+                    : "File URL will be auto-filled after upload, or enter URL manually"}
+                </p>
               </div>
             </div>
           </div>
@@ -724,6 +849,7 @@ export default function CourseMaterialsPage() {
                 setIsDialogOpen(false);
                 setError(null);
                 setSuccessMessage(null);
+                setUploadedFileName(null);
               }}
               disabled={isSaving}
               className="h-11 px-6"
@@ -732,7 +858,7 @@ export default function CourseMaterialsPage() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={!formData.title.trim() || !formData.url.trim() || isSaving}
+              disabled={!formData.title.trim() || !formData.fileUrl.trim() || isSaving}
               className="h-11 px-6 bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white font-semibold"
             >
               {isSaving ? (

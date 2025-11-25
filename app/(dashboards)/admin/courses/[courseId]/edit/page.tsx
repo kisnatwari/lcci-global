@@ -28,7 +28,6 @@ export default function EditCoursePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const STATIC_THUMBNAIL_URL = "https://themystickeys.com/wp-content/uploads/2025/07/8-1-559x373.jpg";
   
   const [formData, setFormData] = useState({
     name: "",
@@ -86,7 +85,7 @@ export default function EditCoursePage() {
         type: course.type === "SelfPaced" ? "SelfPaced" : (course.type === "Guided" ? "Guided" : "Guided"),
         price: course.price?.toString() || "",
         duration: course.duration?.toString() || "",
-        thumbnailUrl: STATIC_THUMBNAIL_URL,
+        thumbnailUrl: course.thumbnailUrl || "",
         autoEnrollFor: Array.isArray(course.autoEnrollFor) ? course.autoEnrollFor : [],
         lcciGQCreditPoints: course.lcciGQCreditPoints?.toString() || "",
       });
@@ -123,9 +122,13 @@ export default function EditCoursePage() {
         curriculum: (formData.curriculum && formData.curriculum.trim()) || undefined,
         requirements: (formData.requirements && formData.requirements.trim()) || undefined,
         level: formData.level,
+        type: formData.type,
         price: parseFloat(formData.price) || 0,
         duration: parseInt(formData.duration) || 0,
         thumbnailUrl: formData.thumbnailUrl,
+        autoEnrollFor: formData.autoEnrollFor.length > 0 ? formData.autoEnrollFor : undefined,
+        // Only include lcciGQCreditPoints for SelfPaced courses
+        ...(formData.type === "SelfPaced" && { lcciGQCreditPoints: parseInt(formData.lcciGQCreditPoints) || 0 }),
       };
 
       const response = await apiClient.put(ENDPOINTS.courses.update(courseId), payload);
@@ -409,7 +412,13 @@ export default function EditCoursePage() {
                             type="button"
                             onClick={() => {
                               if (!isSaving) {
-                                setFormData({ ...formData, type: type.value as "Guided" | "SelfPaced" });
+                                const newType = type.value as "Guided" | "SelfPaced";
+                                // Clear LCCI GQ Credit Points if switching to Guided
+                                setFormData({ 
+                                  ...formData, 
+                                  type: newType,
+                                  lcciGQCreditPoints: newType === "Guided" ? "" : formData.lcciGQCreditPoints
+                                });
                               }
                             }}
                             disabled={isSaving}
@@ -512,25 +521,27 @@ export default function EditCoursePage() {
                     <p className="text-xs text-slate-500 font-medium">Total course duration in days</p>
                   </div>
 
-                  <div className="space-y-2.5">
-                    <Label htmlFor="lcciGQCreditPoints" className="text-sm font-semibold text-slate-800">
-                      LCCI GQ Credit Points
-                    </Label>
-                    <Input
-                      id="lcciGQCreditPoints"
-                      type="number"
-                      min="0"
-                      value={formData.lcciGQCreditPoints}
-                      onChange={(e) => {
-                        setFormData({ ...formData, lcciGQCreditPoints: e.target.value });
-                        setError(null);
-                      }}
-                      placeholder="0"
-                      disabled={isSaving}
-                      className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
-                    />
-                    <p className="text-xs text-slate-500 font-medium">Credit points for this course</p>
-                  </div>
+                  {formData.type === "SelfPaced" && (
+                    <div className="space-y-2.5">
+                      <Label htmlFor="lcciGQCreditPoints" className="text-sm font-semibold text-slate-800">
+                        LCCI GQ Credit Points
+                      </Label>
+                      <Input
+                        id="lcciGQCreditPoints"
+                        type="number"
+                        min="0"
+                        value={formData.lcciGQCreditPoints}
+                        onChange={(e) => {
+                          setFormData({ ...formData, lcciGQCreditPoints: e.target.value });
+                          setError(null);
+                        }}
+                        placeholder="0"
+                        disabled={isSaving}
+                        className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
+                      />
+                      <p className="text-xs text-slate-500 font-medium">Credit points for this course (Self-Paced only)</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Auto Enroll For */}
@@ -679,7 +690,7 @@ export default function EditCoursePage() {
                 <div className="space-y-4">
                   <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-slate-300 bg-slate-100">
                     <img
-                      src={STATIC_THUMBNAIL_URL}
+                      src={formData.thumbnailUrl || ""}
                       alt="Course thumbnail"
                       className="w-full h-full object-cover"
                     />

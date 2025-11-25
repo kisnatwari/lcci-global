@@ -38,7 +38,30 @@ export default function CourseCard({ course }: CourseCardProps) {
   // Use course.image if available, otherwise fallback to hardcoded map
   const imageUrl = course.image || getCourseImage(course);
   const hasImage = !!imageUrl;
-
+  
+  // Check if image URL is from a configured domain
+  const isConfiguredDomain = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      const configuredDomains = [
+        'images.unsplash.com',
+        'themystickeys.com',
+        'example.com',
+        'wwe.com',
+        'upload.wikimedia.org',
+        'wikimedia.org'
+      ];
+      return configuredDomains.some(domain => 
+        urlObj.hostname === domain || 
+        urlObj.hostname.endsWith(`.${domain}`)
+      );
+    } catch {
+      return false;
+    }
+  };
+  
+  const shouldUseNextImage = hasImage && isConfiguredDomain(imageUrl);
+  
   const typeGradient =
     course.type === "guided"
       ? "from-emerald-500 to-teal-500"
@@ -89,13 +112,21 @@ export default function CourseCard({ course }: CourseCardProps) {
           <div className="relative h-48 overflow-hidden">
             {hasImage ? (
               <>
-                <Image
-                  src={imageUrl}
-                  alt={course.title}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+                {shouldUseNextImage ? (
+                  <Image
+                    src={imageUrl}
+                    alt={course.title}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                ) : (
+                  <img
+                    src={imageUrl}
+                    alt={course.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-transparent" />
               </>
             ) : (
