@@ -176,7 +176,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             <div className="lg:col-span-8 space-y-8">
               {/* Course Image */}
               {course.image && (
-                <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl border border-slate-200">
                   <Image
                     src={course.image}
                     alt={course.title}
@@ -184,56 +184,40 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 66vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 </div>
               )}
 
               {/* Overview */}
               {fullCourseDetails?.overview && (
-                <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-slate-200">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] text-white shadow-lg">
-                      <BookOpen className="w-6 h-6" />
+                <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] text-white">
+                      <BookOpen className="w-5 h-5" />
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900">Course Overview</h2>
                   </div>
-                  <div className="prose prose-slate max-w-none">
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                  <div className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed">
+                    <div className="text-slate-700 leading-relaxed whitespace-pre-line">
                       {fullCourseDetails.overview}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Curriculum */}
-              {fullCourseDetails?.curriculum && (
-                <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-slate-200">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
-                      <CalendarDays className="w-6 h-6" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900">Curriculum</h2>
                   </div>
-                  <div 
-                    className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-700 prose-strong:text-slate-900 prose-a:text-[color:var(--brand-blue)] prose-a:no-underline hover:prose-a:underline prose-ul:text-slate-700 prose-ol:text-slate-700 prose-li:text-slate-700 prose-img:rounded-lg prose-table:w-full prose-th:bg-slate-100 prose-th:text-slate-900 prose-td:text-slate-700"
-                    dangerouslySetInnerHTML={{ __html: fullCourseDetails.curriculum }}
-                  />
                 </div>
               )}
 
-              {/* Requirements */}
+              {/* Requirements - Moved Above Curriculum */}
               {fullCourseDetails?.requirements && (
-                <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-slate-200">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg">
-                      <CheckCircle2 className="w-6 h-6" />
+                <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                      <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900">Requirements</h2>
                   </div>
-                  <div className="prose prose-slate max-w-none">
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                  <div className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed">
+                    <div className="text-slate-700 leading-relaxed whitespace-pre-line">
                       {fullCourseDetails.requirements}
-                    </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -249,7 +233,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 />
 
                 {/* Course Details Card */}
-                <div className="bg-white rounded-3xl p-6 shadow-xl border-2 border-slate-200">
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
                   <h3 className="text-xl font-bold text-slate-900 mb-6">Course Details</h3>
                   
                   <div className="space-y-5">
@@ -327,6 +311,22 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               </div>
             </div>
           </div>
+
+          {/* Curriculum - Full Width Section */}
+          {fullCourseDetails?.curriculum && (
+            <div className="mt-12 bg-white rounded-2xl p-8 lg:p-12 shadow-lg border border-slate-200">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md">
+                  <CalendarDays className="w-6 h-6" />
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900">Curriculum</h2>
+              </div>
+              <div 
+                className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-slate-900 prose-strong:font-bold prose-a:text-[color:var(--brand-blue)] prose-a:no-underline hover:prose-a:underline prose-ul:text-slate-700 prose-ol:text-slate-700 prose-li:text-slate-700 prose-li:leading-relaxed prose-li:mb-2 prose-img:rounded-lg prose-img:shadow-md prose-img:my-6 prose-table:w-full prose-table:border-collapse prose-table:my-6 prose-th:bg-slate-100 prose-th:text-slate-900 prose-th:font-semibold prose-th:border prose-th:border-slate-300 prose-th:px-4 prose-th:py-3 prose-td:text-slate-700 prose-td:border prose-td:border-slate-300 prose-td:px-4 prose-td:py-3"
+                dangerouslySetInnerHTML={{ __html: fullCourseDetails.curriculum }}
+              />
+            </div>
+          )}
         </section>
       </main>
       

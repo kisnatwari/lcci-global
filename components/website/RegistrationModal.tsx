@@ -78,9 +78,16 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
           return;
         }
         
-        // Training centre ID must be provided for Cambridge (not for SQA)
+        // Training centre ID must be provided for Cambridge
         if (centreUniqueIdentifier === "Cambridge" && !trainingCentreId.trim()) {
           setError("Please enter your training centre ID.");
+          setIsLoading(false);
+          return;
+        }
+        
+        // SCN number must be provided for SQA
+        if (centreUniqueIdentifier === "SQA" && !scnNumber.trim()) {
+          setError("Please enter your SCN number.");
           setIsLoading(false);
           return;
         }
@@ -89,8 +96,8 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
         
         // Register directly without OTP
         // For Cambridge: send training centre ID
-        // For SQA: send centre type (SQA), don't send SCN number
-        const registerPayload = {
+        // For SQA: send centre type (SQA) and SCN number with key "scnNo"
+        const registerPayload: any = {
           email,
           password,
           userType: "Training_Site_Student",
@@ -100,6 +107,11 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
             : centreUniqueIdentifier, // For SQA, send "SQA", for Cambridge send the training centre ID
           otp: "", // Empty OTP for training centre students
         };
+        
+        // Add SCN number for SQA students
+        if (centreUniqueIdentifier === "SQA" && scnNumber.trim()) {
+          registerPayload.scnNo = scnNumber.trim();
+        }
         
         try {
           const registerResponse = await register(registerPayload);
@@ -378,10 +390,11 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                               onChange={(e) => setScnNumber(e.target.value)}
                               className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
                               placeholder="Enter your SCN number"
+                              required
                             />
                           </div>
                           <p className="mt-2 text-xs text-slate-500">
-                            Enter your SCN number (this information is not sent to the server).
+                            Enter your SCN number provided by your institution.
                           </p>
                         </div>
                       )}
