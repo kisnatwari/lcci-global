@@ -43,6 +43,7 @@ export default function Header() {
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [registrationCentreType, setRegistrationCentreType] = useState<"SQA" | "Cambridge" | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showRegisterOptions, setShowRegisterOptions] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
@@ -309,7 +310,10 @@ export default function Header() {
 
             {/* Mobile Menu Button */}
             {mounted && (
-              <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
+              <Drawer open={mobileDrawerOpen} onOpenChange={(open) => {
+                setMobileDrawerOpen(open);
+                if (!open) setShowRegisterOptions(false);
+              }}>
                 <DrawerTrigger asChild>
                   <button
                     className={`lg:hidden p-3 rounded-xl transition-all duration-300 ${
@@ -402,54 +406,63 @@ export default function Header() {
                           >
                             Login
                           </button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                onClick={() => setMobileDrawerOpen(false)}
-                                className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                              >
-                                Register
-                                <ChevronDown className="w-5 h-5" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuLabel>Register as</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setMobileDrawerOpen(false);
-                                  setRegistrationCentreType(null);
-                                  setIsRegistrationModalOpen(true);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <User2 className="w-4 h-4 mr-2" />
-                                Regular Learner
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setMobileDrawerOpen(false);
-                                  setRegistrationCentreType("SQA");
-                                  setIsRegistrationModalOpen(true);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <School className="w-4 h-4 mr-2" />
-                                SQA Student
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setMobileDrawerOpen(false);
-                                  setRegistrationCentreType("Cambridge");
-                                  setIsRegistrationModalOpen(true);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <GraduationCap className="w-4 h-4 mr-2" />
-                                Cambridge Student
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => setShowRegisterOptions(!showRegisterOptions)}
+                              className="w-full px-5 py-4 rounded-xl font-bold text-white bg-[color:var(--brand-blue)] hover:opacity-90 transition-all flex items-center justify-between"
+                            >
+                              <span>Register</span>
+                              <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${showRegisterOptions ? 'rotate-180' : ''}`} />
+                            </button>
+                            <AnimatePresence>
+                              {showRegisterOptions && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="space-y-2 overflow-hidden"
+                                >
+                                  <button
+                                    onClick={() => {
+                                      setMobileDrawerOpen(false);
+                                      setShowRegisterOptions(false);
+                                      setRegistrationCentreType(null);
+                                      setIsRegistrationModalOpen(true);
+                                    }}
+                                    className="w-full px-5 py-3 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-3"
+                                  >
+                                    <User2 className="w-5 h-5 text-slate-600" />
+                                    Regular Learner
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setMobileDrawerOpen(false);
+                                      setShowRegisterOptions(false);
+                                      setRegistrationCentreType("SQA");
+                                      setIsRegistrationModalOpen(true);
+                                    }}
+                                    className="w-full px-5 py-3 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-3"
+                                  >
+                                    <School className="w-5 h-5 text-slate-600" />
+                                    SQA Student
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setMobileDrawerOpen(false);
+                                      setShowRegisterOptions(false);
+                                      setRegistrationCentreType("Cambridge");
+                                      setIsRegistrationModalOpen(true);
+                                    }}
+                                    className="w-full px-5 py-3 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-3"
+                                  >
+                                    <GraduationCap className="w-5 h-5 text-slate-600" />
+                                    Cambridge Student
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </>
                       )}
                     </div>

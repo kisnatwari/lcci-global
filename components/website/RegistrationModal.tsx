@@ -27,6 +27,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
   const [otp, setOtp] = useState("");
   const [centreUniqueIdentifier, setCentreUniqueIdentifier] = useState<string | null>(preSelectedCentreType || null);
   const [trainingCentreId, setTrainingCentreId] = useState("");
+  const [scnNumber, setScnNumber] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -44,6 +45,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
       setOtp("");
       setCentreUniqueIdentifier(preSelectedCentreType || null);
       setTrainingCentreId("");
+      setScnNumber("");
     }
 
     return () => {
@@ -76,8 +78,8 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
           return;
         }
         
-        // Training centre ID must be provided
-        if (!trainingCentreId.trim()) {
+        // Training centre ID must be provided for Cambridge (not for SQA)
+        if (centreUniqueIdentifier === "Cambridge" && !trainingCentreId.trim()) {
           setError("Please enter your training centre ID.");
           setIsLoading(false);
           return;
@@ -86,13 +88,16 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
         setIsLoading(true);
         
         // Register directly without OTP
-        // For training centre students, centreUniqueIdentifier should contain the training centre ID value
+        // For Cambridge: send training centre ID
+        // For SQA: send centre type (SQA), don't send SCN number
         const registerPayload = {
           email,
           password,
           userType: "Training_Site_Student",
           username: fullName,
-          centreUniqueIdentifier: trainingCentreId.trim(), // Send the training centre ID as centreUniqueIdentifier (not trainingCentreId)
+          centreUniqueIdentifier: centreUniqueIdentifier === "Cambridge" 
+            ? trainingCentreId.trim() 
+            : centreUniqueIdentifier, // For SQA, send "SQA", for Cambridge send the training centre ID
           otp: "", // Empty OTP for training centre students
         };
         
@@ -109,6 +114,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
             setOtp("");
             setCentreUniqueIdentifier(null);
             setTrainingCentreId("");
+            setScnNumber("");
             
             // Close modal after 2 seconds
             setTimeout(() => {
@@ -188,6 +194,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
           setOtp("");
           setCentreUniqueIdentifier(null);
           setTrainingCentreId("");
+          setScnNumber("");
           
           // Close modal after 2 seconds
           setTimeout(() => {
@@ -335,26 +342,49 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                           />
                         </div>
                       </div>
-                      <div>
-                        <label htmlFor="trainingCentreId" className="block text-sm font-bold text-slate-900 mb-2">
-                          Training Centre ID
-                        </label>
-                        <div className="relative">
-                          <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                          <input
-                            type="text"
-                            id="trainingCentreId"
-                            value={trainingCentreId}
-                            onChange={(e) => setTrainingCentreId(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
-                            placeholder="Enter your training centre ID"
-                            required
-                          />
+                      {centreUniqueIdentifier === "Cambridge" && (
+                        <div>
+                          <label htmlFor="trainingCentreId" className="block text-sm font-bold text-slate-900 mb-2">
+                            Training Centre ID
+                          </label>
+                          <div className="relative">
+                            <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              type="text"
+                              id="trainingCentreId"
+                              value={trainingCentreId}
+                              onChange={(e) => setTrainingCentreId(e.target.value)}
+                              className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                              placeholder="Enter your training centre ID"
+                              required
+                            />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-500">
+                            Enter your training centre ID provided by your institution.
+                          </p>
                         </div>
-                        <p className="mt-2 text-xs text-slate-500">
-                          Enter your training centre ID provided by your institution.
-                        </p>
-                      </div>
+                      )}
+                      {centreUniqueIdentifier === "SQA" && (
+                        <div>
+                          <label htmlFor="scnNumber" className="block text-sm font-bold text-slate-900 mb-2">
+                            SCN Number
+                          </label>
+                          <div className="relative">
+                            <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              type="text"
+                              id="scnNumber"
+                              value={scnNumber}
+                              onChange={(e) => setScnNumber(e.target.value)}
+                              className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                              placeholder="Enter your SCN number"
+                            />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-500">
+                            Enter your SCN number (this information is not sent to the server).
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : registrationStep === 1 ? (
                     // Regular Registration - Step 1: Request OTP

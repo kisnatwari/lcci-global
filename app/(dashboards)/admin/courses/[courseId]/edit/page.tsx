@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, BookOpen, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon, FolderTree, Users, Briefcase, Target, TrendingUp, Award, Star, GraduationCap, School } from "lucide-react";
+import { ArrowLeft, BookOpen, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon, FolderTree, Users, Briefcase, Target, TrendingUp, Award, Star, GraduationCap, School, Upload, X } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,7 @@ export default function EditCoursePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -97,6 +98,45 @@ export default function EditCoursePage() {
     }
   };
 
+  const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.upload(ENDPOINTS.upload.file(), file);
+      
+      // Assuming the response has a url or fileUrl field
+      const uploadedUrl = response.data?.url || response.data?.fileUrl || response.url || response.fileUrl;
+      
+      if (uploadedUrl) {
+        setFormData({ ...formData, thumbnailUrl: uploadedUrl });
+        setSuccessMessage("Thumbnail uploaded successfully");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error("Upload response did not contain a URL");
+      }
+    } catch (err: any) {
+      console.error("Failed to upload thumbnail:", err);
+      setError(err.message || "Failed to upload thumbnail. Please try again.");
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!formData.name || !formData.name.trim()) {
@@ -203,9 +243,9 @@ export default function EditCoursePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Main Form - Same as new page */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-6">
             {/* Basic Information */}
             <Card className="border-2 border-slate-200 shadow-lg">
               <CardContent className="p-6">
@@ -413,10 +453,11 @@ export default function EditCoursePage() {
                             onClick={() => {
                               if (!isSaving) {
                                 const newType = type.value as "Guided" | "SelfPaced";
-                                // Clear LCCI GQ Credit Points if switching to Guided
+                                // Clear auto-enroll and LCCI GQ Credit Points if switching to Guided
                                 setFormData({ 
                                   ...formData, 
                                   type: newType,
+                                  autoEnrollFor: newType === "Guided" ? [] : formData.autoEnrollFor,
                                   lcciGQCreditPoints: newType === "Guided" ? "" : formData.lcciGQCreditPoints
                                 });
                               }
@@ -674,8 +715,8 @@ export default function EditCoursePage() {
           </div>
 
           {/* Sidebar - Thumbnail Upload - Same as new page */}
-          <div className="lg:col-span-1">
-            <Card className="border-2 border-slate-200 shadow-lg sticky top-8">
+          <div className="xl:col-span-1">
+            <Card className="border-2 border-slate-200 shadow-lg xl:sticky top-8">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 pb-4 mb-6 border-b border-slate-200">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[color:var(--brand-blue)]/10">
@@ -688,16 +729,65 @@ export default function EditCoursePage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-slate-300 bg-slate-100">
-                    <img
-                      src={formData.thumbnailUrl || ""}
-                      alt="Course thumbnail"
-                      className="w-full h-full object-cover"
-                    />
+                  {formData.thumbnailUrl ? (
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-slate-300 bg-slate-100">
+                      <img
+                        src={formData.thumbnailUrl}
+                        alt="Course thumbnail"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, thumbnailUrl: "" })}
+                        disabled={isSaving || isUploadingThumbnail}
+                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                        title="Remove thumbnail"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative w-full aspect-video rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center">
+                      <ImageIcon className="w-12 h-12 text-slate-400 mb-2" />
+                      <p className="text-sm text-slate-600 font-medium mb-1">No thumbnail uploaded</p>
+                      <p className="text-xs text-slate-500">Upload a course thumbnail image</p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="thumbnail-upload" className="text-sm font-semibold text-slate-800">
+                      Upload Thumbnail
+                    </Label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="thumbnail-upload"
+                        accept="image/*"
+                        onChange={handleThumbnailUpload}
+                        disabled={isSaving || isUploadingThumbnail}
+                        className="hidden"
+                      />
+                      <Label
+                        htmlFor="thumbnail-upload"
+                        className={`flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg border-2 border-slate-300 bg-white hover:bg-slate-50 transition-all cursor-pointer ${
+                          isSaving || isUploadingThumbnail ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {isUploadingThumbnail ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-[color:var(--brand-blue)]" />
+                            <span className="text-sm font-medium text-slate-700">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 text-[color:var(--brand-blue)]" />
+                            <span className="text-sm font-medium text-slate-700">Choose Image</span>
+                          </>
+                        )}
+                      </Label>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium">JPG, PNG or GIF. Max 5MB</p>
                   </div>
-                  <p className="text-xs text-slate-500 text-center">
-                    Default course thumbnail
-                  </p>
                 </div>
               </CardContent>
             </Card>

@@ -81,4 +81,7 @@ export const ENDPOINTS = {
         getById: (id: string) => `/api/certificates/${id}`, // GET: Get certificate by ID
         getByUser: (userId: string) => `/api/certificates/user/${userId}`, // GET: List certificates for a user
     },
+    stats: {
+        get: () => "/api/stats", // GET: Get admin dashboard statistics
+    },
 }

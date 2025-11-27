@@ -274,7 +274,13 @@ export function CategoriesPageClient({ initialCategories, error: initialError }:
                       </TableCell>
                       <TableCell className="font-medium">{category.name}</TableCell>
                       <TableCell className="text-muted-foreground max-w-md">
-                        {category.description || <span className="text-muted-foreground/50">No description</span>}
+                        {category.description ? (
+                          category.description.length > 70
+                            ? `${category.description.substring(0, 70)}...`
+                            : category.description
+                        ) : (
+                          <span className="text-muted-foreground/50">No description</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {formatDate(category.createdAt)}

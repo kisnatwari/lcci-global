@@ -2,10 +2,72 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Play, CheckCircle2, Sparkles } from "lucide-react";
-import { useMemo } from "react";
+import { ArrowRight, Play, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { apiClient, ENDPOINTS } from "@/lib/api";
+
+interface Category {
+  categoryId: string;
+  name: string;
+  description: string;
+}
+
+interface Course {
+  courseId: string;
+  categoryId?: string;
+  category?: {
+    categoryId: string;
+    name: string;
+  };
+}
+
+const categoryIcons: Record<string, string> = {
+  "Communication": "🗣️",
+  "Leadership": "🧭",
+  "Customer Experience": "🤝",
+  "Sales": "🎤",
+  "Presentation": "🎤",
+  "Business": "💼",
+  "Finance": "💰",
+  "IT": "💻",
+  "English": "📚",
+};
+
+const categoryColors: Record<string, string> = {
+  "Communication": "from-purple-500 to-pink-500",
+  "Leadership": "from-amber-500 to-orange-500",
+  "Customer Experience": "from-emerald-500 to-teal-500",
+  "Sales": "from-blue-600 to-cyan-500",
+  "Presentation": "from-blue-600 to-cyan-500",
+  "Business": "from-indigo-500 to-purple-500",
+  "Finance": "from-green-500 to-emerald-500",
+  "IT": "from-blue-500 to-cyan-500",
+  "English": "from-red-500 to-pink-500",
+};
+
+const getCategoryIcon = (name: string): string => {
+  for (const [key, icon] of Object.entries(categoryIcons)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) {
+      return icon;
+    }
+  }
+  return "📚"; // Default icon
+};
+
+const getCategoryColor = (name: string): string => {
+  for (const [key, color] of Object.entries(categoryColors)) {
+    if (name.toLowerCase().includes(key.toLowerCase())) {
+      return color;
+    }
+  }
+  return "from-slate-500 to-slate-600"; // Default color
+};
 
 export default function HeroSection() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   // Generate stable particle positions that match server and client
   const particles = useMemo(() => {
     // Use a seeded random function for consistent results
@@ -23,6 +85,73 @@ export default function HeroSection() {
       delay: seededRandom() * 5,
     }));
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch categories and courses in parallel
+        const [categoriesResponse, coursesResponse] = await Promise.all([
+          apiClient.get(ENDPOINTS.categories.get()),
+          apiClient.get(ENDPOINTS.courses.get()),
+        ]);
+
+        // Handle categories response
+        let categoriesData: Category[] = [];
+        if (categoriesResponse.success && categoriesResponse.data) {
+          if (Array.isArray(categoriesResponse.data.categories)) {
+            categoriesData = categoriesResponse.data.categories;
+          } else if (Array.isArray(categoriesResponse.data)) {
+            categoriesData = categoriesResponse.data;
+          } else if (Array.isArray(categoriesResponse)) {
+            categoriesData = categoriesResponse;
+          }
+        }
+
+        // Handle courses response
+        let coursesData: Course[] = [];
+        if (coursesResponse.success && coursesResponse.data) {
+          if (Array.isArray(coursesResponse.data.courses)) {
+            coursesData = coursesResponse.data.courses;
+          } else if (Array.isArray(coursesResponse.data)) {
+            coursesData = coursesResponse.data;
+          } else if (Array.isArray(coursesResponse)) {
+            coursesData = coursesResponse;
+          }
+        }
+
+        setCategories(categoriesData);
+        setCourses(coursesData);
+      } catch (err: any) {
+        console.error("Failed to fetch categories/courses:", err);
+        setError("Failed to load categories");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Map categories with course counts
+  const categoryCards = useMemo(() => {
+    return categories.map((category) => {
+      const courseCount = courses.filter(
+        (course) => 
+          course.categoryId === category.categoryId || 
+          course.category?.categoryId === category.categoryId
+      ).length;
+
+      return {
+        title: category.name,
+        count: courseCount,
+        color: getCategoryColor(category.name),
+        icon: getCategoryIcon(category.name),
+        categoryId: category.categoryId,
+      };
+    }).slice(0, 4); // Show only first 4 categories
+  }, [categories, courses]);
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-slate-900">
@@ -193,32 +322,61 @@ export default function HeroSection() {
                     </h3>
 
                     <div className="space-y-4">
-                        {[
-                          { title: "Communication Labs", count: "18+", color: "from-purple-500 to-pink-500", icon: "🗣️" },
-                          { title: "Leadership Tracks", count: "14+", color: "from-amber-500 to-orange-500", icon: "🧭" },
-                          { title: "Customer Experience", count: "9+", color: "from-emerald-500 to-teal-500", icon: "🤝" },
-                          { title: "Sales & Presentation", count: "12+", color: "from-blue-600 to-cyan-500", icon: "🎤" },
-                        ].map((item, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.5 + idx * 0.1 }}
-                          className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
-                        >
-                          <div className={`flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                            {item.icon}
-                  </div>
-                          <div className="flex-1">
-                            <h4 className="text-white font-semibold group-hover:text-[color:var(--brand-cyan)] transition-colors">
-                              {item.title}
-                            </h4>
-                            <p className="text-sm text-blue-200">{item.count} programmes</p>
-                </div>
-                          <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                        </motion.div>
-                      ))}
-              </div>
+                      {isLoading ? (
+                        // Loading skeleton
+                        [1, 2, 3, 4].map((idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10"
+                          >
+                            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-white/10 animate-pulse" />
+                            <div className="flex-1">
+                              <div className="h-5 w-32 bg-white/10 rounded animate-pulse mb-2" />
+                              <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+                            </div>
+                            <Loader2 className="w-5 h-5 text-white/30 animate-spin" />
+                          </div>
+                        ))
+                      ) : error ? (
+                        // Error state
+                        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                          <p className="text-sm text-red-200 text-center">{error}</p>
+                        </div>
+                      ) : categoryCards.length === 0 ? (
+                        // Empty state
+                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                          <p className="text-sm text-blue-200 text-center">No categories available</p>
+                        </div>
+                      ) : (
+                        // Category cards
+                        categoryCards.map((item, idx) => (
+                          <Link
+                            key={item.categoryId}
+                            href={`/courses?category=${item.categoryId}`}
+                          >
+                            <motion.div
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.5 + idx * 0.1 }}
+                              className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
+                            >
+                              <div className={`flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                {item.icon}
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-white font-semibold group-hover:text-[color:var(--brand-cyan)] transition-colors">
+                                  {item.title}
+                                </h4>
+                                <p className="text-sm text-blue-200">
+                                  {item.count} {item.count === 1 ? 'programme' : 'programmes'}
+                                </p>
+                              </div>
+                              <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                            </motion.div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
 
                     <div className="pt-4 border-t border-white/10">
                       <p className="text-sm text-blue-100 text-center">
@@ -238,7 +396,13 @@ export default function HeroSection() {
                 className="absolute -bottom-8 -left-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-6 shadow-2xl max-w-[200px]"
               >
                 <div className="text-white">
-                  <div className="text-3xl font-bold">40+</div>
+                  <div className="text-3xl font-bold">
+                    {isLoading ? (
+                      <Loader2 className="w-8 h-8 animate-spin" />
+                    ) : (
+                      `${courses.length}+`
+                    )}
+                  </div>
                   <div className="text-sm text-white/90">Active Courses</div>
             </div>
               </motion.div>
