@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { EnrollmentCTA } from "./enrollment-cta";
+import { ContactForm } from "./contact-form";
 
 interface CourseDetailPageProps {
   params: Promise<{ id: string }>;
@@ -308,6 +309,12 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                     </div>
                   </div>
                 </div>
+
+                {/* Contact Form */}
+                <ContactForm 
+                  courseId={fullCourseDetails?.courseId || id} 
+                  courseName={course.title}
+                />
               </div>
             </div>
           </div>

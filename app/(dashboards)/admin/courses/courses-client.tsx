@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, Loader2, AlertCircle, CheckCircle, CheckCircle2, ImageIcon, FileText, HelpCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MoreVertical, Eye, Loader2, AlertCircle, CheckCircle, CheckCircle2, ImageIcon, FileText, HelpCircle, Filter } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type Course = {
@@ -42,6 +42,7 @@ type Course = {
   thumbnailUrl?: string | null;
   createdAt: string;
   updatedAt: string;
+  type?: "Guided" | "SelfPaced";
   category?: {
     categoryId: string;
     name: string;
@@ -58,6 +59,12 @@ type Course = {
   quizzes?: any[];
 };
 
+type Category = {
+  categoryId: string;
+  name: string;
+  description: string;
+};
+
 interface CoursesPageClientProps {
   initialCourses: Course[];
   error: string | null;
@@ -66,12 +73,17 @@ interface CoursesPageClientProps {
 export function CoursesPageClient({ initialCourses, error: initialError }: CoursesPageClientProps) {
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [allCourses, setAllCourses] = useState<Course[]>(initialCourses); // Store all courses for counting
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
 
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -83,20 +95,80 @@ export function CoursesPageClient({ initialCourses, error: initialError }: Cours
     }
   }, [successMessage]);
 
-  // Fetch courses from API (for refresh)
-  const fetchCourses = async () => {
+  // Fetch categories and all courses for counting
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const response = await apiClient.get(ENDPOINTS.categories.get());
+        if (response.success && response.data && Array.isArray(response.data.categories)) {
+          setCategories(response.data.categories);
+        } else if (response.data && Array.isArray(response.data)) {
+          setCategories(response.data);
+        } else if (Array.isArray(response)) {
+          setCategories(response);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch categories:", err);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    const fetchAllCourses = async () => {
+      try {
+        const response = await apiClient.get(ENDPOINTS.courses.get());
+        let fetchedCourses: Course[] = [];
+        if (response.success && response.data && Array.isArray(response.data.courses)) {
+          fetchedCourses = response.data.courses;
+        } else if (response.data && Array.isArray(response.data.courses)) {
+          fetchedCourses = response.data.courses;
+        } else if (Array.isArray(response)) {
+          fetchedCourses = response;
+        }
+        setAllCourses(fetchedCourses);
+      } catch (err: any) {
+        console.error("Failed to fetch all courses:", err);
+      }
+    };
+
+    fetchCategories();
+    fetchAllCourses();
+  }, []);
+
+  // Fetch courses from API with filtering
+  const fetchCourses = async (categoryId?: string | null, type?: string | null) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINTS.courses.get());
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (categoryId) {
+        params.append("categoryId", categoryId);
+      }
+      if (type) {
+        params.append("type", type);
+      }
+      
+      const url = params.toString() 
+        ? `${ENDPOINTS.courses.get()}?${params.toString()}`
+        : ENDPOINTS.courses.get();
+      
+      const response = await apiClient.get(url);
+      let fetchedCourses: Course[] = [];
       if (response.success && response.data && Array.isArray(response.data.courses)) {
-        setCourses(response.data.courses);
+        fetchedCourses = response.data.courses;
       } else if (response.data && Array.isArray(response.data.courses)) {
-        setCourses(response.data.courses);
+        fetchedCourses = response.data.courses;
       } else if (Array.isArray(response)) {
-        setCourses(response);
-      } else {
-        setCourses([]);
+        fetchedCourses = response;
+      }
+      
+      setCourses(fetchedCourses);
+      
+      // Update all courses for counting when no filters are applied
+      if (!selectedCategory && !selectedType) {
+        setAllCourses(fetchedCourses);
       }
     } catch (err: any) {
       console.error("Failed to fetch courses:", err);
@@ -107,7 +179,13 @@ export function CoursesPageClient({ initialCourses, error: initialError }: Cours
     }
   };
 
-  // Filter courses based on search
+  // Fetch courses when filters change
+  useEffect(() => {
+    fetchCourses(selectedCategory, selectedType);
+  }, [selectedCategory, selectedType]);
+
+  // Filter courses based on search (client-side filtering for search term only)
+  // Category and type filtering is handled by backend
   const filteredCourses = courses.filter(
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -194,20 +272,80 @@ export function CoursesPageClient({ initialCourses, error: initialError }: Cours
             </div>
           )}
 
-          {/* Search Section */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search courses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          {/* Filters Section */}
+          <div className="space-y-4">
+            {/* Category Tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span>Filter by category:</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant={selectedCategory === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(null)}
+                  className="rounded-full"
+                >
+                  All Courses ({allCourses.length})
+                </Button>
+                {categories.map((category) => {
+                  const count = allCourses.filter(c => c.category?.categoryId === category.categoryId).length;
+                  return (
+                    <Button
+                      key={category.categoryId}
+                      variant={selectedCategory === category.categoryId ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category.categoryId)}
+                      className="rounded-full"
+                    >
+                      {category.name} ({count})
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredCourses.length} {filteredCourses.length === 1 ? "course" : "courses"} found
+
+            {/* Type Dropdown and Search */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Filter className="h-4 w-4" />
+                      Type: {selectedType === null ? "All" : selectedType === "Guided" ? "Guided" : "Self-Paced"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => setSelectedType(null)}>
+                      All Types
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSelectedType("Guided")}>
+                      Guided
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSelectedType("SelfPaced")}>
+                      Self-Paced
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="flex items-center gap-4 flex-1 max-w-md">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search courses..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
+                  {filteredCourses.length} {filteredCourses.length === 1 ? "course" : "courses"}
+                </div>
+              </div>
             </div>
           </div>
 

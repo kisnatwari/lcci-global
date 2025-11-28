@@ -19,6 +19,7 @@ import {
   LogOut,
   Building2,
   Tag,
+  GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -55,6 +56,11 @@ const menuItems = [
     title: "Users",
     icon: Users,
     href: "/admin/users",
+  },
+  {
+    title: "SQA Students",
+    icon: GraduationCap,
+    href: "/admin/sqa-students",
   },
 ];
 

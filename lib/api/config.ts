@@ -84,4 +84,7 @@ export const ENDPOINTS = {
     stats: {
         get: () => "/api/stats", // GET: Get admin dashboard statistics
     },
+    sqaStudents: {
+        get: () => "/api/sqa-students", // GET: List all SQA students
+    },
 }

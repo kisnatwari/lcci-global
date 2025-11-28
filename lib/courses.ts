@@ -4,7 +4,16 @@ import { API_BASE_URL } from "./api/config";
 // Map API course to website Course format
 export function mapApiCourseToWebsiteCourse(apiCourse: any): Course {
   // Determine type - default to "guided" if not specified
-  const courseType: "guided" | "self-paced" = apiCourse.type || "guided";
+  // Map API types (Guided/SelfPaced) to frontend types (guided/self-paced)
+  let courseType: "guided" | "self-paced" = "guided";
+  if (apiCourse.type) {
+    const apiType = String(apiCourse.type).toLowerCase();
+    if (apiType === "selfpaced" || apiType === "self-paced") {
+      courseType = "self-paced";
+    } else {
+      courseType = "guided";
+    }
+  }
   
   // Format duration - convert days to weeks or keep as string
   const formatDuration = (days: number): string => {
