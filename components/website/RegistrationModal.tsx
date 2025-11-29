@@ -102,6 +102,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
           password,
           userType: "Training_Site_Student",
           username: fullName,
+          fullName: fullName, // Additional fullName field for SQA and Cambridge
           centreUniqueIdentifier: centreUniqueIdentifier === "Cambridge" 
             ? trainingCentreId.trim() 
             : centreUniqueIdentifier, // For SQA, send "SQA", for Cambridge send the training centre ID
@@ -187,7 +188,6 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
         email,
         password,
         userType: "Customer",
-        username: fullName,
         centreUniqueIdentifier: null,
         trainingCentreId: null,
         otp,

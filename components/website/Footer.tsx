@@ -1,15 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
-import { Mail, Phone, MapPin, ArrowRight, ShieldCheck } from "lucide-react";
-import AdminLoginModal from "./AdminLoginModal";
+import { Mail, Phone, MapPin, ArrowRight, ShieldCheck, Facebook, Linkedin, Youtube } from "lucide-react";
+import { apiClient, ENDPOINTS } from "@/lib/api";
+
+interface Category {
+  categoryId: string;
+  name: string;
+  description: string;
+}
 
 export default function Footer() {
-  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.get(ENDPOINTS.categories.get());
+        
+        // Handle different response structures
+        let categoriesData: Category[] = [];
+        if (response.success && response.data) {
+          if (Array.isArray(response.data.categories)) {
+            categoriesData = response.data.categories;
+          } else if (Array.isArray(response.data)) {
+            categoriesData = response.data;
+          } else if (Array.isArray(response)) {
+            categoriesData = response;
+          }
+        }
+
+        // Shuffle and take 4 random categories
+        const shuffled = [...categoriesData].sort(() => Math.random() - 0.5);
+        setCategories(shuffled.slice(0, 4));
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        // Fallback to empty array on error
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   return (
     <>
       <footer className="relative bg-slate-900 text-white">
@@ -29,16 +64,33 @@ export default function Footer() {
               Award-winning qualifications in Business, IT, English and Professional Skills since 1887.
             </p>
             <div className="flex gap-3">
-              {['facebook', 'twitter', 'linkedin', 'instagram'].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
-                >
-                  <span className="sr-only">{social}</span>
-                  <div className="w-5 h-5 bg-white rounded-sm" />
-                </a>
-              ))}
+              <a
+                href="https://www.facebook.com/LCCIGQ.NP"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/lcci-gq/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://www.youtube.com/@lcciglobalqualifications274"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                aria-label="YouTube"
+              >
+                <Youtube className="w-5 h-5 text-white" />
+              </a>
           </div>
           </motion.div>
 
@@ -79,22 +131,37 @@ export default function Footer() {
           >
             <h4 className="text-lg font-bold mb-6">Programmes</h4>
             <ul className="space-y-3">
-              {[
-                { label: "Guided Courses", href: "/courses?type=guided" },
-                { label: "Self-Paced Courses", href: "/courses?type=self-paced" },
-                { label: "Communication Labs", href: "/courses" },
-                { label: "Leadership Tracks", href: "/courses" },
-              ].map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="group inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"
-                  >
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    {link.label}
-                </Link>
-              </li>
-              ))}
+              {categories.length > 0 ? (
+                categories.map((category) => (
+                  <li key={category.categoryId}>
+                    <Link
+                      href={`/courses?category=${category.categoryId}`}
+                      className="group inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"
+                    >
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      {category.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                // Fallback while loading or if no categories
+                [
+                  { label: "Guided Courses", href: "/courses?type=guided" },
+                  { label: "Self-Paced Courses", href: "/courses?type=self-paced" },
+                  { label: "Communication Labs", href: "/courses" },
+                  { label: "Leadership Tracks", href: "/courses" },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="group inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"
+                    >
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      {link.label}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </motion.div>
 
@@ -135,10 +202,15 @@ export default function Footer() {
           </div>
           <div>
                   <div className="text-sm text-blue-300 mb-1">Address</div>
-                  <p className="text-white leading-relaxed text-sm">
+                  <a 
+                    href="https://maps.app.goo.gl/fiajArULXFvQ13NM6"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white hover:text-[color:var(--brand-cyan)] transition-colors leading-relaxed text-sm block"
+                  >
                     Ekantakuna Marg, Jawalakhel<br />
                     Lalitpur, Nepal - 44700
-                  </p>
+                  </a>
                 </div>
               </li>
             </ul>
@@ -158,20 +230,18 @@ export default function Footer() {
               <a href="#" className="text-blue-200 hover:text-white transition-colors">
                 Terms of Service
               </a>
-              <button
-                onClick={() => setIsAdminLoginOpen(true)}
+              <Link
+                href="/admin-login"
                 className="inline-flex items-center gap-2 text-blue-200 hover:text-white transition-colors"
               >
                 <ShieldCheck className="w-4 h-4" />
                 Admin Login
-              </button>
+              </Link>
           </div>
         </div>
         </div>
       </div>
     </footer>
-    
-    <AdminLoginModal isOpen={isAdminLoginOpen} onClose={() => setIsAdminLoginOpen(false)} />
     </>
   );
 }

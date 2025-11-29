@@ -75,6 +75,12 @@ export default function EditCoursePage() {
       const response = await apiClient.get(ENDPOINTS.courses.getById(courseId));
       const course = response.data || response;
       
+      console.log("Fetched course price:", { 
+        rawPrice: course.price, 
+        type: typeof course.price,
+        stringified: course.price?.toString() 
+      });
+      
       setFormData({
         name: course.name || "",
         categoryId: course.category?.categoryId || "",
@@ -154,6 +160,9 @@ export default function EditCoursePage() {
     setSuccessMessage(null);
 
     try {
+      // Parse price as integer to avoid any floating point precision issues
+      const priceValue = formData.price.trim() ? Math.round(parseFloat(formData.price)) : 0;
+      
       const payload = {
         name: formData.name.trim(),
         categoryId: formData.categoryId,
@@ -163,7 +172,7 @@ export default function EditCoursePage() {
         requirements: (formData.requirements && formData.requirements.trim()) || undefined,
         level: formData.level,
         type: formData.type,
-        price: parseFloat(formData.price) || 0,
+        price: priceValue,
         duration: parseInt(formData.duration) || 0,
         thumbnailUrl: formData.thumbnailUrl,
         autoEnrollFor: formData.autoEnrollFor.length > 0 ? formData.autoEnrollFor : undefined,
@@ -171,7 +180,18 @@ export default function EditCoursePage() {
         ...(formData.type === "SelfPaced" && { lcciGQCreditPoints: parseInt(formData.lcciGQCreditPoints) || 0 }),
       };
 
+      console.log("Submitting price:", { 
+        input: formData.price, 
+        parsed: priceValue, 
+        payload: payload.price 
+      });
+
       const response = await apiClient.put(ENDPOINTS.courses.update(courseId), payload);
+      
+      console.log("Update response:", { 
+        response, 
+        returnedPrice: response.data?.price || response.price 
+      });
       console.log("Update response:", response);
       setSuccessMessage("Course updated successfully!");
       

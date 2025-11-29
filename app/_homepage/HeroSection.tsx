@@ -253,10 +253,15 @@ export default function HeroSection() {
                 </motion.div>
                 
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <button className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-md px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300">
+                  <a
+                    href="https://youtu.be/m2Pck7Vt4Ls?si=nXJQNgD79dK54kgG"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-md px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300"
+                  >
                     <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     Watch Overview
-                  </button>
+                  </a>
                 </motion.div>
             </div>
 

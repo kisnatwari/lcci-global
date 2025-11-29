@@ -20,6 +20,7 @@ import {
   Building2,
   Tag,
   GraduationCap,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,6 +62,11 @@ const menuItems = [
     title: "SQA Students",
     icon: GraduationCap,
     href: "/admin/sqa-students",
+  },
+  {
+    title: "Blogs",
+    icon: FileText,
+    href: "/admin/blogs",
   },
 ];
 

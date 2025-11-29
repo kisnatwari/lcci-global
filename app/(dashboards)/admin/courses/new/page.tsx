@@ -133,7 +133,7 @@ export default function NewCoursePage() {
         requirements: (formData.requirements && formData.requirements.trim()) || undefined,
         level: formData.level,
         type: formData.type,
-        price: parseFloat(formData.price) || 0,
+        price: Math.round(parseFloat(formData.price) || 0), // Round to nearest integer to avoid precision issues
         duration: parseInt(formData.duration) || 0,
         thumbnailUrl: formData.thumbnailUrl,
         autoEnrollFor: formData.autoEnrollFor.length > 0 ? formData.autoEnrollFor : undefined,

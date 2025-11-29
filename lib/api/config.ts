@@ -87,4 +87,12 @@ export const ENDPOINTS = {
     sqaStudents: {
         get: () => "/api/sqa-students", // GET: List all SQA students
     },
+    blogs: {
+        post: () => "/api/cms/blogs", // POST: Create a new blog
+        get: () => "/api/cms/blogs", // GET: List all blogs
+        getById: (id: string) => `/api/cms/blogs/${id}`, // GET: Get blog by ID
+        update: (id: string) => `/api/cms/blogs/${id}`, // PUT: Update blog by ID
+        delete: (id: string) => `/api/cms/blogs/${id}`, // DELETE: Delete blog by ID
+        getBySlug: (slug: string) => `/api/cms/blogs/slug/${slug}`, // GET: Get blog by slug
+    },
 }

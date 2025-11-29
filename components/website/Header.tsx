@@ -31,6 +31,7 @@ import { isTokenExpired } from "@/lib/auth/token";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },
+  { href: "/blogs", label: "Blogs" },
   { href: "/about", label: "About" },
   { href: "/contact-us", label: "Contact" },
 ];
