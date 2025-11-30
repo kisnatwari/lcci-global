@@ -95,21 +95,23 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
         setIsLoading(true);
         
         // Register directly without OTP
-        // For Cambridge: send training centre ID
-        // For SQA: send centre type (SQA) and SCN number with key "scnNo"
+        // For Cambridge: send training centre ID as centreUniqueIdentifier
+        // For SQA: send only scnNo, do NOT send centreUniqueIdentifier
         const registerPayload: any = {
           email,
           password,
           userType: "Training_Site_Student",
           username: fullName,
           fullName: fullName, // Additional fullName field for SQA and Cambridge
-          centreUniqueIdentifier: centreUniqueIdentifier === "Cambridge" 
-            ? trainingCentreId.trim() 
-            : centreUniqueIdentifier, // For SQA, send "SQA", for Cambridge send the training centre ID
           otp: "", // Empty OTP for training centre students
         };
         
-        // Add SCN number for SQA students
+        // For Cambridge: send training centre ID as centreUniqueIdentifier
+        if (centreUniqueIdentifier === "Cambridge" && trainingCentreId.trim()) {
+          registerPayload.centreUniqueIdentifier = trainingCentreId.trim();
+        }
+        
+        // For SQA: send only scnNo, do NOT send centreUniqueIdentifier
         if (centreUniqueIdentifier === "SQA" && scnNumber.trim()) {
           registerPayload.scnNo = scnNumber.trim();
         }
