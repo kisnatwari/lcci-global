@@ -37,6 +37,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '**.digitaloceanspaces.com',
       },
+      // Backend API server
+      {
+        protocol: 'http',
+        hostname: '147.93.28.223',
+        port: '9010',
+      },
     ],
     // Allow unoptimized images for external domains not in the list
     unoptimized: false,

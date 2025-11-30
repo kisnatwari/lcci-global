@@ -209,8 +209,8 @@ export function RichTextEditor({
       }
 
       const data = await response.json();
-      // Handle different response structures
-      const imageUrl = data.url || data.data?.url || (data.data && typeof data.data === 'string' ? data.data : null);
+      // Handle API response structure: { success, message, data: { url, fileName } }
+      const imageUrl = data.data?.url || data.url || (data.data && typeof data.data === 'string' ? data.data : null);
 
       if (!imageUrl) {
         throw new Error('No URL returned from upload');

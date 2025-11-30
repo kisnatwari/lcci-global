@@ -60,8 +60,7 @@ export default function CourseMaterialsPage() {
   const [deletingMaterial, setDeletingMaterial] = useState<CourseMaterial | null>(null);
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
-    fileUrl: "",
+    url: "",
     type: "video" as "video" | "pdf" | "doc" | "link",
     orderIndex: "",
   });
@@ -136,9 +135,13 @@ export default function CourseMaterialsPage() {
     try {
       const response = await apiClient.upload(ENDPOINTS.upload.file(), file);
       
-      if (response.url) {
-        setFormData({ ...formData, fileUrl: response.url });
-        setUploadedFileName(response.fileName || file.name);
+      // Handle API response structure: { success, message, data: { url, fileName } }
+      const url = response.data?.url || response.url;
+      const fileName = response.data?.fileName || response.fileName;
+      
+      if (url) {
+        setFormData({ ...formData, url: url });
+        setUploadedFileName(fileName || file.name);
         setSuccessMessage("File uploaded successfully!");
       } else {
         setError("Upload failed: No URL returned");
@@ -170,8 +173,7 @@ export default function CourseMaterialsPage() {
       setEditingMaterial(material);
       setFormData({
         title: material.title || "",
-        description: material.description || "",
-        fileUrl: material.fileUrl || "",
+        url: material.url || material.fileUrl || "",
         type: material.type,
         orderIndex: material.orderIndex?.toString() || "",
       });
@@ -179,8 +181,7 @@ export default function CourseMaterialsPage() {
       setEditingMaterial(null);
       setFormData({
         title: "",
-        description: "",
-        fileUrl: "",
+        url: "",
         type: "video",
         orderIndex: "",
       });
@@ -195,8 +196,15 @@ export default function CourseMaterialsPage() {
       return;
     }
 
-    if (!formData.fileUrl || !formData.fileUrl.trim()) {
-      setError("Material file URL is required");
+    if (!formData.url || !formData.url.trim()) {
+      setError("Material URL is required");
+      return;
+    }
+
+    // Parse orderIndex to number, default to 0 if empty
+    const orderIndex = formData.orderIndex ? parseInt(formData.orderIndex, 10) : 0;
+    if (isNaN(orderIndex)) {
+      setError("Order index must be a valid number");
       return;
     }
 
@@ -207,9 +215,9 @@ export default function CourseMaterialsPage() {
     try {
       const payload: CreateMaterialPayload = {
         title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
-        fileUrl: formData.fileUrl.trim(),
         type: formData.type,
+        url: formData.url.trim(),
+        orderIndex: orderIndex,
       };
 
       if (editingMaterial) {
@@ -231,8 +239,7 @@ export default function CourseMaterialsPage() {
         setEditingMaterial(null);
         setFormData({
           title: "",
-          description: "",
-          fileUrl: "",
+          url: "",
           type: "video",
           orderIndex: "",
         });
@@ -457,7 +464,7 @@ export default function CourseMaterialsPage() {
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground truncate max-w-xs mt-1">
-                            {material.fileUrl}
+                            {material.url || material.fileUrl}
                           </div>
                         </div>
                       </TableCell>
@@ -512,7 +519,7 @@ export default function CourseMaterialsPage() {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => window.open(material.fileUrl, '_blank')}
+                              onClick={() => window.open(material.url || material.fileUrl, '_blank')}
                               className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
@@ -620,26 +627,6 @@ export default function CourseMaterialsPage() {
                 <p className="text-xs text-slate-500">Enter a descriptive title for this material</p>
               </div>
 
-              {/* Description Field */}
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-slate-500" />
-                  Description
-                </Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => {
-                    setFormData({ ...formData, description: e.target.value });
-                    setError(null);
-                  }}
-                  placeholder="e.g., PDF covering basics of financial management"
-                  disabled={isSaving}
-                  className="h-11 text-base"
-                />
-                <p className="text-xs text-slate-500">Optional description for this material</p>
-              </div>
-
               {/* Material Type Selection - Icon Cards */}
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -692,7 +679,7 @@ export default function CourseMaterialsPage() {
                             // Clear uploaded file when changing type
                             if (formData.type !== type.value) {
                               setUploadedFileName(null);
-                              setFormData({ ...formData, type: type.value, fileUrl: "" });
+                              setFormData({ ...formData, type: type.value, url: "" });
                             } else {
                               setFormData({ ...formData, type: type.value });
                             }
@@ -745,11 +732,11 @@ export default function CourseMaterialsPage() {
                 </div>
               </div>
 
-              {/* URL Field with File Upload */}
+              {/* Material URL Field with File Upload */}
               <div className="space-y-2">
                 <Label htmlFor="url" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                   <Link className="w-4 h-4 text-slate-500" />
-                  Material URL
+                  URL
                   <span className="text-red-500">*</span>
                 </Label>
                 
@@ -805,7 +792,7 @@ export default function CourseMaterialsPage() {
                             type="button"
                             onClick={() => {
                               setUploadedFileName(null);
-                              setFormData({ ...formData, fileUrl: "" });
+                              setFormData({ ...formData, url: "" });
                             }}
                             className="ml-1 p-1 hover:bg-emerald-100 rounded"
                           >
@@ -820,13 +807,13 @@ export default function CourseMaterialsPage() {
                   </div>
                 )}
                 
-                {/* File URL Input */}
+                {/* Material URL Input */}
                 <Input
-                  id="fileUrl"
+                  id="url"
                   type="url"
-                  value={formData.fileUrl}
+                  value={formData.url}
                   onChange={(e) => {
-                    setFormData({ ...formData, fileUrl: e.target.value });
+                    setFormData({ ...formData, url: e.target.value });
                     setError(null);
                   }}
                   placeholder={formData.type === "link" ? "https://example.com/material" : "Upload file or enter URL"}
@@ -858,7 +845,7 @@ export default function CourseMaterialsPage() {
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={!formData.title.trim() || !formData.fileUrl.trim() || isSaving}
+              disabled={!formData.title.trim() || !formData.url.trim() || isSaving}
               className="h-11 px-6 bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white font-semibold"
             >
               {isSaving ? (

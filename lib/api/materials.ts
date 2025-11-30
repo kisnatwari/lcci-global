@@ -16,16 +16,15 @@ export interface CourseMaterial {
 
 export interface CreateMaterialPayload {
   title: string;
-  description?: string;
-  fileUrl: string;
   type: "video" | "pdf" | "doc" | "link";
+  url: string;
+  orderIndex: number;
 }
 
 export interface UpdateMaterialPayload {
   title?: string;
-  description?: string;
-  fileUrl?: string;
   type?: "video" | "pdf" | "doc" | "link";
+  url?: string;
   orderIndex?: number;
 }
 

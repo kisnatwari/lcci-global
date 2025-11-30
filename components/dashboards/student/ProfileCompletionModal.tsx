@@ -95,13 +95,13 @@ export function ProfileCompletionModal({
         try {
           const uploadResponse = await apiClient.upload(ENDPOINTS.upload.file(), selectedFile);
           
-          // Handle different response structures
-          if (uploadResponse.url) {
-            finalAvatarUrl = uploadResponse.url;
-          } else if (uploadResponse.data && uploadResponse.data.url) {
-            finalAvatarUrl = uploadResponse.data.url;
+          // Handle API response structure: { success, message, data: { url, fileName } }
+          const uploadedUrl = uploadResponse.data?.url || uploadResponse.url;
+          
+          if (uploadedUrl) {
+            finalAvatarUrl = uploadedUrl;
           } else {
-            throw new Error("Invalid upload response");
+            throw new Error("Invalid upload response: No URL returned");
           }
         } catch (uploadErr: any) {
           console.error("Avatar upload error:", uploadErr);
