@@ -38,11 +38,23 @@ export default function EditBlogPage() {
       const response = await apiClient.get(ENDPOINTS.blogs.getById(blogId));
       const blog = response.data || response;
       
+      // Extract author name from object if needed
+      let authorName = "";
+      if (typeof blog.author === 'string') {
+        authorName = blog.author;
+      } else if (blog.author?.profile?.name) {
+        authorName = blog.author.profile.name;
+      } else if (blog.author?.profile?.fullName) {
+        authorName = blog.author.profile.fullName;
+      } else if (blog.author?.userId) {
+        authorName = blog.author.userId;
+      }
+
       setFormData({
         title: blog.title || "",
         slug: blog.slug || "",
         content: blog.content || "",
-        author: blog.author || "",
+        author: authorName,
       });
     } catch (err: any) {
       console.error("Failed to fetch blog:", err);
@@ -101,7 +113,6 @@ export default function EditBlogPage() {
       };
 
       const response = await apiClient.put(ENDPOINTS.blogs.update(blogId), payload);
-      console.log("Update response:", response);
       setSuccessMessage("Blog updated successfully!");
       
       // Redirect to blogs list after a short delay

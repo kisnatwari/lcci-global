@@ -2,31 +2,17 @@
 
 import { motion } from "framer-motion";
 import { HelpCircle } from "lucide-react";
-
-const faqs = [
-  {
-    q: "What qualifications does LCCI offer?",
-    a: "LCCI specialises in communication, leadership, customer experience and other soft-skills programmes. From executive communication labs to leadership presence accelerators and coaching certifications, our stackable pathways support learners throughout their professional journey.",
-  },
-  {
-    q: "Are LCCI certificates recognized globally?",
-    a: "Yes, LCCI qualifications are recognized by employers, universities and professional bodies in over 100 countries. Our certificates have been trusted since 1887 and are valued for their practical, industry-relevant content that prepares learners for real-world challenges.",
-  },
-  {
-    q: "What is the difference between guided and self-paced courses?",
-    a: "Guided programmes feature instructor-led sessions with fixed schedules, regular assessments and cohort-based learning—ideal for schools and training centers. Self-paced courses allow you to learn on your own timeline with access to all materials and support resources—perfect for working professionals balancing multiple commitments.",
-  },
-  {
-    q: "How can my institution partner with LCCI?",
-    a: "We welcome partnerships with schools, colleges and training providers worldwide. Contact our team to learn about centre approval, programme delivery models, tutor training, marketing support and how we can help you enhance your academic portfolio with internationally-recognized qualifications.",
-  },
-  {
-    q: "What support is available for learners?",
-    a: "All learners receive access to comprehensive study materials, online resources and expert support throughout their programme. Guided course students benefit from live instructor sessions, while self-paced learners can reach our support team via email. We're committed to helping every learner succeed.",
-  },
-];
+import { useEffect, useState } from "react";
+import { getActiveFAQs, type FAQ } from "@/lib/faqs/static-store";
 
 export default function FaqSection() {
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+
+  useEffect(() => {
+    // Load FAQs from static store (will be replaced with API call later)
+    const activeFAQs = getActiveFAQs();
+    setFaqs(activeFAQs);
+  }, []);
   return (
     <section className="relative py-24 bg-slate-50">
 
@@ -52,31 +38,38 @@ export default function FaqSection() {
 
         {/* FAQ List */}
         <div className="max-w-4xl mx-auto space-y-4">
-          {faqs.map((faq, idx) => (
-            <motion.details
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.05 }}
-              className="group bg-white rounded-2xl border-2 border-slate-200 shadow-lg hover:shadow-xl hover:border-[color:var(--brand-blue)]/30 transition-all duration-300 overflow-hidden"
-            >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 md:px-8 py-5 md:py-6 text-base md:text-lg font-bold text-slate-900 hover:text-[color:var(--brand-blue)] transition-colors">
-                <span className="flex-1 pr-4">{faq.q}</span>
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] group-hover:scale-110 flex items-center justify-center text-white shadow-lg transition-transform">
-                  <span className="text-xl group-open:hidden">+</span>
-                  <span className="text-xl hidden group-open:inline">−</span>
+          {faqs.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No FAQs available at the moment.</p>
+            </div>
+          ) : (
+            faqs.map((faq, idx) => (
+              <motion.details
+                key={faq.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.05 }}
+                className="group bg-white rounded-2xl border-2 border-slate-200 shadow-lg hover:shadow-xl hover:border-[color:var(--brand-blue)]/30 transition-all duration-300 overflow-hidden"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 md:px-8 py-5 md:py-6 text-base md:text-lg font-bold text-slate-900 hover:text-[color:var(--brand-blue)] transition-colors">
+                  <span className="flex-1 pr-4">{faq.question}</span>
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] group-hover:scale-110 flex items-center justify-center text-white shadow-lg transition-transform">
+                    <span className="text-xl group-open:hidden">+</span>
+                    <span className="text-xl hidden group-open:inline">−</span>
+                  </div>
+                </summary>
+                <div className="px-6 md:px-8 pb-6 pt-2">
+                  <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-6">
+                    <p className="text-sm md:text-base text-slate-700 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </div>
                 </div>
-              </summary>
-              <div className="px-6 md:px-8 pb-6 pt-2">
-                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-6">
-                  <p className="text-sm md:text-base text-slate-700 leading-relaxed">
-                    {faq.a}
-                  </p>
-                </div>
-              </div>
-            </motion.details>
-          ))}
+              </motion.details>
+            ))
+          )}
         </div>
 
         {/* Bottom CTA */}

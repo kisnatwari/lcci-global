@@ -45,7 +45,6 @@ export default async function CoursesPage() {
   try {
     const apiClient = await getServerApiClient();
     const response = await apiClient.get(ENDPOINTS.courses.get());
-    console.log(response.data);
     if (response.success && response.data && Array.isArray(response.data.courses)) {
       courses = response.data.courses;
     } else if (response.data && Array.isArray(response.data.courses)) {

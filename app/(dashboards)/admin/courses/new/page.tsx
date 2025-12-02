@@ -142,7 +142,6 @@ export default function NewCoursePage() {
       };
 
       const response = await apiClient.post(ENDPOINTS.courses.post(), payload);
-      console.log("Create response:", response);
       setSuccessMessage("Course created successfully!");
       
       // Redirect to courses list after a short delay

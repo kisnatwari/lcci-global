@@ -51,16 +51,12 @@ export default function StudentEnrollmentsPage() {
 
   // Filter enrollments
   const filteredEnrollments = enrollments.filter((enrollment) => {
-    const courseName = enrollment.course?.name || enrollment.course?.title || "";
-    const categoryName = enrollment.course?.category?.name || "";
-    const matchesSearch = courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      categoryName.toLowerCase().includes(searchTerm.toLowerCase());
+    const courseName = enrollment.course?.name || "";
+    const matchesSearch = courseName.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || enrollment.status === statusFilter;
-    const courseLevel = enrollment.course?.level || "";
-    const matchesLevel = levelFilter === "all" || courseLevel === levelFilter;
 
-    return matchesSearch && matchesStatus && matchesLevel;
+    return matchesSearch && matchesStatus;
   });
 
   const formatDate = (dateString: string | null) => {
@@ -113,13 +109,12 @@ export default function StudentEnrollmentsPage() {
     }
     // If no progress field, calculate based on completion status
     if (enrollment.status === "completed") return 100;
-    if (enrollment.status === "in_progress") return 50;
-    return 0;
+    return enrollment.progress || 0;
   };
 
   // Get enrollment ID (handle both id and enrollmentId)
   const getEnrollmentId = (enrollment: Enrollment): string => {
-    return enrollment.enrollmentId || enrollment.id;
+    return enrollment.enrollmentId || enrollment.id || "";
   };
 
   if (isLoading) {
@@ -212,12 +207,9 @@ export default function StudentEnrollmentsPage() {
       {/* Enrollments Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredEnrollments.map((enrollment) => {
-          console.log(enrollment);
           const enrollmentId = getEnrollmentId(enrollment);
           const progress = getProgress(enrollment);
-          const courseName = enrollment.course?.name || enrollment.course?.title || "Untitled Course";
-          const categoryName = enrollment.course?.category?.name || "Uncategorized";
-          const courseLevel = enrollment.course?.level || "";
+          const courseName = enrollment.course?.name || "Untitled Course";
           const status = enrollment.status || (enrollment.completedAt ? "completed" : "enrolled");
 
           return (
@@ -232,14 +224,6 @@ export default function StudentEnrollmentsPage() {
                       {courseName}
                     </CardTitle>
                     <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <Badge variant="outline" className="text-xs">
-                        {categoryName}
-                      </Badge>
-                      {courseLevel && (
-                        <Badge variant="secondary" className="capitalize">
-                          {courseLevel}
-                        </Badge>
-                      )}
                       <Badge variant="secondary" className={getStatusColor(status)}>
                         {getStatusText(status)}
                       </Badge>
@@ -272,33 +256,16 @@ export default function StudentEnrollmentsPage() {
                       {formatDate(enrollment.enrolledAt)}
                     </p>
                   </div>
-                  <div>
-                    <span className="text-slate-500">Last access</span>
-                    <p className="font-medium text-slate-900">
-                      {getTimeAgo(enrollment.lastAccessed || null)}
-                    </p>
-                  </div>
+                  {enrollment.completedAt && (
+                    <div>
+                      <span className="text-slate-500">Completed</span>
+                      <p className="font-medium text-slate-900">
+                        {formatDate(enrollment.completedAt)}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Score & Certificate */}
-                {status === "completed" && enrollment.score && (
-                  <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-emerald-500" />
-                      <span className="text-sm font-medium text-emerald-700">
-                        Score: {enrollment.score}%
-                      </span>
-                    </div>
-                    {enrollment.certificateUrl && (
-                      <Button size="sm" variant="outline" className="text-xs" asChild>
-                        <a href={enrollment.certificateUrl} target="_blank" rel="noopener noreferrer">
-                          <Eye className="h-3 w-3 mr-1" />
-                          Certificate
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                )}
 
                 {/* Action Button */}
                 <Button asChild variant="outline" className="w-full">

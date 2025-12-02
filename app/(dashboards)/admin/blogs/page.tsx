@@ -9,7 +9,7 @@ type Blog = {
   title: string;
   slug: string;
   content: string;
-  author: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } };
   createdAt: string;
   updatedAt: string;
 };

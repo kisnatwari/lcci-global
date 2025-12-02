@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +72,7 @@ interface UsersPageClientProps {
 }
 
 export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
+  const searchParams = useSearchParams();
   const [users] = useState<UserProfile[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -78,6 +80,15 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+
+  // Auto-open profile dialog if userId is in query params
+  useEffect(() => {
+    const userId = searchParams.get('userId');
+    if (userId && !isProfileDialogOpen) {
+      handleViewProfile(userId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Filter users based on search query
   const filteredUsers = users.filter((user) => {

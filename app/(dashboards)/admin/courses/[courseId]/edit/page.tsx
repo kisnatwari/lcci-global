@@ -75,12 +75,6 @@ export default function EditCoursePage() {
       const response = await apiClient.get(ENDPOINTS.courses.getById(courseId));
       const course = response.data || response;
       
-      console.log("Fetched course price:", { 
-        rawPrice: course.price, 
-        type: typeof course.price,
-        stringified: course.price?.toString() 
-      });
-      
       setFormData({
         name: course.name || "",
         categoryId: course.category?.categoryId || "",
@@ -180,19 +174,8 @@ export default function EditCoursePage() {
         ...(formData.type === "SelfPaced" && { lcciGQCreditPoints: parseInt(formData.lcciGQCreditPoints) || 0 }),
       };
 
-      console.log("Submitting price:", { 
-        input: formData.price, 
-        parsed: priceValue, 
-        payload: payload.price 
-      });
-
       const response = await apiClient.put(ENDPOINTS.courses.update(courseId), payload);
       
-      console.log("Update response:", { 
-        response, 
-        returnedPrice: response.data?.price || response.price 
-      });
-      console.log("Update response:", response);
       setSuccessMessage("Course updated successfully!");
       
       // Redirect to courses list after a short delay

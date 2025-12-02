@@ -31,7 +31,7 @@ type Blog = {
   title: string;
   slug: string;
   content: string;
-  author: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } };
   createdAt: string;
   updatedAt: string;
 };
@@ -84,12 +84,18 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
     }
   };
 
+  // Helper function to get author name
+  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } }): string => {
+    if (typeof author === 'string') return author;
+    return author?.profile?.name || author?.profile?.fullName || author?.userId || 'Unknown';
+  };
+
   // Filter blogs based on search
   const filteredBlogs = blogs.filter(
     (blog) =>
       blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       blog.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      blog.author.toLowerCase().includes(searchTerm.toLowerCase())
+      getAuthorName(blog.author).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle delete
@@ -225,8 +231,8 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBlogs.map((blog) => (
-                    <TableRow key={blog.id}>
+                  {filteredBlogs.map((blog, index) => (
+                    <TableRow key={blog.id || `blog-${index}`}>
                       <TableCell>
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)]">
                           <FileText className="h-4 w-4" />
@@ -236,7 +242,11 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
                       <TableCell className="text-muted-foreground text-sm font-mono">
                         {blog.slug}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{blog.author}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {typeof blog.author === 'string' 
+                          ? blog.author 
+                          : blog.author?.profile?.name || blog.author?.profile?.fullName || blog.author?.userId || 'Unknown'}
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {formatDate(blog.createdAt)}
                       </TableCell>

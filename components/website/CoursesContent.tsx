@@ -166,77 +166,79 @@ export default function CoursesContent({ initialCategoryId, initialType }: Cours
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-16 relative">
-      {/* Filters Section */}
-      <div className="space-y-6 mb-10">
-        {/* Category Tabs */}
-        <div className="flex flex-wrap items-center gap-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-700"
-          >
-            <Filter className="w-4 h-4" />
-            Filter by category:
-          </motion.div>
-          
-          <div className="flex flex-wrap gap-3">
-            <CategoryTab
-              label={`All Courses (${allCourses.length})`}
-              active={selectedCategory === null}
-              onClick={() => handleCategoryChange(null)}
-            />
-            {categories.map((category) => {
-              const count = getCategoryCount(category.categoryId);
-              return (
+      {/* Filters Section - Redesigned */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12"
+      >
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-6">
+            <Filter className="w-5 h-5 text-[color:var(--brand-blue)]" />
+            <h3 className="text-lg font-semibold text-slate-900">Filter Courses</h3>
+          </div>
+
+          <div className="space-y-6">
+            {/* Category Tabs */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                Category
+              </label>
+              <div className="flex flex-wrap gap-2">
                 <CategoryTab
-                  key={category.categoryId}
-                  label={`${category.name} (${count})`}
-                  active={selectedCategory === category.categoryId}
-                  onClick={() => handleCategoryChange(category.categoryId)}
+                  label={`All Courses (${allCourses.length})`}
+                  active={selectedCategory === null}
+                  onClick={() => handleCategoryChange(null)}
                 />
-              );
-            })}
+                {categories.map((category) => {
+                  const count = getCategoryCount(category.categoryId);
+                  return (
+                    <CategoryTab
+                      key={category.categoryId}
+                      label={`${category.name} (${count})`}
+                      active={selectedCategory === category.categoryId}
+                      onClick={() => handleCategoryChange(category.categoryId)}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Type Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-3">
+                Type
+              </label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 min-w-[200px] justify-between h-11">
+                    <span>
+                      {selectedType === null 
+                        ? "All Types" 
+                        : selectedType === "guided" 
+                        ? "Guided" 
+                        : "Self-Paced"}
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[200px]">
+                  <DropdownMenuItem onClick={() => handleTypeChange(null)}>
+                    All Types ({allCourses.length})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleTypeChange("guided")}>
+                    Guided ({getTypeCount("guided")})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleTypeChange("self-paced")}>
+                    Self-Paced ({getTypeCount("self-paced")})
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
-
-        {/* Type Dropdown */}
-        <div className="flex items-center gap-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-700"
-          >
-            <Filter className="w-4 h-4" />
-            Type:
-          </motion.div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 min-w-[180px] justify-between">
-                <span>
-                  {selectedType === null 
-                    ? "All Types" 
-                    : selectedType === "guided" 
-                    ? "Guided" 
-                    : "Self-Paced"}
-                </span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => handleTypeChange(null)}>
-                All Types ({allCourses.length})
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTypeChange("guided")}>
-                Guided ({getTypeCount("guided")})
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTypeChange("self-paced")}>
-                Self-Paced ({getTypeCount("self-paced")})
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+      </motion.div>
 
       {/* Results Count */}
       {(selectedCategory || selectedType) && (
@@ -326,34 +328,13 @@ function CategoryTab({ label, active, onClick }: CategoryTabProps) {
   return (
     <button
       onClick={onClick}
-      className="relative overflow-hidden group"
+      className={`relative px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${
+        active
+          ? "bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] text-white shadow-md"
+          : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+      }`}
     >
-      <div
-        className={`relative z-10 px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 ${
-          active
-            ? "text-white"
-            : "text-slate-700"
-        }`}
-      >
-        {active && (
-          <motion.div
-            layoutId="activeCategoryFilter"
-            className="absolute inset-0 bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] rounded-2xl shadow-lg"
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
-        )}
-        <div className={`absolute inset-0 rounded-2xl border-2 transition-colors ${
-          active
-            ? "border-transparent"
-            : "border-slate-200 group-hover:border-[color:var(--brand-blue)]/30"
-        }`} />
-        <div className={`absolute inset-0 rounded-2xl transition-colors ${
-          active
-            ? "bg-transparent"
-            : "bg-white group-hover:bg-gradient-to-r group-hover:from-blue-50 group-hover:to-cyan-50"
-        }`} />
-        <span className="relative z-10">{label}</span>
-      </div>
+      {label}
     </button>
   );
 }

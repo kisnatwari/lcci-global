@@ -8,7 +8,6 @@ import {
   BookOpen,
   Target,
   Clock,
-  TrendingUp,
   Award,
   Play,
   CheckCircle,
@@ -45,6 +44,7 @@ export default function StudentDashboard() {
     setError(null);
     try {
       const data = await getUserEnrollments();
+      console.log(data || []);
       setEnrollments(data || []);
     } catch (err: any) {
       console.error("Failed to fetch enrollments:", err);
@@ -94,14 +94,9 @@ export default function StudentDashboard() {
   // Calculate stats from real data
   const totalCourses = enrollments.length;
   const completedCourses = enrollments.filter(e => e.status === "completed" || e.completedAt).length;
-  const inProgressCourses = enrollments.filter(e => e.status === "in_progress" || (e.progress && e.progress > 0 && e.progress < 100)).length;
-  const certificates = enrollments.filter(e => e.certificateUrl).length;
-  
-  // Calculate average score from enrollments with scores
-  const enrollmentsWithScores = enrollments.filter(e => e.score !== null && e.score !== undefined);
-  const averageScore = enrollmentsWithScores.length > 0
-    ? Math.round(enrollmentsWithScores.reduce((sum, e) => sum + (e.score || 0), 0) / enrollmentsWithScores.length)
-    : 0;
+  const inProgressCourses = enrollments.filter(e => e.status === "enrolled" && (e.progress === 0 || (e.progress > 0 && e.progress < 100))).length;
+  // Certificates not available in current API response
+  const certificates = 0;
 
   const getTimeAgo = (dateString: string | null | undefined) => {
     if (!dateString) return "Never";
@@ -116,28 +111,30 @@ export default function StudentDashboard() {
   };
 
   const getEnrollmentId = (enrollment: Enrollment) => {
-    return enrollment.enrollmentId || enrollment.id;
+    return enrollment.enrollmentId;
   };
 
   const getCourseName = (enrollment: Enrollment) => {
-    return enrollment.course?.name || enrollment.course?.title || "Untitled Course";
+    return enrollment.course?.name || "Untitled Course";
   };
 
   const getCourseCategory = (enrollment: Enrollment) => {
-    return enrollment.course?.category?.name || "Uncategorized";
+    // Category not available in API response
+    return "Course";
   };
 
   const getCourseLevel = (enrollment: Enrollment) => {
-    return enrollment.course?.level || "beginner";
+    // Level not available in API response
+    return "All Levels";
   };
 
   const inProgressEnrollments = enrollments.filter(
-    (e) => e.status === "in_progress" || (e.progress && e.progress > 0 && e.progress < 100)
+    (e) => e.status === "enrolled" && (e.progress === 0 || (e.progress > 0 && e.progress < 100))
   );
 
   // Get enrolled course IDs
   const enrolledCourseIds = new Set(
-    enrollments.map(e => e.courseId || e.course?.courseId || e.course?.id).filter(Boolean)
+    enrollments.map(e => e.course?.courseId).filter(Boolean)
   );
 
   // Filter courses: exclude already enrolled ones and apply search
@@ -200,25 +197,14 @@ export default function StudentDashboard() {
               <span role="img" aria-hidden="true">🎯</span>
               {totalCourses} {totalCourses === 1 ? 'course' : 'courses'} enrolled
             </div>
-            {certificates > 0 && (
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 text-sm font-medium">
-                <span role="img" aria-hidden="true">🏆</span>
-                {certificates} {certificates === 1 ? 'certificate' : 'certificates'} earned
-              </div>
-            )}
-            {averageScore > 0 && (
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 text-sm font-medium">
-                <span role="img" aria-hidden="true">⭐</span>
-                {averageScore}% average score
-              </div>
-            )}
+            {/* Certificates not available in current API response */}
           </div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
       </section>
 
       {/* Key Metrics */}
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-xl transition-shadow">
           <CardContent className="flex items-center justify-between p-6">
             <div>
@@ -270,22 +256,7 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-xl transition-shadow">
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm font-medium text-blue-700">Average Score</p>
-              <p className="mt-2 text-3xl font-bold text-blue-900">
-                {averageScore > 0 ? `${averageScore}%` : '—'}
-              </p>
-              {averageScore > 0 && (
-                <p className="mt-1 text-xs text-blue-600">From quizzes</p>
-              )}
-            </div>
-            <div className="rounded-2xl bg-[color:var(--brand-blue)] p-4 text-white shadow-lg">
-              <TrendingUp className="h-6 w-6" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Average Score card hidden - score data not available in API response */}
       </section>
 
       {/* Continue Learning Section */}
@@ -329,7 +300,7 @@ export default function StudentDashboard() {
                           <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
                             <span>{getCourseCategory(enrollment)}</span>
                             <span className="text-slate-300">•</span>
-                            <span>Last accessed {getTimeAgo(enrollment.lastAccessed)}</span>
+                            <span>Enrolled {getTimeAgo(enrollment.enrolledAt)}</span>
                           </div>
                         </div>
                         <Badge variant="outline" className="capitalize w-fit">

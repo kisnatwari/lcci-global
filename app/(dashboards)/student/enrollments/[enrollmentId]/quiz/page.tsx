@@ -58,7 +58,7 @@ export default function QuizPage() {
     setError(null);
     try {
       const enrollment = await getEnrollmentById(enrollmentId);
-      const courseId = enrollment?.courseId || enrollment?.course?.courseId || enrollment?.course?.id;
+      const courseId = enrollment?.courseId || enrollment?.course?.courseId;
       
       if (!courseId) {
         throw new Error("Course ID not found");

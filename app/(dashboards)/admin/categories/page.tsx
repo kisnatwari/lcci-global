@@ -7,9 +7,12 @@ import { CategoriesPageClient } from "./categories-client";
 type Category = {
   categoryId: string;
   name: string;
-  description: string;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    courses: number;
+  };
 };
 
 export default async function CategoriesPage() {

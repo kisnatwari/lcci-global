@@ -157,12 +157,10 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
       if (editingCentre) {
         // Update existing centre
         const response = await apiClient.put(ENDPOINTS.trainingCentres.update(editingCentre.centreId), payload);
-        console.log("Update response:", response);
         setSuccessMessage("Training centre updated successfully!");
       } else {
         // Create new centre
         const response = await apiClient.post(ENDPOINTS.trainingCentres.post(), payload);
-        console.log("Create response:", response);
         setSuccessMessage("Training centre created successfully!");
       }
 
@@ -208,8 +206,6 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
       // Close dialog
       setIsDeleteDialogOpen(false);
       setDeletingCentre(null);
-      
-      console.log("Training centre deleted successfully");
     } catch (err: any) {
       console.error("Failed to delete training centre:", err);
       setError(err.message || "Failed to delete training centre");

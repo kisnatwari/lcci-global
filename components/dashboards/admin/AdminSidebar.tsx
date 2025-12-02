@@ -21,6 +21,8 @@ import {
   Tag,
   GraduationCap,
   FileText,
+  HelpCircle,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -59,6 +61,11 @@ const menuItems = [
     href: "/admin/users",
   },
   {
+    title: "Enrollments",
+    icon: ClipboardList,
+    href: "/admin/enrollments",
+  },
+  {
     title: "SQA Students",
     icon: GraduationCap,
     href: "/admin/sqa-students",
@@ -68,22 +75,16 @@ const menuItems = [
     icon: FileText,
     href: "/admin/blogs",
   },
+  {
+    title: "FAQs",
+    icon: HelpCircle,
+    href: "/admin/faqs",
+  },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    // Test API call with authentication
-    apiClient.get("/api/profile/me")
-      .then(data => {
-        console.log("Profile data:", data);
-      })
-      .catch(error => {
-        console.error("Error fetching profile:", error);
-      });
-  }, []);
 
   const handleLogout = async () => {
     await logout();

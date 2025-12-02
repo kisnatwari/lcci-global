@@ -23,7 +23,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { getEnrollmentById, type Enrollment, markMaterialComplete } from "@/lib/api/enrollments";
+import { getEnrollmentById, type Enrollment, markMaterialComplete, updateLastAccessed } from "@/lib/api/enrollments";
 import { getCourseMaterials, type CourseMaterial } from "@/lib/api/materials";
 
 export default function EnrollmentDetailsPage() {
@@ -62,9 +62,16 @@ export default function EnrollmentDetailsPage() {
       if (data) {
         setEnrollment(data);
         // Fetch materials for the course
-        const courseId = data.courseId || data.course?.courseId || data.course?.id;
+        const courseId = data.course?.courseId || data.courseId;
         if (courseId && typeof courseId === 'string') {
           await fetchMaterials(courseId);
+          // Update last accessed time when student views the course
+          try {
+            await updateLastAccessed(courseId);
+          } catch (err) {
+            // Silently fail - don't block the page if this fails
+            console.error("Failed to update last accessed:", err);
+          }
         }
       } else {
         setError("Enrollment not found");
@@ -153,23 +160,14 @@ export default function EnrollmentDetailsPage() {
   const enrollmentData = {
     enrollmentId: enrollment.enrollmentId || enrollment.id,
     course: {
-      courseId: enrollment.course?.courseId || enrollment.course?.id || enrollment.courseId,
-      name: enrollment.course?.name || enrollment.course?.title || "Untitled Course",
-      description: enrollment.course?.description || "No description available.",
-      level: enrollment.course?.level || "beginner",
-      price: enrollment.course?.price || 0,
-      duration: enrollment.course?.duration || 0,
-      category: { 
-        name: enrollment.course?.category?.name || "Uncategorized",
-      },
+      courseId: enrollment.course?.courseId || enrollment.courseId,
+      name: enrollment.course?.name || "Untitled Course",
+      thumbnailUrl: enrollment.course?.thumbnailUrl || null,
     },
     progress: enrollment.progress || (enrollment.completedAt ? 100 : 0),
     status: enrollment.status || (enrollment.completedAt ? "completed" : "enrolled"),
     enrolledAt: enrollment.enrolledAt,
-    lastAccessed: enrollment.lastAccessed || null,
     completedAt: enrollment.completedAt,
-    score: enrollment.score || null,
-    certificateUrl: enrollment.certificateUrl || null,
     // Calculate from fetched materials
     totalLessons: materials.length,
     completedLessons: materials.filter(m => completedMaterials.has(m.materialId)).length,
@@ -238,19 +236,10 @@ export default function EnrollmentDetailsPage() {
                     {enrollmentData.course.name}
                   </h1>
                   <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <Badge variant="secondary" className={getLevelColor(enrollmentData.course.level)}>
-                      {enrollmentData.course.level}
-                    </Badge>
-                    <Badge variant="outline">
-                      {enrollmentData.course.category.name}
-                    </Badge>
                     <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
                       {enrollmentData.status === "completed" ? "Completed" : "In Progress"}
                     </Badge>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-2xl">
-                    {enrollmentData.course.description}
-                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-3">
                   <Button
@@ -283,10 +272,6 @@ export default function EnrollmentDetailsPage() {
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-purple-600" />
                   <span>{enrollmentData.completedQuizzes}/{enrollmentData.totalQuizzes} quizzes</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-blue-600" />
-                  <span>{enrollmentData.course.duration} days</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-orange-600" />

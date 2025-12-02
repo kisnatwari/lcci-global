@@ -232,8 +232,6 @@ export default function QuizzesPage() {
       // Close dialog
       setIsDeleteDialogOpen(false);
       setDeletingQuiz(null);
-      
-      console.log("Quiz deleted successfully");
     } catch (err: any) {
       console.error("Failed to delete quiz:", err);
       setError(err.message || "Failed to delete quiz");
@@ -360,7 +358,6 @@ export default function QuizzesPage() {
                             <DropdownMenuItem
                               onClick={() => {
                                 // TODO: Navigate to questions management
-                                console.log("Manage questions for quiz:", quiz.quizId);
                               }}
                               className="cursor-pointer"
                             >
@@ -370,7 +367,6 @@ export default function QuizzesPage() {
                             <DropdownMenuItem
                               onClick={() => {
                                 // TODO: Navigate to quiz preview
-                                console.log("Preview quiz:", quiz.quizId);
                               }}
                               className="cursor-pointer"
                             >

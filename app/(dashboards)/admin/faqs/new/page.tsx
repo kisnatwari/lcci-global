@@ -7,56 +7,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, FileText, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { apiClient, ENDPOINTS } from "@/lib/api";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, HelpCircle, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { createFAQ, getFAQs } from "@/lib/faqs/static-store";
 
-export default function NewBlogPage() {
+export default function NewFAQPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
-    content: "",
-    author: "",
+    question: "",
+    answer: "",
+    orderIndex: "",
+    isActive: true,
   });
 
-  // Generate slug from title
-  const generateSlug = (title: string): string => {
-    return title
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
-  // Auto-generate slug when title changes
-  const handleTitleChange = (title: string) => {
-    setFormData({ ...formData, title, slug: generateSlug(title) });
-  };
-
-  const handleSave = async () => {
-    if (!formData.title || !formData.title.trim()) {
-      setError("Title is required");
+  const handleSave = () => {
+    if (!formData.question || !formData.question.trim()) {
+      setError("Question is required");
       return;
     }
 
-    if (!formData.slug || !formData.slug.trim()) {
-      setError("Slug is required");
+    if (!formData.answer || !formData.answer.trim()) {
+      setError("Answer is required");
       return;
     }
 
-    if (!formData.content || !formData.content.trim()) {
-      setError("Content is required");
-      return;
-    }
-
-    if (!formData.author || !formData.author.trim()) {
-      setError("Author is required");
+    // Parse orderIndex, default to 0 if empty
+    const orderIndex = formData.orderIndex ? parseInt(formData.orderIndex, 10) : getFAQs().length;
+    if (isNaN(orderIndex)) {
+      setError("Order index must be a valid number");
       return;
     }
 
@@ -65,26 +47,22 @@ export default function NewBlogPage() {
     setSuccessMessage(null);
 
     try {
-      const payload = {
-        title: formData.title.trim(),
-        slug: formData.slug.trim(),
-        content: formData.content.trim(),
-        author: formData.author.trim(),
-      };
+      createFAQ({
+        question: formData.question.trim(),
+        answer: formData.answer.trim(),
+        orderIndex: orderIndex,
+        isActive: formData.isActive,
+      });
 
-      const response = await apiClient.post(ENDPOINTS.blogs.post(), payload);
-      setSuccessMessage("Blog created successfully!");
+      setSuccessMessage("FAQ created successfully!");
       
-      // Redirect to blogs list after a short delay
+      // Redirect to FAQs list after a short delay
       setTimeout(() => {
-        router.push("/admin/blogs");
+        router.push("/admin/faqs");
       }, 1500);
     } catch (err: any) {
-      console.error("Failed to create blog:", err);
-      const errorMessage = err.message || 
-                          (err.response?.data?.message) ||
-                          "Failed to create blog";
-      setError(errorMessage);
+      console.error("Failed to create FAQ:", err);
+      setError(err.message || "Failed to create FAQ");
     } finally {
       setIsSaving(false);
     }
@@ -97,19 +75,19 @@ export default function NewBlogPage() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => router.push("/admin/blogs")}
+            onClick={() => router.push("/admin/faqs")}
             className="mb-4 text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Blogs
+            Back to FAQs
           </Button>
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[color:var(--brand-blue)]/10">
-              <FileText className="w-7 h-7 text-[color:var(--brand-blue)]" />
+              <HelpCircle className="w-7 h-7 text-[color:var(--brand-blue)]" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">New Blog Post</h1>
-              <p className="text-slate-600 mt-1">Create a new blog post</p>
+              <h1 className="text-3xl font-bold text-slate-900">New FAQ</h1>
+              <p className="text-slate-600 mt-1">Create a new frequently asked question</p>
             </div>
           </div>
         </div>
@@ -137,73 +115,77 @@ export default function NewBlogPage() {
 
         <Card className="border-2 border-slate-200 shadow-lg">
           <CardContent className="p-6 space-y-6">
-            {/* Title */}
+            {/* Question */}
             <div className="space-y-2.5">
-              <Label htmlFor="title" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                Title <span className="text-red-500 font-bold">*</span>
+              <Label htmlFor="question" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                Question <span className="text-red-500 font-bold">*</span>
               </Label>
               <Input
-                id="title"
-                value={formData.title}
+                id="question"
+                value={formData.question}
                 onChange={(e) => {
-                  handleTitleChange(e.target.value);
+                  setFormData({ ...formData, question: e.target.value });
                   setError(null);
                 }}
-                placeholder="Enter blog title"
+                placeholder="Enter the question"
                 disabled={isSaving}
                 className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
               />
             </div>
 
-            {/* Slug */}
+            {/* Answer */}
             <div className="space-y-2.5">
-              <Label htmlFor="slug" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                Slug <span className="text-red-500 font-bold">*</span>
+              <Label htmlFor="answer" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                Answer <span className="text-red-500 font-bold">*</span>
               </Label>
-              <Input
-                id="slug"
-                value={formData.slug}
+              <Textarea
+                id="answer"
+                value={formData.answer}
                 onChange={(e) => {
-                  setFormData({ ...formData, slug: e.target.value });
+                  setFormData({ ...formData, answer: e.target.value });
                   setError(null);
                 }}
-                placeholder="blog-post-slug"
+                placeholder="Enter the answer"
                 disabled={isSaving}
-                className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm font-mono"
+                rows={6}
+                className="border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm resize-none"
               />
-              <p className="text-xs text-slate-500 font-medium">URL-friendly identifier (auto-generated from title)</p>
             </div>
 
-            {/* Author */}
+            {/* Order Index */}
             <div className="space-y-2.5">
-              <Label htmlFor="author" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                Author <span className="text-red-500 font-bold">*</span>
+              <Label htmlFor="orderIndex" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                Order Index
               </Label>
               <Input
-                id="author"
-                value={formData.author}
+                id="orderIndex"
+                type="number"
+                value={formData.orderIndex}
                 onChange={(e) => {
-                  setFormData({ ...formData, author: e.target.value });
+                  setFormData({ ...formData, orderIndex: e.target.value });
                   setError(null);
                 }}
-                placeholder="Author name"
+                placeholder="Leave empty to add at the end"
                 disabled={isSaving}
                 className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
               />
+              <p className="text-xs text-slate-500 font-medium">Controls the display order. Lower numbers appear first. Leave empty to add at the end.</p>
             </div>
 
-            {/* Content */}
-            <div className="space-y-2.5">
-              <Label htmlFor="content" className="text-sm font-semibold text-slate-800">
-                Content <span className="text-red-500 font-bold">*</span>
-              </Label>
-              <RichTextEditor
-                content={formData.content}
-                onChange={(content) => setFormData({ ...formData, content })}
-                placeholder="Write your blog content here. You can add tables, images, links, and format text..."
+            {/* Active Status */}
+            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-slate-200 bg-slate-50">
+              <div>
+                <Label htmlFor="isActive" className="text-sm font-semibold text-slate-800">
+                  Active Status
+                </Label>
+                <p className="text-xs text-slate-500 mt-1">Only active FAQs are displayed on the homepage</p>
+              </div>
+              <Switch
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                 disabled={isSaving}
               />
-              <p className="text-xs text-slate-500 font-medium">Blog content. Supports rich text, tables, images, and links.</p>
             </div>
           </CardContent>
         </Card>
@@ -212,7 +194,7 @@ export default function NewBlogPage() {
         <div className="mt-8 flex items-center justify-end gap-4 pb-8">
           <Button
             variant="outline"
-            onClick={() => router.push("/admin/blogs")}
+            onClick={() => router.push("/admin/faqs")}
             disabled={isSaving}
             className="h-12 px-8 border-2 border-slate-300 font-semibold hover:bg-slate-100 transition-all"
           >
@@ -222,10 +204,8 @@ export default function NewBlogPage() {
             onClick={handleSave}
             disabled={
               isSaving ||
-              !formData.title.trim() ||
-              !formData.slug.trim() ||
-              !formData.content.trim() ||
-              !formData.author.trim()
+              !formData.question.trim() ||
+              !formData.answer.trim()
             }
             className="min-w-[160px] h-12 px-8 bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -235,7 +215,7 @@ export default function NewBlogPage() {
                 Creating...
               </>
             ) : (
-              "Create Blog"
+              "Create FAQ"
             )}
           </Button>
         </div>

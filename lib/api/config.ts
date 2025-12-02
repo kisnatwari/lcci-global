@@ -64,11 +64,33 @@ export const ENDPOINTS = {
     },
     enrollments: {
         post: () => "/api/enrollments",           // POST: Create a new enrollment
-        get: () => "/api/enrollments",            // GET: List all enrollments (Admin only)
+        get: (params?: {
+            limit?: number;
+            offset?: number;
+            sortBy?: string;
+            sortOrder?: "asc" | "desc";
+            search?: string;
+            userId?: string;
+            courseId?: string;
+            status?: "enrolled" | "completed" | "cancelled";
+        }) => {
+            const queryParams = new URLSearchParams();
+            if (params?.limit) queryParams.append('limit', params.limit.toString());
+            if (params?.offset) queryParams.append('offset', params.offset.toString());
+            if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+            if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+            if (params?.search) queryParams.append('search', params.search);
+            if (params?.userId) queryParams.append('userId', params.userId);
+            if (params?.courseId) queryParams.append('courseId', params.courseId);
+            if (params?.status) queryParams.append('status', params.status);
+            const query = queryParams.toString();
+            return `/api/enrollments${query ? `?${query}` : ''}`;
+        },
         getMe: () => "/api/enrollments/me",       // GET: List my enrollments (authenticated user)
         getById: (id: string) => `/api/enrollments/${id}`, // GET: Get enrollment by ID
         markMaterialComplete: (enrollmentId: string) => `/api/enrollments/${enrollmentId}/completions/materials`, // POST: Mark material as complete
         markQuizComplete: (enrollmentId: string) => `/api/enrollments/${enrollmentId}/completions/quizzes`, // POST: Mark quiz as complete
+        updateLastAccessed: () => "/api/enrollments/last-accessed", // POST: Update last accessed time for a course
     },
     promoCodes: {
         post: () => "/api/promo-codes",           // POST: Create a new promo code
@@ -85,7 +107,14 @@ export const ENDPOINTS = {
         get: () => "/api/stats", // GET: Get admin dashboard statistics
     },
     sqaStudents: {
-        get: () => "/api/sqa-students", // GET: List all SQA students
+        get: (page?: number, limit?: number, search?: string) => {
+            const params = new URLSearchParams();
+            if (page) params.append('page', page.toString());
+            if (limit) params.append('limit', limit.toString());
+            if (search && search.trim()) params.append('search', search.trim());
+            const query = params.toString();
+            return `/api/sqa-students${query ? `?${query}` : ''}`;
+        },
     },
     blogs: {
         post: () => "/api/cms/blogs", // POST: Create a new blog

@@ -20,7 +20,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     const session = getAuthSession();
     
     if (!session || !session.refreshToken) {
-      console.log('No refresh token available');
+      //console.log('No refresh token available');
       return null;
     }
 

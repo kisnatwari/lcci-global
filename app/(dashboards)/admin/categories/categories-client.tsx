@@ -28,9 +28,12 @@ import { apiClient, ENDPOINTS } from "@/lib/api";
 type Category = {
   categoryId: string;
   name: string;
-  description: string;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    courses: number;
+  };
 };
 
 interface CategoriesPageClientProps {
@@ -260,6 +263,7 @@ export function CategoriesPageClient({ initialCategories, error: initialError }:
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
+                    <TableHead>Courses</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -281,6 +285,14 @@ export function CategoriesPageClient({ initialCategories, error: initialError }:
                         ) : (
                           <span className="text-muted-foreground/50">No description</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <span className="font-medium text-slate-900">
+                          {category._count?.courses || 0}
+                        </span>
+                        <span className="text-muted-foreground text-sm ml-1">
+                          {category._count?.courses === 1 ? 'course' : 'courses'}
+                        </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {formatDate(category.createdAt)}

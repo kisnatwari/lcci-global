@@ -10,7 +10,10 @@ import { apiClient, ENDPOINTS } from "@/lib/api";
 interface Category {
   categoryId: string;
   name: string;
-  description: string;
+  description: string | null;
+  _count?: {
+    courses: number;
+  };
 }
 
 export default function Footer() {
@@ -33,9 +36,12 @@ export default function Footer() {
           }
         }
 
-        // Shuffle and take 4 random categories
-        const shuffled = [...categoriesData].sort(() => Math.random() - 0.5);
-        setCategories(shuffled.slice(0, 4));
+        // Sort by course count (descending) - prioritize higher counts, then take top 4
+        const sortedCategories = categoriesData
+          .sort((a, b) => (b._count?.courses || 0) - (a._count?.courses || 0));
+        
+        // Take top 4 categories (prioritizing those with highest course count)
+        setCategories(sortedCategories.slice(0, 4));
       } catch (err) {
         console.error("Failed to fetch categories:", err);
         // Fallback to empty array on error

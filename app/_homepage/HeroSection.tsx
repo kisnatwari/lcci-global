@@ -9,7 +9,10 @@ import { apiClient, ENDPOINTS } from "@/lib/api";
 interface Category {
   categoryId: string;
   name: string;
-  description: string;
+  description: string | null;
+  _count?: {
+    courses: number;
+  };
 }
 
 interface Course {
@@ -134,24 +137,22 @@ export default function HeroSection() {
     fetchData();
   }, []);
 
-  // Map categories with course counts
+  // Map categories with course counts from API, sort by count (highest first), and take top 4
   const categoryCards = useMemo(() => {
-    return categories.map((category) => {
-      const courseCount = courses.filter(
-        (course) => 
-          course.categoryId === category.categoryId || 
-          course.category?.categoryId === category.categoryId
-      ).length;
-
-      return {
-        title: category.name,
-        count: courseCount,
-        color: getCategoryColor(category.name),
-        icon: getCategoryIcon(category.name),
-        categoryId: category.categoryId,
-      };
-    }).slice(0, 4); // Show only first 4 categories
-  }, [categories, courses]);
+    return categories
+      .map((category) => {
+        const courseCount = category._count?.courses || 0;
+        return {
+          title: category.name,
+          count: courseCount,
+          color: getCategoryColor(category.name),
+          icon: getCategoryIcon(category.name),
+          categoryId: category.categoryId,
+        };
+      })
+      .sort((a, b) => b.count - a.count) // Sort by course count (descending) - prioritize higher counts
+      .slice(0, 4); // Show only top 4 categories
+  }, [categories]);
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-slate-900">

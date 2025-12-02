@@ -20,6 +20,11 @@ import { isTokenExpired } from "@/lib/auth/token";
 export function AdminHeader() {
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const checkAuthStatus = async () => {
     const session = getAuthSession();
@@ -123,9 +128,10 @@ export function AdminHeader() {
         {/* Enhanced action buttons */}
         <div className="flex items-center gap-2">
           {/* Enhanced user menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-accent/80 transition-all border-2 border-transparent hover:border-[color:var(--brand-blue)]/30 group relative overflow-hidden">
+          {isMounted && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-accent/80 transition-all border-2 border-transparent hover:border-[color:var(--brand-blue)]/30 group relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--brand-blue)]/5 to-[color:var(--brand-cyan)]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Avatar className="relative z-10 ring-2 ring-[color:var(--brand-blue)]/20 group-hover:ring-[color:var(--brand-blue)]/40 transition-all shadow-md">
                   <AvatarFallback className="bg-gradient-to-br from-[color:var(--brand-blue)] via-[color:var(--brand-cyan)] to-[color:var(--brand-blue)] text-white font-bold shadow-lg">
@@ -159,6 +165,7 @@ export function AdminHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
         </div>
       </div>
     </header>

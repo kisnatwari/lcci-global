@@ -2,33 +2,43 @@ import { apiClient } from './client';
 import { ENDPOINTS } from './config';
 
 export interface Enrollment {
-  id: string;
-  enrollmentId?: string; // Some APIs might use enrollmentId
-  courseId: string;
-  userId: string;
+  enrollmentId: string;
+  status: "enrolled" | "completed";
+  progress: number;
   enrolledAt: string;
   completedAt: string | null;
-  // Extended fields from API response
-  course?: {
-    courseId?: string;
-    id?: string;
-    name?: string;
-    title?: string;
-    description?: string;
-    level?: string;
-    category?: {
-      name?: string;
-      id?: string;
+  isLcci: boolean;
+  user: {
+    userId: string;
+    email: string;
+    profile: {
+      profileId: string;
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      phone: string | null;
+      address: string | null;
+      avatarUrl: string | null;
+      bio: string | null;
+      createdAt: string;
+      updatedAt: string;
     };
-    price?: number;
-    duration?: number;
-    thumbnailUrl?: string;
   };
-  progress?: number;
-  status?: "enrolled" | "in_progress" | "completed";
-  lastAccessed?: string | null;
-  score?: number | null;
-  certificateUrl?: string | null;
+  course: {
+    courseId: string;
+    name: string;
+    thumbnailUrl: string;
+  };
+  transaction: {
+    transactionId: string;
+    amount: string;
+    paymentType: string;
+    status: string;
+  };
+  // Legacy fields for backward compatibility
+  id?: string;
+  courseId?: string;
+  userId?: string;
 }
 
 export interface EnrollmentPayload {
@@ -73,14 +83,21 @@ export async function getAllEnrollments(): Promise<Enrollment[]> {
  */
 export async function getUserEnrollments(): Promise<Enrollment[]> {
   const response = await apiClient.get(ENDPOINTS.enrollments.getMe());
-  if (response.success && response.data && Array.isArray(response.data.enrollments)) {
+  // Handle nested structure: { success, data: { enrollments: [...], total: ... } }
+  if (response.success && response.data && response.data.enrollments && Array.isArray(response.data.enrollments)) {
     return response.data.enrollments;
-  } else if (response.data && Array.isArray(response.data.enrollments)) {
-    return response.data.enrollments;
-  } else if (Array.isArray(response)) {
+  }
+  // Handle direct array response
+  if (Array.isArray(response)) {
     return response;
-  } else if (response.success && response.data && Array.isArray(response.data)) {
+  }
+  // Handle wrapped response with data as array
+  if (response.data && Array.isArray(response.data)) {
     return response.data;
+  }
+  // Handle nested enrollments without success flag
+  if (response.data && response.data.enrollments && Array.isArray(response.data.enrollments)) {
+    return response.data.enrollments;
   }
   return [];
 }
@@ -122,6 +139,17 @@ export async function markQuizComplete(
   const response = await apiClient.post(
     ENDPOINTS.enrollments.markQuizComplete(enrollmentId),
     payload
+  );
+  return response.data || response;
+}
+
+/**
+ * Update last accessed time for a course (client-side)
+ */
+export async function updateLastAccessed(courseId: string): Promise<any> {
+  const response = await apiClient.post(
+    ENDPOINTS.enrollments.updateLastAccessed(),
+    { courseId }
   );
   return response.data || response;
 }

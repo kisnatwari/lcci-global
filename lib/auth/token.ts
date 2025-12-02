@@ -14,11 +14,11 @@ const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || process.env.JWT_SECRET;
 
 // Debug: Log if secret is found (only in development, first time)
 if (process.env.NODE_ENV === 'development' && !(global as any).__jwt_secret_checked) {
-  if (JWT_SECRET) {
+  /* if (JWT_SECRET) {
     console.log('✅ JWT_SECRET found (length:', JWT_SECRET.length, 'chars)');
   } else {
     console.warn('❌ JWT_SECRET not found in environment variables');
-  }
+  } */
   (global as any).__jwt_secret_checked = true;
 }
 
@@ -132,9 +132,6 @@ export function isTokenExpired(token: string): boolean {
       return true;
     }
 
-    console.log('payload', payload);
-    console.log("token", token);
-    
     const currentTime = Math.floor(Date.now() / 1000);
     return payload.exp < currentTime;
   } catch (error) {

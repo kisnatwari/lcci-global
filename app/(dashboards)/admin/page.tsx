@@ -29,7 +29,6 @@ export default function AdminDashboardPage() {
       try {
         const response = await apiClient.get(ENDPOINTS.stats.get());
         if (response.success && response.data) {
-          console.log("Stats data received:", response.data);
           setStatsData(response.data);
         } else {
           throw new Error(response.message || "Failed to fetch stats");

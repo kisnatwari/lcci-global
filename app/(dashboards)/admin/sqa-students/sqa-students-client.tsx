@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, AlertCircle, Loader2, GraduationCap, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, AlertCircle, Loader2, GraduationCap, User, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
@@ -19,29 +21,67 @@ interface SQAStudent {
   scn: string;
 }
 
+interface PaginationData {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 interface SQAStudentsPageClientProps {
   initialStudents: SQAStudent[];
+  initialPagination: PaginationData | null;
+  initialSearch: string;
   error: string | null;
 }
 
-export function SQAStudentsPageClient({ initialStudents, error: initialError }: SQAStudentsPageClientProps) {
+export function SQAStudentsPageClient({ 
+  initialStudents, 
+  initialPagination,
+  initialSearch,
+  error: initialError 
+}: SQAStudentsPageClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [students, setStudents] = useState<SQAStudent[]>(initialStudents);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [pagination, setPagination] = useState<PaginationData | null>(initialPagination);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
 
-  // Fetch SQA students from API (for refresh)
-  const fetchStudents = async () => {
+  // Get current page, limit, and search from URL
+  const currentPage = searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1;
+  const currentLimit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 10;
+  const currentSearch = searchParams.get('search') || '';
+
+  // Fetch SQA students from API
+  const fetchStudents = async (page: number = currentPage, limit: number = currentLimit, search: string = currentSearch) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(ENDPOINTS.sqaStudents.get());
-      if (response.success && response.data && Array.isArray(response.data)) {
-        setStudents(response.data);
+      const response = await apiClient.get(ENDPOINTS.sqaStudents.get(page, limit, search));
+      
+      // Handle API response structure: { success, data: { data: [...], total, page, limit, totalPages } }
+      if (response.success && response.data) {
+        // Check if data.data exists (nested structure)
+        if (response.data.data && Array.isArray(response.data.data)) {
+          setStudents(response.data.data);
+          // Extract pagination info from response.data
+          if (response.data.total !== undefined) {
+            setPagination({
+              total: response.data.total,
+              page: response.data.page || page,
+              limit: response.data.limit || limit,
+              totalPages: response.data.totalPages || Math.ceil(response.data.total / (response.data.limit || limit)),
+            });
+          }
+        } else if (Array.isArray(response.data)) {
+          // Fallback: if response.data is directly an array
+          setStudents(response.data);
+        }
       } else if (Array.isArray(response)) {
+        // Fallback: if response is directly an array
         setStudents(response);
-      } else if (response.data && Array.isArray(response.data)) {
-        setStudents(response.data);
       } else {
         setStudents([]);
       }
@@ -54,12 +94,31 @@ export function SQAStudentsPageClient({ initialStudents, error: initialError }: 
     }
   };
 
-  // Filter students based on search
-  const filteredStudents = students.filter(
-    (student) =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.scn.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    if (currentSearch) params.set('search', currentSearch);
+    router.push(`/admin/sqa-students?${params.toString()}`);
+    fetchStudents(newPage, currentLimit, currentSearch);
+  };
+
+  // Handle search with debounce
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    
+    // Reset to page 1 when searching
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    if (value.trim()) {
+      params.set('search', value.trim());
+    }
+    router.push(`/admin/sqa-students?${params.toString()}`);
+    fetchStudents(1, currentLimit, value.trim());
+  };
+
+  // Use students directly (no client-side filtering)
+  const displayedStudents = students;
 
   return (
     <div className="space-y-6">
@@ -95,12 +154,14 @@ export function SQAStudentsPageClient({ initialStudents, error: initialError }: 
                 type="search"
                 placeholder="Search by name or SCN..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9"
               />
             </div>
             <div className="text-sm text-muted-foreground">
-              {filteredStudents.length} {filteredStudents.length === 1 ? "student" : "students"} found
+              {pagination 
+                ? `Showing ${(pagination.page - 1) * pagination.limit + 1}-${Math.min(pagination.page * pagination.limit, pagination.total)} of ${pagination.total} students`
+                : `${displayedStudents.length} ${displayedStudents.length === 1 ? "student" : "students"} found`}
             </div>
           </div>
 
@@ -113,7 +174,7 @@ export function SQAStudentsPageClient({ initialStudents, error: initialError }: 
           )}
 
           {/* Table Section */}
-          {!isLoading && filteredStudents.length > 0 ? (
+          {!isLoading && displayedStudents.length > 0 ? (
             <div className="rounded-md border overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
@@ -125,10 +186,12 @@ export function SQAStudentsPageClient({ initialStudents, error: initialError }: 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStudents.map((student, index) => (
+                    {displayedStudents.map((student, index) => (
                       <TableRow key={`${student.scn}-${index}`}>
                         <TableCell className="text-muted-foreground">
-                          {index + 1}
+                          {pagination 
+                            ? (pagination.page - 1) * pagination.limit + index + 1
+                            : index + 1}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -169,6 +232,85 @@ export function SQAStudentsPageClient({ initialStudents, error: initialError }: 
               </div>
             </div>
           ) : null}
+
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between border-t pt-4">
+              <div className="text-sm text-muted-foreground">
+                Page {pagination.page} of {pagination.totalPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={pagination.page <= 1 || isLoading}
+                  className="gap-1"
+                  title="First page"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1 || isLoading}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.page <= 3) {
+                      pageNum = i + 1;
+                    } else if (pagination.page >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = pagination.page - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pagination.page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        disabled={isLoading}
+                        className="min-w-[2.5rem]"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages || isLoading}
+                  className="gap-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.totalPages)}
+                  disabled={pagination.page >= pagination.totalPages || isLoading}
+                  className="gap-1"
+                  title="Last page"
+                >
+                  Last
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
