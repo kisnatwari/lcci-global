@@ -35,6 +35,11 @@ export interface Enrollment {
     paymentType: string;
     status: string;
   };
+  completedItems?: Array<{
+    materialId: string | null;
+    quizId: string | null;
+    completedAt: string;
+  }>;
   // Legacy fields for backward compatibility
   id?: string;
   courseId?: string;
@@ -47,6 +52,31 @@ export interface EnrollmentPayload {
   promoCode?: string;
 }
 
+export interface PaymentParams {
+  url: string;
+  signature: string;
+  signed_field_names: string;
+  amount: number;
+  total_amount: number;
+  transaction_uuid: string;
+  product_code: string;
+  success_url: string;
+  failure_url: string;
+  tax_amount: number;
+  product_service_charge: number;
+  product_delivery_charge: number;
+}
+
+export interface PaymentRequiredResponse {
+  status: "payment_required";
+  transactionId: string;
+  paymentUrl: string;
+  paymentParams: PaymentParams;
+  message: string;
+}
+
+export type EnrollmentResponse = Enrollment | PaymentRequiredResponse;
+
 export interface MaterialCompletionPayload {
   materialId: string;
 }
@@ -57,10 +87,16 @@ export interface QuizCompletionPayload {
 
 /**
  * Enroll in a course (client-side)
+ * Returns either an Enrollment or PaymentRequiredResponse
  */
-export async function enrollInCourse(payload: EnrollmentPayload): Promise<Enrollment> {
+export async function enrollInCourse(payload: EnrollmentPayload): Promise<EnrollmentResponse> {
   const response = await apiClient.post(ENDPOINTS.enrollments.post(), payload);
-  return response.data || response;
+  // Check if response indicates payment is required
+  if (response.status === "payment_required") {
+    return response as PaymentRequiredResponse;
+  }
+  // Otherwise return enrollment data
+  return (response.data || response) as Enrollment;
 }
 
 /**

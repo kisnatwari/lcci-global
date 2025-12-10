@@ -30,8 +30,11 @@ export {
   markQuizComplete,
   type Enrollment,
   type EnrollmentPayload,
+  type EnrollmentResponse,
   type MaterialCompletionPayload,
   type QuizCompletionPayload,
+  type PaymentRequiredResponse,
+  type PaymentParams,
 } from './enrollments';
 
 // Promo Codes API (client-side only)
@@ -86,6 +89,7 @@ export {
 export {
   getCertificateById,
   getUserCertificates,
+  getCertificateByCourse,
   type Certificate,
 } from './certificates';
 

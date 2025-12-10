@@ -29,6 +29,8 @@ export function BlogsListingClient({ initialBlogs, error: initialError }: BlogsL
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
 
+  console.log(blogs);
+
   // Filter blogs based on search
   const filteredBlogs = blogs.filter(
     (blog) =>

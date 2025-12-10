@@ -19,16 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, MoreVertical, Mail, User, Building2, AlertCircle, Loader2, Phone, MapPin, Calendar } from "lucide-react";
+import { Search, User, Building2, AlertCircle, Loader2, Phone, MapPin, Calendar, Eye, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
@@ -50,6 +43,9 @@ interface UserProfile {
     status: string;
     trainingCentreId: string | null;
     centreUniqueIdentifier: string | null;
+    trainingCentre?: {
+      category?: string;
+    } | null;
   };
 }
 
@@ -72,6 +68,7 @@ interface UsersPageClientProps {
 }
 
 export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
+  console.log("initialUsers", initialUsers);
   const searchParams = useSearchParams();
   const [users] = useState<UserProfile[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
@@ -137,9 +134,27 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
     }
   };
 
-  // Format user type for display
-  const formatUserType = (userType: string) => {
-    return userType.replace(/_/g, " ");
+  // Get training centre category label
+  const getCategoryLabel = (category: string | null | undefined): string => {
+    if (!category) return "";
+    switch (category) {
+      case "SQA":
+        return "IT & Hospitality Management";
+      case "Cambridge":
+        return "Cambridge";
+      case "SoftSkill":
+        return "Soft Skill";
+      default:
+        return category;
+    }
+  };
+
+  // Format user type for display - show category for Training_Site_Student
+  const formatUserType = (user: UserProfile) => {
+    if (user.user.userType === "Training_Site_Student" && user.user.trainingCentre?.category) {
+      return getCategoryLabel(user.user.trainingCentre.category);
+    }
+    return user.user.userType.replace(/_/g, " ");
   };
 
   // Fetch user profile details
@@ -235,14 +250,13 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
                   <TableHead>Email</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Training Centre</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                    <TableCell colSpan={5} className="text-center py-12 text-slate-500">
                       {searchQuery ? "No users found matching your search." : "No users found."}
                     </TableCell>
                   </TableRow>
@@ -273,7 +287,7 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getUserTypeBadge(user.user.userType)}>
-                          {formatUserType(user.user.userType)}
+                          {formatUserType(user)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -283,40 +297,15 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
                           {user.user.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {user.user.trainingCentreId ? (
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-slate-400" />
-                            <span className="text-sm text-slate-600">
-                              {user.user.centreUniqueIdentifier || "Linked"}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-slate-400">—</span>
-                        )}
-                      </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewProfile(user.userId)}>
-                              <User className="mr-2 h-4 w-4" />
-                              View Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Mail className="mr-2 h-4 w-4" />
-                              Send Email
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                              Suspend User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewProfile(user.userId)}
+                          title="View Profile"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -366,7 +355,7 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
                   )}
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant={getUserTypeBadge(selectedUser.user.userType)}>
-                      {formatUserType(selectedUser.user.userType)}
+                      {formatUserType(selectedUser)}
                     </Badge>
                     <Badge variant={selectedUser.user.status === "active" ? "default" : "secondary"}>
                       {selectedUser.user.status}
@@ -425,15 +414,32 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
                 )}
 
                 {/* Training Centre */}
-                {selectedUser.user.trainingCentreId && (
+                {(selectedUser.user.trainingCentreId || selectedUser.user.trainingCentre) && (
                   <div className="md:col-span-2">
                     <label className="text-sm font-semibold text-slate-500 flex items-center gap-2 mb-1">
                       <Building2 className="h-4 w-4" />
                       Training Centre
                     </label>
-                    <p className="text-sm text-slate-900">
-                      {selectedUser.user.centreUniqueIdentifier || "Linked"}
-                    </p>
+                    <div className="space-y-2">
+                      {selectedUser.user.trainingCentre?.category && (
+                        <div>
+                          <span className="text-xs text-slate-500 font-medium">Category: </span>
+                          <Badge variant="outline" className="ml-1">
+                            {getCategoryLabel(selectedUser.user.trainingCentre.category)}
+                          </Badge>
+                        </div>
+                      )}
+                      {selectedUser.user.centreUniqueIdentifier && (
+                        <p className="text-sm text-slate-900">
+                          ID: {selectedUser.user.centreUniqueIdentifier}
+                        </p>
+                      )}
+                      {selectedUser.user.trainingCentreId && !selectedUser.user.centreUniqueIdentifier && (
+                        <p className="text-sm text-slate-900">
+                          Centre ID: {selectedUser.user.trainingCentreId}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 

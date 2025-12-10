@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, BookOpen, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon, FolderTree, Users, Briefcase, Target, TrendingUp, Award, Star, GraduationCap, School, Upload, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon, FolderTree, Users, Briefcase, Target, TrendingUp, Award, Star, GraduationCap, School, Upload, X, Brain } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,6 +41,7 @@ export default function NewCoursePage() {
     thumbnailUrl: "",
     autoEnrollFor: [] as string[],
     lcciGQCreditPoints: "",
+    passMarks: "",
   });
 
   useEffect(() => {
@@ -139,6 +140,7 @@ export default function NewCoursePage() {
         autoEnrollFor: formData.autoEnrollFor.length > 0 ? formData.autoEnrollFor : undefined,
         // Only include lcciGQCreditPoints for SelfPaced courses
         ...(formData.type === "SelfPaced" && { lcciGQCreditPoints: parseInt(formData.lcciGQCreditPoints) || 0 }),
+        passMarks: parseInt(formData.passMarks) || undefined,
       };
 
       const response = await apiClient.post(ENDPOINTS.courses.post(), payload);
@@ -487,7 +489,7 @@ export default function NewCoursePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="space-y-2.5">
                     <Label htmlFor="price" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                       Price (NPR) <span className="text-red-500 font-bold">*</span>
@@ -529,6 +531,27 @@ export default function NewCoursePage() {
                       className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
                     />
                     <p className="text-xs text-slate-500 font-medium">Total course duration in days</p>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <Label htmlFor="passMarks" className="text-sm font-semibold text-slate-800">
+                      Pass Marks
+                    </Label>
+                    <Input
+                      id="passMarks"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.passMarks}
+                      onChange={(e) => {
+                        setFormData({ ...formData, passMarks: e.target.value });
+                        setError(null);
+                      }}
+                      placeholder="e.g., 60"
+                      disabled={isSaving}
+                      className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
+                    />
+                    <p className="text-xs text-slate-500 font-medium">Minimum marks required to pass (0-100)</p>
                   </div>
 
                   {formData.type === "SelfPaced" && (
@@ -613,6 +636,33 @@ export default function NewCoursePage() {
                         >
                           <GraduationCap className="w-4 h-4 text-slate-600" />
                           Cambridge
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="autoEnrollSoftSkill"
+                          checked={formData.autoEnrollFor.includes("SoftSkill")}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                autoEnrollFor: [...formData.autoEnrollFor, "SoftSkill"],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                autoEnrollFor: formData.autoEnrollFor.filter((item) => item !== "SoftSkill"),
+                              });
+                            }
+                          }}
+                          disabled={isSaving}
+                        />
+                        <Label
+                          htmlFor="autoEnrollSoftSkill"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                        >
+                          <Brain className="w-4 h-4 text-slate-600" />
+                          Soft Skills
                         </Label>
                       </div>
                     </div>

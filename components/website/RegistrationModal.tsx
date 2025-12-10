@@ -3,19 +3,18 @@
 import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User2, Mail, Lock, ArrowRight, IdCard, Loader2, AlertCircle, CheckCircle, School, GraduationCap, ShieldCheck } from "lucide-react";
-import { requestRegistrationOtp, register } from "@/lib/api";
+import { X, User2, Mail, Lock, ArrowRight, IdCard, Loader2, AlertCircle, CheckCircle, School, GraduationCap, ShieldCheck, Brain, Phone } from "lucide-react";
+import { register, requestRegistrationOtp } from "@/lib/api";
 import { setAuthSession, decodeToken } from "@/lib/auth";
 
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  preSelectedCentreType?: "SQA" | "Cambridge" | null; // Pre-select training centre type
+  preSelectedCentreType?: "SQA" | "Cambridge" | "SoftSkills" | null; // Pre-select training centre type
 }
 
 function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = null }: RegistrationModalProps) {
   const router = useRouter();
-  const [registrationStep, setRegistrationStep] = useState<1 | 2>(1); // Step 1: Request OTP (for regular) or Direct registration (for training centre), Step 2: Complete registration with OTP
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -24,10 +23,16 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [otp, setOtp] = useState("");
   const [centreUniqueIdentifier, setCentreUniqueIdentifier] = useState<string | null>(preSelectedCentreType || null);
   const [trainingCentreId, setTrainingCentreId] = useState("");
   const [scnNumber, setScnNumber] = useState("");
+  const [institutionName, setInstitutionName] = useState("");
+  const [phone, setPhone] = useState("");
+  
+  // OTP state (for regular learners only)
+  const [otp, setOtp] = useState("");
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -35,17 +40,20 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
     } else {
       document.body.style.overflow = "";
       // Reset form when modal closes
-      setRegistrationStep(1);
       setIsLoading(false);
       setError(null);
       setSuccessMessage(null);
       setEmail("");
       setPassword("");
       setFullName("");
-      setOtp("");
       setCentreUniqueIdentifier(preSelectedCentreType || null);
       setTrainingCentreId("");
       setScnNumber("");
+      setInstitutionName("");
+      setPhone("");
+      setOtp("");
+      setOtpRequested(false);
+      setIsRequestingOtp(false);
     }
 
     return () => {
@@ -64,167 +72,121 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
     e.preventDefault();
     setError(null);
 
-    // Check if training centre is selected - if yes, skip OTP
     const isTrainingCentreStudent = centreUniqueIdentifier && (centreUniqueIdentifier === "SQA" || centreUniqueIdentifier === "Cambridge");
+    const isSoftSkillsStudent = centreUniqueIdentifier === "SoftSkills";
+    const isRegularLearner = !isTrainingCentreStudent && !isSoftSkillsStudent;
     
-    if (registrationStep === 1) {
-      // Step 1: Request OTP (only for regular students) OR Direct registration (for training centre students)
-      if (isTrainingCentreStudent) {
-        // Training centre students skip OTP - go directly to registration
-        // Validate required fields
-        if (!email || !password || !fullName) {
-          setError("Please fill in all required fields.");
-          setIsLoading(false);
-          return;
-        }
-        
-        // Training centre ID must be provided for Cambridge
-        if (centreUniqueIdentifier === "Cambridge" && !trainingCentreId.trim()) {
-          setError("Please enter your training centre ID.");
-          setIsLoading(false);
-          return;
-        }
-        
-        // SCN number must be provided for SQA
-        if (centreUniqueIdentifier === "SQA" && !scnNumber.trim()) {
-          setError("Please enter your SCN number.");
-          setIsLoading(false);
-          return;
-        }
-        
-        setIsLoading(true);
-        
-        // Register directly without OTP
-        // For Cambridge: send training centre ID as centreUniqueIdentifier
-        // For SQA: send only scnNo, do NOT send centreUniqueIdentifier
-        const registerPayload: any = {
-          email,
-          password,
-          userType: "Training_Site_Student",
-          username: fullName,
-          fullName: fullName, // Additional fullName field for SQA and Cambridge
-          otp: "", // Empty OTP for training centre students
-        };
-        
-        // For Cambridge: send training centre ID as centreUniqueIdentifier
-        if (centreUniqueIdentifier === "Cambridge" && trainingCentreId.trim()) {
-          registerPayload.centreUniqueIdentifier = trainingCentreId.trim();
-        }
-        
-        // For SQA: send only scnNo, do NOT send centreUniqueIdentifier
-        if (centreUniqueIdentifier === "SQA" && scnNumber.trim()) {
-          registerPayload.scnNo = scnNumber.trim();
-        }
-        
-        try {
-          const registerResponse = await register(registerPayload);
-          
-          // Handle successful registration
-          if (registerResponse.success) {
-            // Show success message and close modal
-            setSuccessMessage("Registration successful! Please login now.");
-            setIsLoading(false);
-            // Clear sensitive fields
-            setPassword("");
-            setOtp("");
-            setCentreUniqueIdentifier(null);
-            setTrainingCentreId("");
-            setScnNumber("");
-            
-            // Close modal after 2 seconds
-            setTimeout(() => {
-              onClose();
-            }, 2000);
-            return;
-          } else {
-            setError(registerResponse.message || "Registration failed. Please try again.");
-            setIsLoading(false);
-            return;
-          }
-        } catch (err: any) {
-          setError(err.message || "Registration failed. Please try again.");
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        // Regular students - Request OTP
-        if (!email) {
-          setError("Please enter your email address.");
-          setIsLoading(false);
-          return;
-        }
-        
-        setIsLoading(true);
-        
+    // Validate required fields based on type
+    if (isTrainingCentreStudent) {
+      if (!email || !password || !fullName) {
+        setError("Please fill in all required fields.");
+        return;
+      }
+      if (centreUniqueIdentifier === "Cambridge" && !trainingCentreId.trim()) {
+        setError("Please enter your training centre ID.");
+        return;
+      }
+      if (centreUniqueIdentifier === "SQA" && !scnNumber.trim()) {
+        setError("Please enter your SCN number.");
+        return;
+      }
+    } else if (isSoftSkillsStudent) {
+      if (!email || !password || !fullName || !institutionName.trim() || !phone.trim()) {
+        setError("Please fill in all required fields.");
+        return;
+      }
+    } else {
+      // Regular learner validation
+      if (!email || !password || !fullName) {
+        setError("Please fill in all required fields.");
+        return;
+      }
+      
+      // For regular learners, handle OTP flow
+      if (!otpRequested) {
+        // Request OTP first
+        setIsRequestingOtp(true);
         try {
           const otpResponse = await requestRegistrationOtp({ email });
-          
           if (otpResponse.success) {
+            setOtpRequested(true);
             setSuccessMessage("OTP has been sent to your email. Please check your inbox.");
-            setRegistrationStep(2);
-            setIsLoading(false);
+            setIsRequestingOtp(false);
             return;
           } else {
             setError(otpResponse.message || "Failed to send OTP. Please try again.");
-            setIsLoading(false);
+            setIsRequestingOtp(false);
             return;
           }
         } catch (err: any) {
           setError(err.message || "Failed to send OTP. Please try again.");
-          setIsLoading(false);
+          setIsRequestingOtp(false);
           return;
         }
       }
-    } else {
-      // Step 2: Complete registration with OTP (only for regular students)
-      if (!password || !fullName || !otp) {
-        setError("Please fill in all required fields.");
-        setIsLoading(false);
+      
+      // If OTP is requested but not entered
+      if (!otp.trim()) {
+        setError("Please enter the OTP sent to your email.");
         return;
       }
-      
-      setIsLoading(true);
-      
-      // Regular students don't need training centre
-      const registerPayload = {
-        email,
-        password,
-        userType: "Customer",
-        centreUniqueIdentifier: null,
-        trainingCentreId: null,
-        otp,
-      };
-      
-      try {
-        const registerResponse = await register(registerPayload);
+    }
         
-        // Handle successful registration
-        if (registerResponse.success) {
-          // Show success message and close modal
-          setSuccessMessage("Registration successful! Please login now.");
-          setIsLoading(false);
-          // Clear sensitive fields
-          setPassword("");
-          setOtp("");
-          setCentreUniqueIdentifier(null);
-          setTrainingCentreId("");
-          setScnNumber("");
-          
-          // Close modal after 2 seconds
-          setTimeout(() => {
-            onClose();
-          }, 2000);
-          return;
-        } else {
-          setError(registerResponse.message || "Registration failed. Please try again.");
-          setIsLoading(false);
-          return;
-        }
-      } catch (err: any) {
-        setError(err.message || "Registration failed. Please try again.");
-        setIsLoading(false);
-        return;
+    setIsLoading(true);
+        
+    const registerPayload: any = {
+      email,
+      password,
+      otp: isRegularLearner ? otp : "", // OTP only for regular learners
+    };
+        
+    if (isTrainingCentreStudent) {
+      registerPayload.userType = "Training_Site_Student";
+      registerPayload.username = fullName;
+      registerPayload.fullName = fullName;
+      if (centreUniqueIdentifier === "Cambridge" && trainingCentreId.trim()) {
+        registerPayload.centreUniqueIdentifier = trainingCentreId.trim();
       }
+      if (centreUniqueIdentifier === "SQA" && scnNumber.trim()) {
+        registerPayload.scnNo = scnNumber.trim();
+      }
+    } else if (isSoftSkillsStudent) {
+      registerPayload.userType = "Training_Site_Student";
+      registerPayload.username = fullName;
+      registerPayload.fullName = fullName;
+      registerPayload.institutionName = institutionName.trim();
+      registerPayload.phone = phone.trim();
+    } else {
+      registerPayload.userType = "Customer";
+      registerPayload.username = fullName;
+      registerPayload.fullName = fullName;
+    }
+        
+    try {
+      const registerResponse = await register(registerPayload);
+          
+      if (registerResponse.success) {
+        setSuccessMessage("Registration successful! Please login now.");
+        setIsLoading(false);
+        setPassword("");
+        setCentreUniqueIdentifier(null);
+        setTrainingCentreId("");
+        setScnNumber("");
+        setInstitutionName("");
+        setPhone("");
+        setOtp("");
+        setOtpRequested(false);
+
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } else {
+        setError(registerResponse.message || "Registration failed. Please try again.");
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -276,7 +238,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                   </h2>
                   <p className="text-slate-600">
                     {centreUniqueIdentifier 
-                      ? `Register as ${centreUniqueIdentifier} Student`
+                      ? `Register as ${centreUniqueIdentifier === "SoftSkills" ? "Soft Skills" : centreUniqueIdentifier} Student`
                       : "Register as a learner"}
                   </p>
                 </div>
@@ -288,22 +250,25 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                       <div className="flex items-center gap-3 mb-2">
                         {centreUniqueIdentifier === "SQA" ? (
                           <School className="w-6 h-6 text-[color:var(--brand-blue)]" />
-                        ) : (
+                        ) : centreUniqueIdentifier === "Cambridge" ? (
                           <GraduationCap className="w-6 h-6 text-[color:var(--brand-blue)]" />
+                        ) : (
+                          <Brain className="w-6 h-6 text-[color:var(--brand-blue)]" />
                         )}
                         <span className="text-sm font-bold text-[color:var(--brand-blue)]">
-                          {centreUniqueIdentifier} Student Registration
+                          {centreUniqueIdentifier === "SoftSkills" ? "Soft Skills" : centreUniqueIdentifier} Student Registration
                         </span>
                       </div>
                       <p className="text-xs text-slate-600">
-                        Training centre students can register directly without OTP verification.
+                        {centreUniqueIdentifier === "SoftSkills" 
+                          ? "Soft Skills students require email verification via OTP."
+                          : "Training centre students can register directly without OTP verification."}
                       </p>
                     </div>
                   )}
 
-                  {/* Conditional form based on training centre selection */}
+                  {/* Single-step form based on selection */}
                   {isTrainingCentreStudent ? (
-                    // Training Centre Registration - Direct (No OTP)
                     <>
                       <div>
                         <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
@@ -401,9 +366,25 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                         </div>
                       )}
                     </>
-                  ) : registrationStep === 1 ? (
-                    // Regular Registration - Step 1: Request OTP
+                  ) : centreUniqueIdentifier === "SoftSkills" ? (
+                    <>
                     <div>
+                        <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
+                          Name
+                        </label>
+                        <div className="relative">
+                          <User2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="text"
+                            id="fullName"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="Enter your name"
+                            required
+                          />
+                        </div>
+                      </div>
                       <div>
                         <label htmlFor="email" className="block text-sm font-bold text-slate-900 mb-2">
                           Email Address
@@ -420,13 +401,60 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                             required
                           />
                         </div>
-                        <p className="mt-2 text-xs text-slate-500">
-                          We'll send you a verification code to confirm your email.
-                        </p>
+                      </div>
+                      <div>
+                        <label htmlFor="institutionName" className="block text-sm font-bold text-slate-900 mb-2">
+                          Institution Name
+                        </label>
+                        <div className="relative">
+                          <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="text"
+                            id="institutionName"
+                            value={institutionName}
+                            onChange={(e) => setInstitutionName(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="Enter your institution name"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-bold text-slate-900 mb-2">
+                          Phone Number
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="tel"
+                            id="phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="Enter your phone number"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="password" className="block text-sm font-bold text-slate-900 mb-2">
+                          Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="••••••••"
+                            required
+                          />
                       </div>
                     </div>
+                    </>
                   ) : (
-                    // Regular Registration - Step 2: Complete registration with OTP
                     <>
                       <div>
                         <label htmlFor="fullName" className="block text-sm font-bold text-slate-900 mb-2">
@@ -446,17 +474,19 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                         </div>
                       </div>
                       <div>
-                        <label htmlFor="email-display" className="block text-sm font-bold text-slate-900 mb-2">
+                        <label htmlFor="email" className="block text-sm font-bold text-slate-900 mb-2">
                           Email Address
                         </label>
                         <div className="relative">
                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
                             type="email"
-                            id="email-display"
+                            id="email"
                             value={email}
-                            disabled
-                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                            placeholder="your.email@example.com"
+                            required
                           />
                         </div>
                       </div>
@@ -477,27 +507,28 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                           />
                         </div>
                       </div>
-                      <div>
-                        <label htmlFor="otp" className="block text-sm font-bold text-slate-900 mb-2">
-                          Verification Code (OTP)
-                        </label>
-                        <div className="relative">
-                          <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                          <input
-                            type="text"
-                            id="otp"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
-                            placeholder="Enter 6-digit code"
-                            required
-                            maxLength={6}
-                          />
+                      {otpRequested && (
+                        <div>
+                          <label htmlFor="otp" className="block text-sm font-bold text-slate-900 mb-2">
+                            OTP Code
+                          </label>
+                          <div className="relative">
+                            <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              type="text"
+                              id="otp"
+                              value={otp}
+                              onChange={(e) => setOtp(e.target.value)}
+                              className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
+                              placeholder="Enter OTP code"
+                              required
+                            />
+                          </div>
+                          <p className="mt-2 text-xs text-slate-500">
+                            Please enter the OTP code sent to your email address.
+                          </p>
                         </div>
-                        <p className="mt-2 text-xs text-slate-500">
-                          Check your email for the verification code.
-                        </p>
-                      </div>
+                      )}
                     </>
                   )}
 
@@ -519,28 +550,23 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
 
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || isRequestingOtp}
                     className="group w-full px-6 py-4 rounded-xl bg-[color:var(--brand-blue)] text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   >
-                    {isLoading ? (
+                    {isRequestingOtp ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>
-                          {isTrainingCentreStudent
-                            ? "Creating Account..."
-                            : registrationStep === 1
-                            ? "Sending OTP..."
-                            : "Creating Account..."}
-                        </span>
+                        <span>Sending OTP...</span>
+                      </>
+                    ) : isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Creating Account...</span>
                       </>
                     ) : (
                       <>
                         <span>
-                          {isTrainingCentreStudent
-                            ? "Create Account"
-                            : registrationStep === 1
-                            ? "Request OTP"
-                            : "Create Account"}
+                          {!centreUniqueIdentifier && !otpRequested ? "Request OTP" : "Create Account"}
                         </span>
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </>
@@ -549,19 +575,6 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                 </form>
 
                 <div className="mt-6 text-center text-sm text-slate-600">
-                  {!isTrainingCentreStudent && registrationStep === 2 && (
-                    <button
-                      onClick={() => {
-                        setRegistrationStep(1);
-                        setOtp("");
-                        setSuccessMessage(null);
-                        setError(null);
-                      }}
-                      className="text-[color:var(--brand-blue)] font-semibold hover:underline mb-2 block"
-                    >
-                      ← Back to email
-                    </button>
-                  )}
                   Already have an account?{" "}
                   <button
                     onClick={onClose}

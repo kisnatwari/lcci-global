@@ -50,6 +50,7 @@ export const ENDPOINTS = {
         getById: (courseId: string, quizId: string) => `/api/courses/${courseId}/quizzes/${quizId}`, // GET: Get quiz by ID
         update: (courseId: string, quizId: string) => `/api/courses/${courseId}/quizzes/${quizId}`,  // PUT: Update a quiz
         delete: (courseId: string, quizId: string) => `/api/courses/${courseId}/quizzes/${quizId}`,  // DELETE: Delete a quiz
+        batch: (courseId: string) => `/api/courses/${courseId}/quizzes/batch`,  // POST: Bulk upload quizzes
     },
     quizQuestions: {
         post: (quizId: string) => `/api/quizzes/${quizId}/questions`, // POST: Create a new question for a quiz
@@ -102,6 +103,7 @@ export const ENDPOINTS = {
     certificates: {
         getById: (id: string) => `/api/certificates/${id}`, // GET: Get certificate by ID
         getByUser: (userId: string) => `/api/certificates/user/${userId}`, // GET: List certificates for a user
+        getByCourse: (courseId: string) => `/api/certificates/course/${courseId}`, // GET: Get certificate by course ID
     },
     stats: {
         get: () => "/api/stats", // GET: Get admin dashboard statistics

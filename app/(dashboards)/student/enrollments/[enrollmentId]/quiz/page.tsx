@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, X, BookOpen, Trophy, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, X, BookOpen, Trophy, Sparkles, Award } from "lucide-react";
 import { getCourseQuizzes } from "@/lib/api/quizzes";
 import { getEnrollmentById, markQuizComplete } from "@/lib/api/enrollments";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,6 +45,7 @@ export default function QuizPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWrongAnswer, setShowWrongAnswer] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isAlreadyCompleted, setIsAlreadyCompleted] = useState(false);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +138,13 @@ export default function QuizPage() {
       setIsCompleted(true);
     } catch (err: any) {
       console.error("Failed to mark quiz as complete:", err);
-      setError(err.message || "Failed to mark quiz as complete");
+      // Check if quiz is already completed (409 status with specific message)
+      if (err.status === 409 && err.message && err.message.includes("already completed")) {
+        setIsAlreadyCompleted(true);
+        setError(null);
+      } else {
+        setError(err.message || "Failed to mark quiz as complete");
+      }
     } finally {
       setIsMarkingComplete(false);
     }
@@ -256,6 +263,80 @@ export default function QuizPage() {
                   onClick={() => router.push(`/student/enrollments/${enrollmentId}`)}
                   size="lg"
                   className="bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white px-8 py-6 text-lg"
+                >
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Back to Course
+                </Button>
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Already completed screen - show Get Certificate button
+  if (isAlreadyCompleted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 50 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", duration: 0.6 }}
+          className="max-w-2xl w-full"
+        >
+          <Card className="border-2 border-blue-200 shadow-2xl">
+            <CardContent className="p-12 text-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.2, duration: 0.6 }}
+                className="mb-6"
+              >
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Award className="w-12 h-12 text-white" />
+                </div>
+              </motion.div>
+              
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-4xl font-bold text-slate-900 mb-4"
+              >
+                Quiz Already Completed! 🎓
+              </motion.h1>
+              
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="text-lg text-slate-600 mb-8"
+              >
+                You have already completed <span className="font-semibold text-slate-900">{currentQuiz.title}</span>.
+                <br />
+                Get your certificate to showcase your achievement!
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+              >
+                <Button
+                  onClick={() => router.push(`/student/certificates`)}
+                  size="lg"
+                  className="bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white px-8 py-6 text-lg"
+                >
+                  <Award className="w-5 h-5 mr-2" />
+                  Get Certificate
+                </Button>
+                <Button
+                  onClick={() => router.push(`/student/enrollments/${enrollmentId}`)}
+                  size="lg"
+                  variant="outline"
+                  className="px-8 py-6 text-lg border-2"
                 >
                   <ArrowLeft className="w-5 h-5 mr-2" />
                   Back to Course

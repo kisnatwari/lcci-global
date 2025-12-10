@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronRight, Sparkles, LogOut, LayoutDashboard, User2, School, GraduationCap, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronRight, Sparkles, LogOut, LayoutDashboard, User2, School, GraduationCap, ChevronDown, Brain } from "lucide-react";
 import Logo from "./Logo";
 import LoginModal from "./LoginModal";
 import RegistrationModal from "./RegistrationModal";
@@ -42,7 +42,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
-  const [registrationCentreType, setRegistrationCentreType] = useState<"SQA" | "Cambridge" | null>(null);
+  const [registrationCentreType, setRegistrationCentreType] = useState<"SQA" | "Cambridge" | "SoftSkills" | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [showRegisterOptions, setShowRegisterOptions] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -169,7 +169,7 @@ export default function Header() {
           <div className="flex items-center justify-between h-20 lg:h-24">
             {/* Logo */}
             <Link href="/" className="relative z-10">
-              <Logo />
+              <Logo isScrolled={isScrolled} />
             </Link>
 
             {/* Desktop Navigation - Completely New Design */}
@@ -291,7 +291,7 @@ export default function Header() {
                         className="cursor-pointer"
                       >
                         <School className="w-4 h-4 mr-2" />
-                        SQA Student
+                        Hospitality & IT Student
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
@@ -302,6 +302,16 @@ export default function Header() {
                       >
                         <GraduationCap className="w-4 h-4 mr-2" />
                         Cambridge Student
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setRegistrationCentreType("SoftSkills");
+                          setIsRegistrationModalOpen(true);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Brain className="w-4 h-4 mr-2" />
+                        Soft Skills Student
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -446,7 +456,7 @@ export default function Header() {
                                     className="w-full px-5 py-3 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-3"
                                   >
                                     <School className="w-5 h-5 text-slate-600" />
-                                    SQA Student
+                                    Hospitality & IT Student
                                   </button>
                                   <button
                                     onClick={() => {
@@ -459,6 +469,18 @@ export default function Header() {
                                   >
                                     <GraduationCap className="w-5 h-5 text-slate-600" />
                                     Cambridge Student
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setMobileDrawerOpen(false);
+                                      setShowRegisterOptions(false);
+                                      setRegistrationCentreType("SoftSkills");
+                                      setIsRegistrationModalOpen(true);
+                                    }}
+                                    className="w-full px-5 py-3 rounded-xl font-semibold text-slate-700 border-2 border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-3"
+                                  >
+                                    <Brain className="w-5 h-5 text-slate-600" />
+                                    Soft Skills Student
                                   </button>
                                 </motion.div>
                               )}

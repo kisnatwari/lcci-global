@@ -9,11 +9,13 @@ export interface RegisterPayload {
   email: string;
   password: string;
   userType: string;
-  username?: string; // Optional - required for SQA and Cambridge, not for regular students
+  username?: string; // Optional - required for SQA, Cambridge, and SoftSkills, not for regular students
   fullName?: string; // Optional - required for SQA and Cambridge
   centreUniqueIdentifier?: string | null; // Training centre ID for training centre students
   trainingCentreId?: string | null; // Training centre ID
   scnNo?: string; // SCN number for SQA students
+  institutionName?: string; // Institution name for Soft Skills students
+  phone?: string; // Phone number for Soft Skills students
   otp: string;
 }
 

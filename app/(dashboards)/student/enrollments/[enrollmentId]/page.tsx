@@ -25,6 +25,7 @@ import {
 import Link from "next/link";
 import { getEnrollmentById, type Enrollment, markMaterialComplete, updateLastAccessed } from "@/lib/api/enrollments";
 import { getCourseMaterials, type CourseMaterial } from "@/lib/api/materials";
+import { getCertificateByCourse } from "@/lib/api/certificates";
 
 export default function EnrollmentDetailsPage() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function EnrollmentDetailsPage() {
   const [completedMaterials, setCompletedMaterials] = useState<Set<string>>(new Set());
   const [isMarkingComplete, setIsMarkingComplete] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const [isFetchingCertificate, setIsFetchingCertificate] = useState(false);
 
   useEffect(() => {
     if (enrollmentId) {
@@ -88,7 +90,14 @@ export default function EnrollmentDetailsPage() {
     try {
       const data = await getCourseMaterials(courseId);
       setMaterials(data);
-      // TODO: Fetch completion status from enrollment API if available
+      // Initialize completed materials from API response
+      const completed = new Set<string>();
+      data.forEach((material) => {
+        if (material.completedAt) {
+          completed.add(material.materialId);
+        }
+      });
+      setCompletedMaterials(completed);
     } catch (err: any) {
       console.error("Failed to fetch materials:", err);
     }
@@ -100,14 +109,21 @@ export default function EnrollmentDetailsPage() {
     setError(null);
     try {
       await markMaterialComplete(enrollmentId, { materialId });
-      setCompletedMaterials(prev => new Set(prev).add(materialId));
+      // Refresh materials to get updated completion status from API
+      const courseId = enrollment?.course?.courseId || enrollment?.courseId;
+      if (courseId && typeof courseId === 'string') {
+        await fetchMaterials(courseId);
+      }
       // Refresh enrollment to update progress
       await fetchEnrollment();
     } catch (err: any) {
       // Handle 409 Conflict - material already completed
       if (err.status === 409) {
-        // Material is already completed, show warning message
-        setCompletedMaterials(prev => new Set(prev).add(materialId));
+        // Material is already completed, refresh materials to sync with API
+        const courseId = enrollment?.course?.courseId || enrollment?.courseId;
+        if (courseId && typeof courseId === 'string') {
+          await fetchMaterials(courseId);
+        }
         // Refresh enrollment to ensure UI is in sync
         await fetchEnrollment();
         // Show warning message
@@ -156,6 +172,11 @@ export default function EnrollmentDetailsPage() {
     );
   }
 
+  // Check if quiz is completed from completedItems
+  const completedQuizzes = enrollment.completedItems?.filter(item => item.quizId !== null) || [];
+  const isQuizCompleted = completedQuizzes.length > 0;
+  const totalQuizzes = 1; // Assuming one quiz per course for now
+
   // Extract enrollment data with fallbacks
   const enrollmentData = {
     enrollmentId: enrollment.enrollmentId || enrollment.id,
@@ -171,8 +192,9 @@ export default function EnrollmentDetailsPage() {
     // Calculate from fetched materials
     totalLessons: materials.length,
     completedLessons: materials.filter(m => completedMaterials.has(m.materialId)).length,
-    totalQuizzes: 0,
-    completedQuizzes: 0,
+    totalQuizzes: totalQuizzes,
+    completedQuizzes: completedQuizzes.length,
+    isQuizCompleted: isQuizCompleted,
   };
 
   // Map materials to display format
@@ -184,7 +206,8 @@ export default function EnrollmentDetailsPage() {
       type: material.type,
       url: material.url || material.fileUrl || "", // API returns 'url', fallback to 'fileUrl' for compatibility
       orderIndex: material.orderIndex || 0,
-      completed: completedMaterials.has(material.materialId),
+      completed: material.completedAt !== null && material.completedAt !== undefined, // Use completedAt from API
+      completedAt: material.completedAt, // Include completion timestamp
       duration: material.type === "video" ? null : null, // Duration would come from API if available
     }));
 
@@ -242,13 +265,53 @@ export default function EnrollmentDetailsPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-3">
-                  <Button
-                    onClick={() => router.push(`/student/enrollments/${enrollmentId}/quiz`)}
-                    className="bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white"
-                  >
-                    <HelpCircle className="w-4 h-4 mr-2" />
-                    Take Quiz
-                  </Button>
+                  {enrollmentData.isQuizCompleted ? (
+                    <Button
+                      onClick={async () => {
+                        const courseId = enrollmentData.course.courseId;
+                        if (courseId) {
+                          setIsFetchingCertificate(true);
+                          try {
+                            const certificate = await getCertificateByCourse(courseId);
+                            if (certificate?.certificateUrl) {
+                              window.open(certificate.certificateUrl, '_blank', 'noopener,noreferrer');
+                            } else {
+                              // Fallback to certificates page if certificate not found
+                              router.push('/student/certificates');
+                            }
+                          } catch (err) {
+                            console.error('Failed to fetch certificate:', err);
+                            // Fallback to certificates page on error
+                            router.push('/student/certificates');
+                          } finally {
+                            setIsFetchingCertificate(false);
+                          }
+                        }
+                      }}
+                      disabled={isFetchingCertificate}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                    >
+                      {isFetchingCertificate ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Award className="w-4 h-4 mr-2" />
+                          Get Certificate
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => router.push(`/student/enrollments/${enrollmentId}/quiz`)}
+                      className="bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white"
+                    >
+                      <HelpCircle className="w-4 h-4 mr-2" />
+                      Take Quiz
+                    </Button>
+                  )}
                   <div className="text-right">
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                       {enrollmentData.progress}%
@@ -342,11 +405,17 @@ export default function EnrollmentDetailsPage() {
                             {material.type}
                           </Badge>
                         </div>
-                        {material.duration && (
-                          <span className="text-sm text-slate-600 dark:text-slate-400">
-                            Duration: {material.duration}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          {material.duration && (
+                            <span>Duration: {material.duration}</span>
+                          )}
+                          {material.completed && material.completedAt && (
+                            <>
+                              {material.duration && <span>•</span>}
+                              <span>Completed {formatDate(material.completedAt)}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {material.url ? (

@@ -29,7 +29,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, MoreVertical, Search, HelpCircle, Pencil, Eye, Trash2, Loader2, AlertCircle, CheckCircle2, MessageSquare, X, ArrowUp, ArrowDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Plus, MoreVertical, Search, HelpCircle, Pencil, Eye, Trash2, Loader2, AlertCircle, CheckCircle2, MessageSquare, X, ArrowUp, ArrowDown, Upload, FileJson } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type Quiz = {
@@ -70,6 +71,7 @@ export default function CourseQuizzesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isBulkUploadDialogOpen, setIsBulkUploadDialogOpen] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [deletingQuiz, setDeletingQuiz] = useState<Quiz | null>(null);
   const [viewingQuiz, setViewingQuiz] = useState<Quiz | null>(null);
@@ -79,6 +81,7 @@ export default function CourseQuizzesPage() {
     questions: [] as Array<{
       questionText: string;
       correctAnswer: string;
+      incorrectAnswers: [string, string, string]; // Array of exactly 3 strings
       orderIndex: number;
     }>,
   });
@@ -88,6 +91,12 @@ export default function CourseQuizzesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Bulk upload states
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [parsedQuizzes, setParsedQuizzes] = useState<any[] | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (successMessage) {
@@ -170,6 +179,9 @@ export default function CourseQuizzesPage() {
           questions: questions.map((q: any, index: number) => ({
             questionText: q.questionText || "",
             correctAnswer: q.correctAnswer || "",
+            incorrectAnswers: q.incorrectAnswers && Array.isArray(q.incorrectAnswers) && q.incorrectAnswers.length >= 3
+              ? [q.incorrectAnswers[0] || "", q.incorrectAnswers[1] || "", q.incorrectAnswers[2] || ""]
+              : ["", "", ""],
             orderIndex: q.orderIndex ?? index + 1,
           })),
         });
@@ -201,6 +213,7 @@ export default function CourseQuizzesPage() {
         {
           questionText: "",
           correctAnswer: "",
+          incorrectAnswers: ["", "", ""],
           orderIndex: formData.questions.length + 1,
         },
       ],
@@ -219,11 +232,27 @@ export default function CourseQuizzesPage() {
   };
 
   // Update question
-  const updateQuestion = (index: number, field: "questionText" | "correctAnswer", value: string) => {
+  const updateQuestion = (index: number, field: "questionText" | "correctAnswer" | "incorrectAnswers", value: string | [string, string, string]) => {
     const updatedQuestions = [...formData.questions];
     updatedQuestions[index] = {
       ...updatedQuestions[index],
       [field]: value,
+    };
+    setFormData({
+      ...formData,
+      questions: updatedQuestions,
+    });
+    setError(null);
+  };
+
+  // Update incorrect answer at specific index
+  const updateIncorrectAnswer = (questionIndex: number, answerIndex: 0 | 1 | 2, value: string) => {
+    const updatedQuestions = [...formData.questions];
+    const currentIncorrectAnswers = [...updatedQuestions[questionIndex].incorrectAnswers];
+    currentIncorrectAnswers[answerIndex] = value;
+    updatedQuestions[questionIndex] = {
+      ...updatedQuestions[questionIndex],
+      incorrectAnswers: [currentIncorrectAnswers[0], currentIncorrectAnswers[1], currentIncorrectAnswers[2]],
     };
     setFormData({
       ...formData,
@@ -260,9 +289,13 @@ export default function CourseQuizzesPage() {
     }
 
     // Validate questions
-    const validQuestions = formData.questions.filter(q => q.questionText.trim() && q.correctAnswer.trim());
+    const validQuestions = formData.questions.filter(q => 
+      q.questionText.trim() && 
+      q.correctAnswer.trim() &&
+      q.incorrectAnswers.every(ans => ans.trim() !== "")
+    );
     if (validQuestions.length === 0) {
-      setError("At least one question with both question text and correct answer is required");
+      setError("At least one question with question text, correct answer, and all 3 incorrect answers is required");
       return;
     }
 
@@ -277,6 +310,7 @@ export default function CourseQuizzesPage() {
         questions: validQuestions.map((q, index) => ({
           questionText: q.questionText.trim(),
           correctAnswer: q.correctAnswer.trim(),
+          incorrectAnswers: q.incorrectAnswers.map(ans => ans.trim()),
           orderIndex: index + 1,
         })),
       };
@@ -310,6 +344,122 @@ export default function CourseQuizzesPage() {
       setError(err.message || (editingQuiz ? "Failed to update quiz" : "Failed to create quiz"));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle JSON file upload and parsing
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.json')) {
+      setParseError("Please upload a JSON file (.json)");
+      setUploadedFile(null);
+      setParsedQuizzes(null);
+      return;
+    }
+
+    setUploadedFile(file);
+    setParseError(null);
+    setParsedQuizzes(null);
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      // Validate structure
+      if (!data.quizzes || !Array.isArray(data.quizzes)) {
+        throw new Error("JSON must have a 'quizzes' array");
+      }
+
+      // Validate each quiz
+      const validatedQuizzes = data.quizzes.map((quiz: any, index: number) => {
+        if (!quiz.title || typeof quiz.title !== 'string') {
+          throw new Error(`Quiz ${index + 1}: Missing or invalid 'title'`);
+        }
+        if (!quiz.questions || !Array.isArray(quiz.questions)) {
+          throw new Error(`Quiz ${index + 1}: Missing or invalid 'questions' array`);
+        }
+        if (quiz.questions.length === 0) {
+          throw new Error(`Quiz ${index + 1}: Must have at least one question`);
+        }
+
+        // Validate each question
+        quiz.questions.forEach((q: any, qIndex: number) => {
+          if (!q.questionText || typeof q.questionText !== 'string') {
+            throw new Error(`Quiz ${index + 1}, Question ${qIndex + 1}: Missing or invalid 'questionText'`);
+          }
+          if (!q.correctAnswer || typeof q.correctAnswer !== 'string') {
+            throw new Error(`Quiz ${index + 1}, Question ${qIndex + 1}: Missing or invalid 'correctAnswer'`);
+          }
+          if (!q.incorrectAnswers || !Array.isArray(q.incorrectAnswers)) {
+            throw new Error(`Quiz ${index + 1}, Question ${qIndex + 1}: Missing or invalid 'incorrectAnswers' array`);
+          }
+          if (q.incorrectAnswers.length !== 3) {
+            throw new Error(`Quiz ${index + 1}, Question ${qIndex + 1}: Must have exactly 3 incorrect answers`);
+          }
+          q.incorrectAnswers.forEach((ans: any, aIndex: number) => {
+            if (typeof ans !== 'string' || !ans.trim()) {
+              throw new Error(`Quiz ${index + 1}, Question ${qIndex + 1}, Incorrect Answer ${aIndex + 1}: Must be a non-empty string`);
+            }
+          });
+          // Set orderIndex if not provided
+          if (q.orderIndex === undefined || q.orderIndex === null) {
+            q.orderIndex = qIndex + 1;
+          }
+        });
+
+        return quiz;
+      });
+
+      setParsedQuizzes(validatedQuizzes);
+    } catch (err: any) {
+      console.error("Failed to parse JSON:", err);
+      setParseError(err.message || "Failed to parse JSON file. Please check the format.");
+      setParsedQuizzes(null);
+    }
+
+    // Reset input
+    event.target.value = "";
+  };
+
+  // Handle bulk upload submission
+  const handleBulkUpload = async () => {
+    if (!parsedQuizzes || parsedQuizzes.length === 0) {
+      setParseError("No valid quizzes to upload");
+      return;
+    }
+
+    setIsUploading(true);
+    setParseError(null);
+    setError(null);
+
+    try {
+      const payload = {
+        quizzes: parsedQuizzes,
+      };
+
+      await apiClient.post(ENDPOINTS.quizzes.batch(courseId), payload);
+      
+      setSuccessMessage(`Successfully uploaded ${parsedQuizzes.length} quiz${parsedQuizzes.length > 1 ? 'es' : ''}!`);
+      
+      // Refresh quizzes list
+      await fetchQuizzes();
+
+      // Close dialog and reset
+      setTimeout(() => {
+        setIsBulkUploadDialogOpen(false);
+        setUploadedFile(null);
+        setParsedQuizzes(null);
+        setParseError(null);
+        setSuccessMessage(null);
+      }, 1500);
+    } catch (err: any) {
+      console.error("Failed to upload quizzes:", err);
+      setParseError(err.message || "Failed to upload quizzes. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -374,10 +524,25 @@ export default function CourseQuizzesPage() {
             </p>
           </div>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2 shrink-0">
-          <Plus className="h-4 w-4" />
-          Add Quiz
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button 
+            onClick={() => {
+              setIsBulkUploadDialogOpen(true);
+              setUploadedFile(null);
+              setParsedQuizzes(null);
+              setParseError(null);
+            }} 
+            variant="outline"
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Bulk Upload
+          </Button>
+          <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Quiz
+          </Button>
+        </div>
       </div>
 
       {/* Main Card with all content */}
@@ -712,6 +877,32 @@ export default function CourseQuizzesPage() {
                             className="h-10"
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-slate-700">Incorrect Answers *</Label>
+                          <div className="space-y-2">
+                            <Input
+                              value={question.incorrectAnswers[0]}
+                              onChange={(e) => updateIncorrectAnswer(index, 0, e.target.value)}
+                              placeholder="Incorrect answer 1"
+                              disabled={isSaving}
+                              className="h-10"
+                            />
+                            <Input
+                              value={question.incorrectAnswers[1]}
+                              onChange={(e) => updateIncorrectAnswer(index, 1, e.target.value)}
+                              placeholder="Incorrect answer 2"
+                              disabled={isSaving}
+                              className="h-10"
+                            />
+                            <Input
+                              value={question.incorrectAnswers[2]}
+                              onChange={(e) => updateIncorrectAnswer(index, 2, e.target.value)}
+                              placeholder="Incorrect answer 3"
+                              disabled={isSaving}
+                              className="h-10"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -911,6 +1102,163 @@ export default function CourseQuizzesPage() {
                 </>
               ) : (
                 "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={isBulkUploadDialogOpen} onOpenChange={setIsBulkUploadDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">Bulk Upload Quizzes</DialogTitle>
+            <DialogDescription className="text-sm text-slate-600">
+              Upload a JSON file containing multiple quizzes. The file should follow the required format.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* File Upload Section */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-slate-700">Upload JSON File</Label>
+              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[color:var(--brand-blue)] transition-colors">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="bulk-upload-file"
+                />
+                <label
+                  htmlFor="bulk-upload-file"
+                  className="cursor-pointer flex flex-col items-center gap-3"
+                >
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                    <FileJson className="h-6 w-6 text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">
+                      {uploadedFile ? uploadedFile.name : "Click to upload or drag and drop"}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">JSON file only</p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Error Message */}
+              {parseError && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{parseError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Preview Section */}
+            {parsedQuizzes && parsedQuizzes.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Preview ({parsedQuizzes.length} quiz{parsedQuizzes.length > 1 ? 'es' : ''})
+                  </Label>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Valid
+                  </Badge>
+                </div>
+                
+                <div className="border rounded-lg divide-y max-h-[400px] overflow-y-auto">
+                  {parsedQuizzes.map((quiz, quizIndex) => (
+                    <div key={quizIndex} className="p-4 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-semibold text-slate-900">
+                            {quizIndex + 1}. {quiz.title}
+                          </h4>
+                          {quiz.description && (
+                            <p className="text-sm text-slate-600 mt-1">{quiz.description}</p>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="shrink-0">
+                          {quiz.questions?.length || 0} question{(quiz.questions?.length || 0) !== 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                      
+                      {/* Questions Preview */}
+                      <div className="mt-3 space-y-2">
+                        {quiz.questions?.slice(0, 3).map((q: any, qIndex: number) => (
+                          <div key={qIndex} className="text-xs text-slate-600 pl-3 border-l-2 border-slate-200">
+                            <p className="font-medium text-slate-700">Q{qIndex + 1}: {q.questionText}</p>
+                            <p className="mt-1 text-slate-500">✓ {q.correctAnswer}</p>
+                          </div>
+                        ))}
+                        {quiz.questions && quiz.questions.length > 3 && (
+                          <p className="text-xs text-slate-500 pl-3">
+                            +{quiz.questions.length - 3} more question{quiz.questions.length - 3 > 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* JSON Format Example */}
+            {!parsedQuizzes && !parseError && (
+              <div className="border rounded-lg p-4 bg-slate-50">
+                <Label className="text-sm font-semibold text-slate-700 mb-2 block">Expected JSON Format:</Label>
+                <pre className="text-xs text-slate-600 overflow-x-auto">
+{`{
+  "quizzes": [
+    {
+      "title": "Quiz Title",
+      "description": "Quiz Description",
+      "questions": [
+        {
+          "questionText": "Question text?",
+          "correctAnswer": "Correct answer",
+          "incorrectAnswers": ["Wrong 1", "Wrong 2", "Wrong 3"],
+          "orderIndex": 1
+        }
+      ]
+    }
+  ]
+}`}
+                </pre>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsBulkUploadDialogOpen(false);
+                setUploadedFile(null);
+                setParsedQuizzes(null);
+                setParseError(null);
+              }}
+              disabled={isUploading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkUpload}
+              disabled={!parsedQuizzes || parsedQuizzes.length === 0 || isUploading}
+              className="bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload {parsedQuizzes?.length || 0} Quiz{parsedQuizzes && parsedQuizzes.length > 1 ? 'es' : ''}
+                </>
               )}
             </Button>
           </DialogFooter>

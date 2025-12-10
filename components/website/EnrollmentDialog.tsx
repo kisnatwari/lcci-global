@@ -14,9 +14,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, CheckCircle2, AlertCircle, Tag } from "lucide-react";
-import { enrollInCourse } from "@/lib/api/enrollments";
+import { enrollInCourse, type PaymentRequiredResponse } from "@/lib/api/enrollments";
 import { getAuthSession, getUserRole } from "@/lib/auth";
 import LoginModal from "@/components/website/LoginModal";
+import { EsewaPaymentForm } from "@/components/website/EsewaPaymentForm";
 
 interface EnrollmentDialogProps {
   courseId: string;
@@ -39,6 +40,7 @@ export function EnrollmentDialog({
   const [enrollmentSuccess, setEnrollmentSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState<PaymentRequiredResponse | null>(null);
 
   // Check if user is logged in
   const isLoggedIn = () => {
@@ -54,6 +56,7 @@ export function EnrollmentDialog({
       setPromoCode("");
       setError(null);
       setEnrollmentSuccess(false);
+      setPaymentRequired(null);
     }
     onOpenChange(open);
   };
@@ -67,6 +70,7 @@ export function EnrollmentDialog({
 
     setIsEnrolling(true);
     setError(null);
+    setPaymentRequired(null);
 
     try {
       const payload: { courseId: string; promoCode?: string } = {
@@ -77,8 +81,16 @@ export function EnrollmentDialog({
         payload.promoCode = promoCode.trim();
       }
 
-      const enrollment = await enrollInCourse(payload);
+      const response = await enrollInCourse(payload);
       
+      // Check if payment is required
+      if ('status' in response && response.status === "payment_required") {
+        setPaymentRequired(response as PaymentRequiredResponse);
+        setIsEnrolling(false);
+        return;
+      }
+      
+      // Enrollment successful without payment
       setEnrollmentSuccess(true);
       
       // Call onSuccess callback if provided
@@ -114,7 +126,18 @@ export function EnrollmentDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {enrollmentSuccess ? (
+          {paymentRequired ? (
+            <div className="py-6">
+              <EsewaPaymentForm
+                paymentParams={paymentRequired.paymentParams}
+                paymentUrl={paymentRequired.paymentUrl}
+                onCancel={() => {
+                  setPaymentRequired(null);
+                  setError("Payment was cancelled. Please try again when ready.");
+                }}
+              />
+            </div>
+          ) : enrollmentSuccess ? (
             <div className="py-6">
               <div className="flex flex-col items-center gap-4 text-center">
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100">
@@ -158,7 +181,7 @@ export function EnrollmentDialog({
           )}
 
           <DialogFooter>
-            {!enrollmentSuccess && (
+            {!enrollmentSuccess && !paymentRequired && (
               <>
                 <Button
                   variant="outline"

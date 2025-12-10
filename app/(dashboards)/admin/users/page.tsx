@@ -22,6 +22,9 @@ interface UserProfile {
     status: string;
     trainingCentreId: string | null;
     centreUniqueIdentifier: string | null;
+    trainingCentre?: {
+      category?: string;
+    } | null;
   };
 }
 

@@ -63,7 +63,7 @@ export async function fetchCoursesFromAPI(): Promise<Course[]> {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch courses: ${response.status}`);
+      //throw new Error(`Failed to fetch courses: ${response.status}`);
     }
     
     const data = await response.json();

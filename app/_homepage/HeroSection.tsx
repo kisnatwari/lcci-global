@@ -79,7 +79,7 @@ export default function HeroSection() {
       seed = (seed * 9301 + 49297) % 233280;
       return seed / 233280;
     };
-    
+
     return Array.from({ length: 20 }, (_, i) => ({
       id: i,
       left: seededRandom() * 100,
@@ -94,41 +94,56 @@ export default function HeroSection() {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch categories and courses in parallel
-        const [categoriesResponse, coursesResponse] = await Promise.all([
+        // Fetch categories and courses in parallel - handle independently
+        const [categoriesResult, coursesResult] = await Promise.allSettled([
           apiClient.get(ENDPOINTS.categories.get()),
           apiClient.get(ENDPOINTS.courses.get()),
         ]);
 
-        // Handle categories response
+        // Handle categories response independently
         let categoriesData: Category[] = [];
-        if (categoriesResponse.success && categoriesResponse.data) {
-          if (Array.isArray(categoriesResponse.data.categories)) {
-            categoriesData = categoriesResponse.data.categories;
-          } else if (Array.isArray(categoriesResponse.data)) {
-            categoriesData = categoriesResponse.data;
-          } else if (Array.isArray(categoriesResponse)) {
-            categoriesData = categoriesResponse;
+        if (categoriesResult.status === 'fulfilled') {
+          const categoriesResponse = categoriesResult.value;
+          if (categoriesResponse.success && categoriesResponse.data) {
+            if (Array.isArray(categoriesResponse.data.categories)) {
+              categoriesData = categoriesResponse.data.categories;
+            } else if (Array.isArray(categoriesResponse.data)) {
+              categoriesData = categoriesResponse.data;
+            } else if (Array.isArray(categoriesResponse)) {
+              categoriesData = categoriesResponse;
+            }
           }
+        } else {
+          console.error("Failed to fetch categories:", categoriesResult.reason);
         }
 
-        // Handle courses response
+        // Handle courses response independently
         let coursesData: Course[] = [];
-        if (coursesResponse.success && coursesResponse.data) {
-          if (Array.isArray(coursesResponse.data.courses)) {
-            coursesData = coursesResponse.data.courses;
-          } else if (Array.isArray(coursesResponse.data)) {
-            coursesData = coursesResponse.data;
-          } else if (Array.isArray(coursesResponse)) {
-            coursesData = coursesResponse;
+        if (coursesResult.status === 'fulfilled') {
+          const coursesResponse = coursesResult.value;
+          if (coursesResponse.success && coursesResponse.data) {
+            if (Array.isArray(coursesResponse.data.courses)) {
+              coursesData = coursesResponse.data.courses;
+            } else if (Array.isArray(coursesResponse.data)) {
+              coursesData = coursesResponse.data;
+            } else if (Array.isArray(coursesResponse)) {
+              coursesData = coursesResponse;
+            }
           }
+        } else {
+          console.error("Failed to fetch courses:", coursesResult.reason);
         }
 
         setCategories(categoriesData);
         setCourses(coursesData);
+
+        // Set error only if both requests failed
+        if (categoriesResult.status === 'rejected' && coursesResult.status === 'rejected') {
+          setError("Failed to load data");
+        }
       } catch (err: any) {
-        console.error("Failed to fetch categories/courses:", err);
-        setError("Failed to load categories");
+        console.error("Unexpected error:", err);
+        setError("Failed to load data");
       } finally {
         setIsLoading(false);
       }
@@ -158,7 +173,7 @@ export default function HeroSection() {
     <section className="relative min-h-screen flex items-center overflow-hidden bg-slate-900">
       {/* Spacer for fixed header */}
       <div className="absolute top-0 left-0 right-0 h-20" />
-      
+
       {/* Animated background with multiple layers */}
       <div className="absolute inset-0">
         {/* Large animated gradient orbs - subtle light effect */}
@@ -178,10 +193,10 @@ export default function HeroSection() {
           transition={{ duration: 10, repeat: Infinity, delay: 1 }}
           className="absolute -bottom-1/4 -left-1/4 w-[700px] h-[700px] bg-gradient-to-tr from-[color:var(--brand-cyan)] to-blue-500 rounded-full blur-3xl"
         />
-        
+
         {/* Animated grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
-        
+
         {/* Floating particles */}
         {particles.map((particle) => (
           <motion.div
@@ -222,37 +237,41 @@ export default function HeroSection() {
                 className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-sm font-semibold text-white shadow-lg"
               >
                 <Sparkles className="w-4 h-4 text-yellow-400" />
-                Award-winning qualifications since 1887
+                Award-winning qualifications since 2009
               </motion.div>
-            
+
               {/* Main Headline */}
               <div className="space-y-6">
-                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight">
                   Master Your
                   <span className="block bg-gradient-to-r from-[color:var(--brand-cyan)] to-blue-400 bg-clip-text text-transparent mt-2">
                     Professional Future
-              </span>
-            </h1>
-            
-                <p className="text-xl md:text-2xl text-blue-100 leading-relaxed max-w-2xl">
-                  Industry-recognized qualifications in business, finance, IT and English. 
-                  <span className="text-white font-semibold"> Learn at your pace, certified globally.</span>
-                </p>
+                  </span>
+                </h1>
+
+                <div className="text-xl md:text-2xl text-blue-100 leading-relaxed max-w-2xl space-y-3">
+                  <div className="text-white text-xl md:text-2xl font-semibold mt-3 mb-1">
+                    Transform Your Future with Skills That Matter
+                  </div>
+                  <div>
+                    At <span className="font-semibold">LCCI Global Qualifications</span>, we boost your confidence, enhance employability, and prepare you for real-world success. <span className="font-semibold text-white">Join thousands of learners shaping their future with us.</span>
+                  </div>
+                </div>
               </div>
-              
+
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                href="/courses"
+                  <Link
+                    href="/courses"
                     className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] px-8 py-4 text-lg font-bold text-white shadow-2xl shadow-blue-500/50 hover:shadow-blue-500/70 transition-all duration-300 relative overflow-hidden"
-              >
+                  >
                     <span className="relative z-10">Start Learning Now</span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-[color:var(--brand-cyan)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
+                  </Link>
                 </motion.div>
-                
+
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <a
                     href="https://youtu.be/m2Pck7Vt4Ls?si=nXJQNgD79dK54kgG"
@@ -264,26 +283,26 @@ export default function HeroSection() {
                     Watch Overview
                   </a>
                 </motion.div>
-            </div>
+              </div>
 
               {/* Trust indicators */}
               <div className="flex flex-wrap items-center gap-8 pt-4">
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-3">
                     {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="w-12 h-12 rounded-full bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] border-4 border-slate-900 flex items-center justify-center text-white font-bold text-sm"
-                        >
-                          {i}K
-                </div>
-              ))}
-            </div>
+                      <div
+                        key={i}
+                        className="w-12 h-12 rounded-full bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] border-4 border-slate-900 flex items-center justify-center text-white font-bold text-sm"
+                      >
+                        {i}K
+                      </div>
+                    ))}
+                  </div>
                   <div className="text-sm">
                     <div className="font-bold text-white text-lg">25,000+</div>
                     <div className="text-blue-200">Learners trained</div>
+                  </div>
                 </div>
-              </div>
 
                 <div className="h-12 w-px bg-white/20" />
 
@@ -316,13 +335,13 @@ export default function HeroSection() {
               >
                 <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl" />
-                  
+
                   <div className="relative space-y-6">
                     <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-400 to-emerald-500 px-4 py-2 text-sm font-bold text-white shadow-lg">
                       <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                       Active Learning Programs
-                  </div>
-                    
+                    </div>
+
                     <h3 className="text-2xl font-bold text-white">
                       Choose Your Path
                     </h3>
@@ -388,9 +407,9 @@ export default function HeroSection() {
                       <p className="text-sm text-blue-100 text-center">
                         Flexible delivery: <span className="text-white font-semibold">Guided</span> or <span className="text-white font-semibold">Self-paced</span>
                       </p>
+                    </div>
                   </div>
                 </div>
-              </div>
               </motion.div>
 
               {/* Floating accent cards */}
@@ -399,18 +418,18 @@ export default function HeroSection() {
                   y: [0, 15, 0],
                 }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-8 -left-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-6 shadow-2xl max-w-[200px]"
+                className="absolute -bottom-8 -left-8 bg-white rounded-2xl p-6 shadow-2xl max-w-[200px]"
               >
-                <div className="text-white">
+                <div className="text-[color:var(--brand-blue)]">
                   <div className="text-3xl font-bold">
                     {isLoading ? (
-                      <Loader2 className="w-8 h-8 animate-spin" />
+                      <Loader2 className="w-8 h-8 animate-spin text-[color:var(--brand-blue)]" />
                     ) : (
                       `${courses.length}+`
                     )}
                   </div>
-                  <div className="text-sm text-white/90">Active Courses</div>
-            </div>
+                  <div className="text-sm text-[color:var(--brand-blue)]/90">Active Courses</div>
+                </div>
               </motion.div>
 
               <motion.div

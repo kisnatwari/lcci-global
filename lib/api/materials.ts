@@ -12,6 +12,7 @@ export interface CourseMaterial {
   orderIndex?: number;
   createdAt?: string;
   updatedAt?: string;
+  completedAt?: string | null; // Completion timestamp from API
 }
 
 export interface CreateMaterialPayload {

@@ -4,7 +4,7 @@ import { getServerApiClient } from "@/lib/api/server-client";
 import { ENDPOINTS } from "@/lib/api/config";
 import { TrainingCentresPageClient } from "./training-centres-client";
 
-type TrainingCentreCategory = "SQA" | "Cambridge";
+type TrainingCentreCategory = "SQA" | "Cambridge" | "SoftSkill";
 
 type TrainingCentre = {
   centreId: string;

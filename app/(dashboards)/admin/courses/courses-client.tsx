@@ -274,41 +274,36 @@ export function CoursesPageClient({ initialCourses, error: initialError }: Cours
 
           {/* Filters Section */}
           <div className="space-y-4">
-            {/* Category Tabs */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Filter className="h-4 w-4" />
-                <span>Filter by category:</span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button
-                  variant={selectedCategory === null ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(null)}
-                  className="rounded-full"
-                >
-                  All Courses ({allCourses.length})
-                </Button>
-                {categories.map((category) => {
-                  const count = allCourses.filter(c => c.category?.categoryId === category.categoryId).length;
-                  return (
-                    <Button
-                      key={category.categoryId}
-                      variant={selectedCategory === category.categoryId ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category.categoryId)}
-                      className="rounded-full"
-                    >
-                      {category.name} ({count})
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Type Dropdown and Search */}
+            {/* Category Dropdown and Type Dropdown */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Filter className="h-4 w-4" />
+                      Category: {selectedCategory === null 
+                        ? `All Courses (${allCourses.length})` 
+                        : categories.find(c => c.categoryId === selectedCategory)?.name || "All Courses"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="max-h-[300px] overflow-y-auto">
+                    <DropdownMenuItem onClick={() => setSelectedCategory(null)}>
+                      All Courses ({allCourses.length})
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {categories.map((category) => {
+                      const count = allCourses.filter(c => c.category?.categoryId === category.categoryId).length;
+                      return (
+                        <DropdownMenuItem 
+                          key={category.categoryId}
+                          onClick={() => setSelectedCategory(category.categoryId)}
+                        >
+                          {category.name} ({count})
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">

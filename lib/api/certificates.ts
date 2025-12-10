@@ -43,3 +43,25 @@ export async function getUserCertificates(userId: string): Promise<Certificate[]
   }
 }
 
+/**
+ * Get certificate by course ID (client-side)
+ * Returns the certificate for the authenticated user's enrollment in the specified course
+ */
+export async function getCertificateByCourse(courseId: string): Promise<Certificate | null> {
+  try {
+    const response = await apiClient.get(ENDPOINTS.certificates.getByCourse(courseId));
+    // Handle different response structures
+    if (response.certificateId) {
+      return response;
+    } else if (response.data && response.data.certificateId) {
+      return response.data;
+    } else if (response.success && response.data && response.data.certificateId) {
+      return response.data;
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to get certificate by course:', error);
+    return null;
+  }
+}
+

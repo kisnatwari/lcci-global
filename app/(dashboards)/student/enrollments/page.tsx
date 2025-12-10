@@ -212,11 +212,22 @@ export default function StudentEnrollmentsPage() {
           const courseName = enrollment.course?.name || "Untitled Course";
           const status = enrollment.status || (enrollment.completedAt ? "completed" : "enrolled");
 
+          const thumbnailUrl = enrollment.course?.thumbnailUrl;
+
           return (
             <Card
               key={enrollmentId}
               className="group relative overflow-hidden border border-slate-200 bg-white shadow-sm transition-colors hover:border-sky-200"
             >
+              {thumbnailUrl && (
+                <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                  <img
+                    src={thumbnailUrl}
+                    alt={courseName}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -229,11 +240,13 @@ export default function StudentEnrollmentsPage() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="ml-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-sky-600">
-                      <BookOpen className="h-5 w-5" />
+                  {!thumbnailUrl && (
+                    <div className="ml-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-sky-600">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">

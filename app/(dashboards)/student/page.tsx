@@ -286,43 +286,57 @@ export default function StudentDashboard() {
                 {inProgressEnrollments.slice(0, 3).map((enrollment) => {
                   const enrollmentId = getEnrollmentId(enrollment);
                   const progress = enrollment.progress || 0;
+                  const thumbnailUrl = enrollment.course?.thumbnailUrl;
                   
                   return (
                     <div
                       key={enrollmentId}
                       className="rounded-xl border border-slate-200 bg-white p-5 hover:border-[color:var(--brand-blue)]/50 hover:shadow-md transition-all"
                     >
-                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <p className="text-base font-semibold text-slate-900">
-                            {getCourseName(enrollment)}
-                          </p>
-                          <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-                            <span>{getCourseCategory(enrollment)}</span>
-                            <span className="text-slate-300">•</span>
-                            <span>Enrolled {getTimeAgo(enrollment.enrolledAt)}</span>
+                      <div className="flex gap-4">
+                        {thumbnailUrl && (
+                          <div className="flex-shrink-0">
+                            <img
+                              src={thumbnailUrl}
+                              alt={getCourseName(enrollment)}
+                              className="w-24 h-24 rounded-lg object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                            <div>
+                              <p className="text-base font-semibold text-slate-900">
+                                {getCourseName(enrollment)}
+                              </p>
+                              <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                                <span>{getCourseCategory(enrollment)}</span>
+                                <span className="text-slate-300">•</span>
+                                <span>Enrolled {getTimeAgo(enrollment.enrolledAt)}</span>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="capitalize w-fit">
+                              {getCourseLevel(enrollment)}
+                            </Badge>
+                          </div>
+                          <div className="mt-4 space-y-1">
+                            <div className="flex items-center justify-between text-sm text-slate-500">
+                              <span>Progress</span>
+                              <span className="font-medium text-slate-900">
+                                {progress}%
+                              </span>
+                            </div>
+                            <Progress value={progress} />
+                          </div>
+                          <div className="mt-4">
+                            <Button asChild variant="outline" className="text-sm">
+                              <Link href={`/student/enrollments/${enrollmentId}`}>
+                                <Play className="mr-2 h-4 w-4" />
+                                Continue course
+                              </Link>
+                            </Button>
                           </div>
                         </div>
-                        <Badge variant="outline" className="capitalize w-fit">
-                          {getCourseLevel(enrollment)}
-                        </Badge>
-                      </div>
-                      <div className="mt-4 space-y-1">
-                        <div className="flex items-center justify-between text-sm text-slate-500">
-                          <span>Progress</span>
-                          <span className="font-medium text-slate-900">
-                            {progress}%
-                          </span>
-                        </div>
-                        <Progress value={progress} />
-                      </div>
-                      <div className="mt-4">
-                        <Button asChild variant="outline" className="text-sm">
-                          <Link href={`/student/enrollments/${enrollmentId}`}>
-                            <Play className="mr-2 h-4 w-4" />
-                            Continue course
-                          </Link>
-                        </Button>
                       </div>
                     </div>
                   );

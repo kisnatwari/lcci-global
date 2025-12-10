@@ -29,10 +29,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check } from "lucide-react";
+import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check, Brain } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
-type TrainingCentreCategory = "SQA" | "Cambridge";
+type TrainingCentreCategory = "SQA" | "Cambridge" | "SoftSkill";
 
 type TrainingCentre = {
   centreId: string;
@@ -49,6 +49,7 @@ interface TrainingCentresPageClientProps {
 }
 
 export function TrainingCentresPageClient({ initialTrainingCentres, error: initialError }: TrainingCentresPageClientProps) {
+  console.log("initialTrainingCentres", initialTrainingCentres);
   const [trainingCentres, setTrainingCentres] = useState<TrainingCentre[]>(initialTrainingCentres);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -214,6 +215,20 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
     }
   };
 
+  // Get category display label
+  const getCategoryLabel = (category: TrainingCentreCategory): string => {
+    switch (category) {
+      case "SQA":
+        return "IT & Hospitality Management";
+      case "Cambridge":
+        return "Cambridge";
+      case "SoftSkill":
+        return "Soft Skill";
+      default:
+        return category;
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -345,7 +360,7 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted">
-                          {centre.category}
+                          {getCategoryLabel(centre.category)}
                         </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
@@ -450,10 +465,11 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
               <Label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                 Category <span className="text-red-500 font-bold">*</span>
               </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { value: "SQA", label: "SQA", icon: School, color: "emerald" },
+                  { value: "SQA", label: "IT & Hospitality Management", icon: School, color: "emerald" },
                   { value: "Cambridge", label: "Cambridge", icon: GraduationCap, color: "blue" },
+                  { value: "SoftSkill", label: "Soft Skill", icon: Brain, color: "purple" },
                 ].map((category) => {
                   const isSelected = formData.category === category.value;
                   const Icon = category.icon;
@@ -473,6 +489,11 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                     iconBgClasses = isSelected ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-600";
                     textClasses = isSelected ? "text-blue-700" : "text-slate-900";
                     checkBgClasses = "bg-blue-500";
+                  } else if (category.color === "purple") {
+                    borderBgClasses = isSelected ? "border-purple-500 bg-purple-50" : "border-slate-300 hover:border-purple-300";
+                    iconBgClasses = isSelected ? "bg-purple-500 text-white" : "bg-purple-100 text-purple-600";
+                    textClasses = isSelected ? "text-purple-700" : "text-slate-900";
+                    checkBgClasses = "bg-purple-500";
                   }
                   
                   return (
@@ -485,7 +506,7 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                         }
                       }}
                       disabled={isSaving}
-                      className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${borderBgClasses} ${
+                      className={`relative p-4 rounded-lg border-2 transition-all duration-200 min-h-[80px] ${borderBgClasses} ${
                         isSaving ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:shadow-sm"
                       }`}
                     >
@@ -494,11 +515,11 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                           <CheckCircle2 className="w-2.5 h-2.5 text-white" />
                         </div>
                       )}
-                      <div className="flex items-center gap-3">
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 transition-colors ${iconBgClasses}`}>
+                      <div className="flex items-start gap-3 pr-6">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-lg shrink-0 transition-colors ${iconBgClasses}`}>
                           <Icon className="w-5 h-5" />
                         </div>
-                        <span className={`font-semibold text-sm ${textClasses}`}>
+                        <span className={`font-semibold text-sm leading-tight ${textClasses} break-words`}>
                           {category.label}
                         </span>
                       </div>
