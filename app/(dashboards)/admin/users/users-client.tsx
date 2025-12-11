@@ -19,9 +19,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, User, Building2, AlertCircle, Loader2, Phone, MapPin, Calendar, Eye, Mail } from "lucide-react";
+import { Search, User, Building2, AlertCircle, Loader2, Phone, MapPin, Calendar, Eye, Mail, Users, BookOpen, CreditCard, CheckCircle as CheckCircleIcon, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
@@ -77,6 +86,14 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+
+  // Enrollments drawer state
+  const [isEnrollmentsDrawerOpen, setIsEnrollmentsDrawerOpen] = useState(false);
+  const [selectedUserForEnrollments, setSelectedUserForEnrollments] = useState<UserProfile | null>(null);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [enrollmentsTotal, setEnrollmentsTotal] = useState(0);
+  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
+  const [enrollmentsError, setEnrollmentsError] = useState<string | null>(null);
 
   // Auto-open profile dialog if userId is in query params
   useEffect(() => {
@@ -190,6 +207,80 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
   // Get selected user from users list
   const selectedUser = users.find((u) => u.userId === selectedUserId);
 
+  // Handle opening enrollments drawer
+  const handleViewEnrollments = async (user: UserProfile) => {
+    setSelectedUserForEnrollments(user);
+    setIsEnrollmentsDrawerOpen(true);
+    setIsLoadingEnrollments(true);
+    setEnrollmentsError(null);
+    
+    try {
+      // Use the correct endpoint with userId query parameter
+      const response = await apiClient.get(ENDPOINTS.enrollments.get({ userId: user.userId }));
+      
+      // Handle response schema: { enrollments: [], total: 0 }
+      let enrollmentsData: any[] = [];
+      let total = 0;
+      
+      if (response.enrollments && Array.isArray(response.enrollments)) {
+        enrollmentsData = response.enrollments;
+        total = response.total || enrollmentsData.length;
+      } else if (response.success && response.data) {
+        if (response.data.enrollments && Array.isArray(response.data.enrollments)) {
+          enrollmentsData = response.data.enrollments;
+          total = response.data.total || enrollmentsData.length;
+        } else if (Array.isArray(response.data)) {
+          enrollmentsData = response.data;
+          total = enrollmentsData.length;
+        }
+      } else if (Array.isArray(response)) {
+        enrollmentsData = response;
+        total = enrollmentsData.length;
+      }
+      
+      setEnrollments(enrollmentsData);
+      setEnrollmentsTotal(total);
+    } catch (err: any) {
+      console.error("Failed to fetch enrollments:", err);
+      setEnrollmentsError(err.message || "Failed to load enrollments");
+      setEnrollments([]);
+    } finally {
+      setIsLoadingEnrollments(false);
+    }
+  };
+
+  // Helper to get user name from enrollment
+  const getUserNameFromEnrollment = (user: any): string => {
+    if (!user) return "Unknown";
+    if (user.profile) {
+      const firstName = user.profile.firstName || "";
+      const lastName = user.profile.lastName || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      return fullName || user.email || "Unknown";
+    }
+    return user.email || "Unknown";
+  };
+
+  // Helper to get status badge color
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+      enrolled: { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-200" },
+      completed: { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-200" },
+      cancelled: { bg: "bg-red-100", text: "text-red-700", border: "border-red-200" },
+    };
+    const colors = statusColors[status.toLowerCase()] || { bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200" };
+    return colors;
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -298,14 +389,24 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewProfile(user.userId)}
-                          title="View Profile"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewEnrollments(user)}
+                            title="View Enrollments"
+                          >
+                            <Users className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewProfile(user.userId)}
+                            title="View Profile"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -477,6 +578,167 @@ export function UsersPageClient({ initialUsers, error }: UsersPageClientProps) {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {/* Enrollments Drawer */}
+      <Drawer open={isEnrollmentsDrawerOpen} onOpenChange={setIsEnrollmentsDrawerOpen} direction="right">
+        <DrawerContent className="max-w-2xl w-full">
+          <DrawerHeader className="border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <DrawerTitle>User Enrollments</DrawerTitle>
+                <DrawerDescription>
+                  {selectedUserForEnrollments ? getDisplayName(selectedUserForEnrollments) : "User"}
+                </DrawerDescription>
+              </div>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DrawerClose>
+            </div>
+          </DrawerHeader>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {isLoadingEnrollments ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Loading enrollments...</span>
+              </div>
+            ) : enrollmentsError ? (
+              <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <div>
+                  <p className="font-medium">Failed to load enrollments</p>
+                  <p className="text-sm">{enrollmentsError}</p>
+                </div>
+              </div>
+            ) : enrollments.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No enrollments found for this user.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {enrollments.map((enrollment) => {
+                  const statusColors = getStatusBadge(enrollment.status);
+                  return (
+                    <div
+                      key={enrollment.enrollmentId}
+                      className="border rounded-lg p-4 space-y-3 hover:bg-slate-50 transition-colors"
+                    >
+                      {/* Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            {enrollment.course?.thumbnailUrl ? (
+                              <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-200">
+                                <img
+                                  src={enrollment.course.thumbnailUrl}
+                                  alt={enrollment.course.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)]">
+                                <BookOpen className="h-6 w-6" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {enrollment.course?.name || "Unknown Course"}
+                              </p>
+                              <p className="text-sm text-slate-600">Course Enrollment</p>
+                            </div>
+                          </div>
+                        </div>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text} border ${statusColors.border}`}>
+                          {enrollment.status.charAt(0).toUpperCase() + enrollment.status.slice(1)}
+                        </span>
+                      </div>
+
+                      {/* Details Grid */}
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Calendar className="h-4 w-4 text-slate-400" />
+                          <span>
+                            <span className="text-slate-500">Enrolled:</span>{" "}
+                            {enrollment.enrolledAt ? formatDate(enrollment.enrolledAt) : "—"}
+                          </span>
+                        </div>
+                        {enrollment.completedAt && (
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
+                            <span>
+                              <span className="text-slate-500">Completed:</span>{" "}
+                              {formatDate(enrollment.completedAt)}
+                            </span>
+                          </div>
+                        )}
+                        {enrollment.transaction && (
+                          <div className="flex items-center gap-2 text-slate-600 col-span-2">
+                            <CreditCard className="h-4 w-4 text-slate-400" />
+                            <span>
+                              <span className="text-slate-500">Payment:</span>{" "}
+                              NPR {Number(enrollment.transaction.amount || 0).toLocaleString()} 
+                              {" "}({enrollment.transaction.paymentType})
+                              {enrollment.transaction.status && (
+                                <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${
+                                  enrollment.transaction.status === 'completed' || enrollment.transaction.status === 'success'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : enrollment.transaction.status === 'pending'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {enrollment.transaction.status}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        {enrollment.isLcci !== undefined && (
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <span className="text-slate-500">LCCI:</span>{" "}
+                            <span className={enrollment.isLcci ? "text-emerald-600 font-medium" : "text-slate-400"}>
+                              {enrollment.isLcci ? "Yes" : "No"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Progress */}
+                      {enrollment.progress !== undefined && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs text-slate-600">
+                            <span>Progress</span>
+                            <span className="font-medium">{enrollment.progress}%</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[color:var(--brand-blue)] transition-all"
+                              style={{ width: `${enrollment.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <DrawerFooter className="border-t">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {enrollmentsTotal} {enrollmentsTotal === 1 ? "enrollment" : "enrollments"}
+              </p>
+              <DrawerClose asChild>
+                <Button variant="outline">Close</Button>
+              </DrawerClose>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

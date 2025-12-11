@@ -9,7 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, HelpCircle, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { getFAQById, updateFAQ, getFAQs } from "@/lib/faqs/static-store";
+import { apiClient, ENDPOINTS } from "@/lib/api";
+
+type FAQ = {
+  faqId: string;
+  question: string;
+  answer: string;
+  isActive: boolean;
+  orderIndex: number;
+};
 
 export default function EditFAQPage() {
   const router = useRouter();
@@ -32,13 +40,22 @@ export default function EditFAQPage() {
     loadFAQ();
   }, [faqId]);
 
-  const loadFAQ = () => {
+  const loadFAQ = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const faq = getFAQById(faqId);
-      if (!faq) {
-        setError("FAQ not found");
-        return;
+      const response = await apiClient.get(ENDPOINTS.faqs.getById(faqId));
+      
+      // Handle different response formats
+      let faq: FAQ;
+      if (response.faqId) {
+        faq = response;
+      } else if (response.data && response.data.faqId) {
+        faq = response.data;
+      } else if (response.success && response.data && response.data.faqId) {
+        faq = response.data;
+      } else {
+        throw new Error("Invalid FAQ response structure");
       }
       
       setFormData({
@@ -49,13 +66,13 @@ export default function EditFAQPage() {
       });
     } catch (err: any) {
       console.error("Failed to load FAQ:", err);
-      setError(err.message || "Failed to load FAQ");
+      setError(err.response?.data?.error?.message || err.message || "Failed to load FAQ");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.question || !formData.question.trim()) {
       setError("Question is required");
       return;
@@ -78,17 +95,12 @@ export default function EditFAQPage() {
     setSuccessMessage(null);
 
     try {
-      const updated = updateFAQ(faqId, {
+      await apiClient.put(ENDPOINTS.faqs.update(faqId), {
         question: formData.question.trim(),
         answer: formData.answer.trim(),
-        orderIndex: orderIndex,
+        orderIndex: orderIndex ?? 0,
         isActive: formData.isActive,
       });
-
-      if (!updated) {
-        setError("Failed to update FAQ");
-        return;
-      }
 
       setSuccessMessage("FAQ updated successfully!");
       
@@ -98,7 +110,9 @@ export default function EditFAQPage() {
       }, 1500);
     } catch (err: any) {
       console.error("Failed to update FAQ:", err);
-      setError(err.message || "Failed to update FAQ");
+      // Handle API error format
+      const errorMessage = err.response?.data?.error?.message || err.message || "Failed to update FAQ";
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }

@@ -8,7 +8,7 @@ export default async function ProfilePage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch profile on server

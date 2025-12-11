@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, HelpCircle, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { createFAQ, getFAQs } from "@/lib/faqs/static-store";
+import { apiClient, ENDPOINTS } from "@/lib/api";
 
 export default function NewFAQPage() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function NewFAQPage() {
     isActive: true,
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.question || !formData.question.trim()) {
       setError("Question is required");
       return;
@@ -36,7 +36,7 @@ export default function NewFAQPage() {
     }
 
     // Parse orderIndex, default to 0 if empty
-    const orderIndex = formData.orderIndex ? parseInt(formData.orderIndex, 10) : getFAQs().length;
+    const orderIndex = formData.orderIndex ? parseInt(formData.orderIndex, 10) : 0;
     if (isNaN(orderIndex)) {
       setError("Order index must be a valid number");
       return;
@@ -47,7 +47,7 @@ export default function NewFAQPage() {
     setSuccessMessage(null);
 
     try {
-      createFAQ({
+      const response = await apiClient.post(ENDPOINTS.faqs.post(), {
         question: formData.question.trim(),
         answer: formData.answer.trim(),
         orderIndex: orderIndex,
@@ -62,7 +62,9 @@ export default function NewFAQPage() {
       }, 1500);
     } catch (err: any) {
       console.error("Failed to create FAQ:", err);
-      setError(err.message || "Failed to create FAQ");
+      // Handle API error format
+      const errorMessage = err.response?.data?.error?.message || err.message || "Failed to create FAQ";
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }

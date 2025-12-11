@@ -33,7 +33,7 @@ export default async function UsersPage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch users on server

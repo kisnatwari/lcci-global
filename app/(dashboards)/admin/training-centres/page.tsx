@@ -20,7 +20,7 @@ export default async function TrainingCentresPage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch training centres on server

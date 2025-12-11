@@ -35,7 +35,7 @@ export default async function CoursesPage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch courses on server

@@ -20,7 +20,7 @@ export default async function CategoriesPage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch categories on server

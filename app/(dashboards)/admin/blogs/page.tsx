@@ -21,7 +21,7 @@ export default async function BlogsPage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch blogs on server

@@ -17,19 +17,17 @@ export default async function proxy(request: NextRequest) {
     const encryptedSession = request.cookies.get(getSessionCookieName())?.value;
     
     if (!encryptedSession) {
-      const homeUrl = new URL('/', request.url);
-      homeUrl.searchParams.set('login', 'true');
-      homeUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(homeUrl);
+      const adminLoginUrl = new URL('/admin-login', request.url);
+      adminLoginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(adminLoginUrl);
     }
 
     // Decrypt session
     const session = getServerSessionData(request.cookies);
     if (!session || !session.accessToken) {
-      const homeUrl = new URL('/', request.url);
-      homeUrl.searchParams.set('login', 'true');
-      homeUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(homeUrl);
+      const adminLoginUrl = new URL('/admin-login', request.url);
+      adminLoginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(adminLoginUrl);
     }
 
     const token = session.accessToken;
@@ -40,19 +38,17 @@ export default async function proxy(request: NextRequest) {
       
       // If token is invalid or expired
       if (!payload) {
-        const homeUrl = new URL('/', request.url);
-        homeUrl.searchParams.set('login', 'true');
-        homeUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(homeUrl);
+        const adminLoginUrl = new URL('/admin-login', request.url);
+        adminLoginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(adminLoginUrl);
       }
 
       // Check if token is expired
       const currentTime = Math.floor(Date.now() / 1000);
       if (payload.exp && payload.exp < currentTime) {
-        const homeUrl = new URL('/', request.url);
-        homeUrl.searchParams.set('login', 'true');
-        homeUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(homeUrl);
+        const adminLoginUrl = new URL('/admin-login', request.url);
+        adminLoginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(adminLoginUrl);
       }
 
       // Check if user is admin (use role from session or token payload)
@@ -66,11 +62,10 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     } catch (error) {
       console.error('Proxy token validation error:', error);
-      // Token validation failed, redirect to home with login modal
-      const homeUrl = new URL('/', request.url);
-      homeUrl.searchParams.set('login', 'true');
-      homeUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(homeUrl);
+      // Token validation failed, redirect to admin login
+      const adminLoginUrl = new URL('/admin-login', request.url);
+      adminLoginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(adminLoginUrl);
     }
   }
 

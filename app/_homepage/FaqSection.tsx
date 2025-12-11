@@ -3,15 +3,52 @@
 import { motion } from "framer-motion";
 import { HelpCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getActiveFAQs, type FAQ } from "@/lib/faqs/static-store";
+import { apiClient, ENDPOINTS } from "@/lib/api";
+
+type FAQ = {
+  faqId: string;
+  question: string;
+  answer: string;
+  isActive: boolean;
+  orderIndex: number;
+};
 
 export default function FaqSection() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load FAQs from static store (will be replaced with API call later)
-    const activeFAQs = getActiveFAQs();
-    setFaqs(activeFAQs);
+    // Load FAQs from API
+    const loadFAQs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await apiClient.get(ENDPOINTS.faqs.get());
+        
+        // Handle API response structure: array of FAQs
+        let fetchedFAQs: FAQ[] = [];
+        if (Array.isArray(response)) {
+          fetchedFAQs = response;
+        } else if (response.success && response.data && Array.isArray(response.data)) {
+          fetchedFAQs = response.data;
+        } else if (response.data && Array.isArray(response.data)) {
+          fetchedFAQs = response.data;
+        }
+        
+        // Filter for active FAQs only and sort by orderIndex
+        const activeFAQs = fetchedFAQs
+          .filter((faq) => faq.isActive)
+          .sort((a, b) => a.orderIndex - b.orderIndex);
+        
+        setFaqs(activeFAQs);
+      } catch (error) {
+        console.error("Failed to load FAQs:", error);
+        setFaqs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFAQs();
   }, []);
   return (
     <section className="relative py-24 bg-slate-50">
@@ -38,7 +75,12 @@ export default function FaqSection() {
 
         {/* FAQ List */}
         <div className="max-w-4xl mx-auto space-y-4">
-          {faqs.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12 text-slate-500">
+              <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-50 animate-pulse" />
+              <p>Loading FAQs...</p>
+            </div>
+          ) : faqs.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No FAQs available at the moment.</p>
@@ -46,7 +88,7 @@ export default function FaqSection() {
           ) : (
             faqs.map((faq, idx) => (
               <motion.details
-                key={faq.id}
+                key={faq.faqId}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

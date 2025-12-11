@@ -87,6 +87,7 @@ export const ENDPOINTS = {
             const query = queryParams.toString();
             return `/api/enrollments${query ? `?${query}` : ''}`;
         },
+        getByCourse: (courseId: string) => `/api/enrollments/${courseId}`, // GET: Get enrollments by course ID
         getMe: () => "/api/enrollments/me",       // GET: List my enrollments (authenticated user)
         getById: (id: string) => `/api/enrollments/${id}`, // GET: Get enrollment by ID
         markMaterialComplete: (enrollmentId: string) => `/api/enrollments/${enrollmentId}/completions/materials`, // POST: Mark material as complete
@@ -125,5 +126,12 @@ export const ENDPOINTS = {
         update: (id: string) => `/api/cms/blogs/${id}`, // PUT: Update blog by ID
         delete: (id: string) => `/api/cms/blogs/${id}`, // DELETE: Delete blog by ID
         getBySlug: (slug: string) => `/api/cms/blogs/slug/${slug}`, // GET: Get blog by slug
+    },
+    faqs: {
+        post: () => "/api/cms/faqs", // POST: Create a new FAQ
+        get: () => "/api/cms/faqs", // GET: List all FAQs
+        getById: (id: string) => `/api/cms/faqs/${id}`, // GET: Get FAQ by ID
+        update: (id: string) => `/api/cms/faqs/${id}`, // PUT: Update FAQ by ID
+        delete: (id: string) => `/api/cms/faqs/${id}`, // DELETE: Delete FAQ by ID
     },
 }

@@ -25,7 +25,7 @@ export default async function SQAStudentsPage({
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Await searchParams (Next.js 15+)

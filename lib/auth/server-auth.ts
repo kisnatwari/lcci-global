@@ -65,7 +65,9 @@ export async function getServerSession(): Promise<ServerSession | null> {
 export async function requireAuth(): Promise<ServerSession> {
   const session = await getServerSession();
   if (!session) {
-    redirect('/?login=true');
+    // Check if we're in an admin route context
+    // Since this is used by requireRole("admin"), redirect to admin login
+    redirect('/admin-login');
   }
   return session;
 }
@@ -77,6 +79,10 @@ export async function requireRole(requiredRole: string): Promise<ServerSession> 
   const session = await requireAuth();
   
   if (session.role !== requiredRole) {
+    // If requiring admin role, redirect to admin login
+    if (requiredRole === 'admin') {
+      redirect('/admin-login');
+    }
     redirect('/');
   }
   

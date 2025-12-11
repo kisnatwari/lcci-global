@@ -23,7 +23,7 @@ export default async function PromoCodesPage() {
   try {
     await requireRole("admin");
   } catch (error) {
-    redirect("/?login=true");
+    redirect("/admin-login");
   }
 
   // Fetch promo codes on server

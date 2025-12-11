@@ -23,6 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   Search, 
   AlertCircle, 
@@ -36,8 +41,11 @@ import {
   ChevronsRight,
   Filter,
   X,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface Enrollment {
   enrollmentId: string;
@@ -105,6 +113,16 @@ export function EnrollmentsPageClient({
   const [userIdFilter, setUserIdFilter] = useState(searchParams.get('userId') || '');
   const [courseIdFilter, setCourseIdFilter] = useState(searchParams.get('courseId') || '');
 
+  // Searchable select states
+  const [users, setUsers] = useState<Array<{ userId: string; email: string; name: string }>>([]);
+  const [courses, setCourses] = useState<Array<{ courseId: string; name: string }>>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [courseSearchQuery, setCourseSearchQuery] = useState("");
+  const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
+  const [isCoursePopoverOpen, setIsCoursePopoverOpen] = useState(false);
+
   // Calculate pagination
   const currentPage = Math.floor(offset / limit) + 1;
   const totalPages = Math.ceil(total / limit);
@@ -160,6 +178,97 @@ export function EnrollmentsPageClient({
     setIsMounted(true);
   }, []);
 
+  // Fetch users when popover opens (lazy loading)
+  const fetchUsers = async (search: string = "") => {
+    if (users.length > 0 && !search) return; // Don't refetch if already loaded and no search
+    
+    setIsLoadingUsers(true);
+    try {
+      const response = await apiClient.get(ENDPOINTS.profile.all());
+      let fetchedUsers: any[] = [];
+      
+      if (response.success && response.data && Array.isArray(response.data.profiles)) {
+        fetchedUsers = response.data.profiles;
+      } else if (Array.isArray(response)) {
+        fetchedUsers = response;
+      } else if (response.data && Array.isArray(response.data)) {
+        fetchedUsers = response.data;
+      }
+
+      const formattedUsers = fetchedUsers.map((profile: any) => {
+        const firstName = profile.firstName || "";
+        const lastName = profile.lastName || "";
+        const name = `${firstName} ${lastName}`.trim() || profile.user?.email || "Unknown";
+        return {
+          userId: profile.userId,
+          email: profile.user?.email || "",
+          name,
+        };
+      });
+
+      setUsers(formattedUsers);
+    } catch (err: any) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Fetch courses when popover opens (lazy loading)
+  const fetchCourses = async (search: string = "") => {
+    if (courses.length > 0 && !search) return; // Don't refetch if already loaded and no search
+    
+    setIsLoadingCourses(true);
+    try {
+      const response = await apiClient.get(ENDPOINTS.courses.get());
+      let fetchedCourses: any[] = [];
+      
+      if (response.success && response.data && Array.isArray(response.data.courses)) {
+        fetchedCourses = response.data.courses;
+      } else if (response.data && Array.isArray(response.data.courses)) {
+        fetchedCourses = response.data.courses;
+      } else if (Array.isArray(response)) {
+        fetchedCourses = response;
+      }
+
+      const formattedCourses = fetchedCourses.map((course: any) => ({
+        courseId: course.courseId,
+        name: course.name || "Unknown Course",
+      }));
+
+      setCourses(formattedCourses);
+    } catch (err: any) {
+      console.error("Failed to fetch courses:", err);
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  };
+
+  // Filter users by search query
+  const filteredUsers = users.filter((user) => {
+    if (!userSearchQuery) return true;
+    const query = userSearchQuery.toLowerCase();
+    return (
+      user.name.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query) ||
+      user.userId.toLowerCase().includes(query)
+    );
+  });
+
+  // Filter courses by search query
+  const filteredCourses = courses.filter((course) => {
+    if (!courseSearchQuery) return true;
+    const query = courseSearchQuery.toLowerCase();
+    return (
+      course.name.toLowerCase().includes(query) ||
+      course.courseId.toLowerCase().includes(query)
+    );
+  });
+
+  // Get selected user/course display names
+  const selectedUser = users.find((u) => u.userId === userIdFilter);
+  const selectedCourse = courses.find((c) => c.courseId === courseIdFilter);
+
   // Update URL and fetch when filters change (skip initial mount)
   const [isInitialMount, setIsInitialMount] = useState(true);
   
@@ -204,6 +313,10 @@ export function EnrollmentsPageClient({
     setStatusFilter('');
     setUserIdFilter('');
     setCourseIdFilter('');
+    setUserSearchQuery('');
+    setCourseSearchQuery('');
+    setIsUserPopoverOpen(false);
+    setIsCoursePopoverOpen(false);
   };
 
   // Format date
@@ -280,7 +393,7 @@ export function EnrollmentsPageClient({
                 </Label>
                 {isMounted ? (
                   <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? "" : value as any)}>
-                    <SelectTrigger id="status" className="h-9">
+                    <SelectTrigger id="status" className="h-9 w-full">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -304,7 +417,7 @@ export function EnrollmentsPageClient({
                 </Label>
                 {isMounted ? (
                   <Select value={sortBy || "default"} onValueChange={(value) => setSortBy(value === "default" ? "" : value)}>
-                    <SelectTrigger id="sortBy" className="h-9">
+                    <SelectTrigger id="sortBy" className="h-9 w-full">
                       <SelectValue placeholder="Default" />
                     </SelectTrigger>
                     <SelectContent>
@@ -328,7 +441,7 @@ export function EnrollmentsPageClient({
                 </Label>
                 {isMounted ? (
                   <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as 'asc' | 'desc')}>
-                    <SelectTrigger id="sortOrder" className="h-9">
+                    <SelectTrigger id="sortOrder" className="h-9 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -343,32 +456,207 @@ export function EnrollmentsPageClient({
                 )}
               </div>
 
-              {/* User ID Filter */}
+              {/* User Filter */}
               <div className="space-y-2">
                 <Label htmlFor="userId" className="text-xs font-medium text-slate-700">
-                  User ID
+                  User
                 </Label>
-                <Input
-                  id="userId"
-                  placeholder="Filter by user ID..."
-                  value={userIdFilter}
-                  onChange={(e) => setUserIdFilter(e.target.value)}
-                  className="h-9"
-                />
+                {isMounted ? (
+                  <Popover 
+                    open={isUserPopoverOpen} 
+                    onOpenChange={(open) => {
+                      setIsUserPopoverOpen(open);
+                      if (open) {
+                        fetchUsers();
+                      } else {
+                        setUserSearchQuery("");
+                      }
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        role="combobox"
+                        id="userId"
+                        className={cn(
+                          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+                          !selectedUser && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate text-left">
+                          {selectedUser ? `${selectedUser.name} (${selectedUser.email})` : "Select user..."}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <div className="flex items-center border-b px-3 py-2">
+                        <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <Input
+                          placeholder="Search users..."
+                          value={userSearchQuery}
+                          onChange={(e) => setUserSearchQuery(e.target.value)}
+                          className="border-0 focus-visible:ring-0 h-8"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-auto p-1">
+                        {isLoadingUsers ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-sm text-muted-foreground">Loading users...</span>
+                          </div>
+                        ) : filteredUsers.length === 0 ? (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            {userSearchQuery ? "No users found." : "No users available."}
+                          </div>
+                        ) : (
+                          <>
+                            <div
+                              className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground transition-colors"
+                              onClick={() => {
+                                setUserIdFilter("");
+                                setIsUserPopoverOpen(false);
+                                setUserSearchQuery("");
+                              }}
+                            >
+                              Clear selection
+                            </div>
+                            <div className="h-px bg-border my-1" />
+                            {filteredUsers.map((user) => (
+                              <div
+                                key={user.userId}
+                                className={cn(
+                                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors",
+                                  userIdFilter === user.userId && "bg-accent font-medium"
+                                )}
+                                onClick={() => {
+                                  setUserIdFilter(user.userId);
+                                  setIsUserPopoverOpen(false);
+                                  setUserSearchQuery("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4 shrink-0",
+                                    userIdFilter === user.userId ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="truncate font-medium">{user.name}</div>
+                                  <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <div className="h-9 w-full border border-input rounded-md bg-background flex items-center px-3 text-sm">
+                    {selectedUser ? `${selectedUser.name} (${selectedUser.email})` : "Select user..."}
+                  </div>
+                )}
               </div>
 
-              {/* Course ID Filter */}
+              {/* Course Filter */}
               <div className="space-y-2">
                 <Label htmlFor="courseId" className="text-xs font-medium text-slate-700">
-                  Course ID
+                  Course
                 </Label>
-                <Input
-                  id="courseId"
-                  placeholder="Filter by course ID..."
-                  value={courseIdFilter}
-                  onChange={(e) => setCourseIdFilter(e.target.value)}
-                  className="h-9"
-                />
+                {isMounted ? (
+                  <Popover 
+                    open={isCoursePopoverOpen} 
+                    onOpenChange={(open) => {
+                      setIsCoursePopoverOpen(open);
+                      if (open) {
+                        fetchCourses();
+                      } else {
+                        setCourseSearchQuery("");
+                      }
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        role="combobox"
+                        id="courseId"
+                        className={cn(
+                          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+                          !selectedCourse && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate text-left">
+                          {selectedCourse ? selectedCourse.name : "Select course..."}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <div className="flex items-center border-b px-3 py-2">
+                        <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <Input
+                          placeholder="Search courses..."
+                          value={courseSearchQuery}
+                          onChange={(e) => setCourseSearchQuery(e.target.value)}
+                          className="border-0 focus-visible:ring-0 h-8"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-auto p-1">
+                        {isLoadingCourses ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-sm text-muted-foreground">Loading courses...</span>
+                          </div>
+                        ) : filteredCourses.length === 0 ? (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            {courseSearchQuery ? "No courses found." : "No courses available."}
+                          </div>
+                        ) : (
+                          <>
+                            <div
+                              className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground transition-colors"
+                              onClick={() => {
+                                setCourseIdFilter("");
+                                setIsCoursePopoverOpen(false);
+                                setCourseSearchQuery("");
+                              }}
+                            >
+                              Clear selection
+                            </div>
+                            <div className="h-px bg-border my-1" />
+                            {filteredCourses.map((course) => (
+                              <div
+                                key={course.courseId}
+                                className={cn(
+                                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors",
+                                  courseIdFilter === course.courseId && "bg-accent font-medium"
+                                )}
+                                onClick={() => {
+                                  setCourseIdFilter(course.courseId);
+                                  setIsCoursePopoverOpen(false);
+                                  setCourseSearchQuery("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4 shrink-0",
+                                    courseIdFilter === course.courseId ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="truncate">{course.name}</span>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <div className="h-9 w-full border border-input rounded-md bg-background flex items-center px-3 text-sm">
+                    {selectedCourse ? selectedCourse.name : "Select course..."}
+                  </div>
+                )}
               </div>
 
               {/* Limit */}
@@ -378,7 +666,7 @@ export function EnrollmentsPageClient({
                 </Label>
                 {isMounted ? (
                   <Select value={limit.toString()} onValueChange={(value) => setLimit(parseInt(value, 10))}>
-                    <SelectTrigger id="limit" className="h-9">
+                    <SelectTrigger id="limit" className="h-9 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
