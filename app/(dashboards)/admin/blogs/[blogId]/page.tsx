@@ -61,9 +61,10 @@ export default function BlogViewPage() {
   };
 
   // Helper function to get author name
-  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } }): string => {
+  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null }): string => {
     if (typeof author === 'string') return author;
-    return author?.profile?.name || author?.profile?.fullName || author?.userId || 'Unknown';
+    if (!author?.profile) return author?.userId || 'Unknown';
+    return author.profile.name || author.profile.fullName || author.userId || 'Unknown';
   };
 
   // Format date for display
