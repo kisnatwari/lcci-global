@@ -6,26 +6,29 @@ import { ENDPOINTS } from "@/lib/api/config";
 import { BlogDetailClient } from "./blog-detail-client";
 
 type Blog = {
-  id: string;
+  blogId: string;
   title: string;
   slug: string;
   content: string;
-  author: string;
-  createdAt: string;
-  updatedAt: string;
+  authorId: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null };
+  status: string;
+  publishedAt: string | null;
+  thumbnailUrl: string | null;
 };
 
-export default async function BlogDetailPage({ params }: { params: { slug: string } }) {
+export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   let blog: Blog | null = null;
   let error: string | null = null;
 
   try {
     const apiClient = await getServerApiClient();
-    const response = await apiClient.get(ENDPOINTS.blogs.getBySlug(params.slug));
+    const response = await apiClient.get(ENDPOINTS.blogs.getBySlug(slug));
     
     if (response.success && response.data) {
       blog = response.data;
-    } else if (response.id) {
+    } else if (response.blogId) {
       blog = response;
     } else {
       blog = null;

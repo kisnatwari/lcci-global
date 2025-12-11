@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, FileText, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, AlertCircle, CheckCircle2, Upload, X, Image as ImageIcon } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function EditBlogPage() {
   const router = useRouter();
@@ -18,15 +19,23 @@ export default function EditBlogPage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     title: "",
-    slug: "",
     content: "",
-    author: "",
+    thumbnailUrl: "",
+    status: "draft" as "draft" | "published",
   });
+
+  const [blogData, setBlogData] = useState<{
+    blogId?: string;
+    status?: string;
+    publishedAt?: string | null;
+    authorId?: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchBlog();
@@ -52,31 +61,116 @@ export default function EditBlogPage() {
 
       setFormData({
         title: blog.title || "",
-        slug: blog.slug || "",
         content: blog.content || "",
-        author: authorName,
+        thumbnailUrl: blog.thumbnailUrl || "",
+        status: (blog.status === "published" ? "published" : "draft") as "draft" | "published",
+      });
+
+      setBlogData({
+        blogId: blog.blogId,
+        status: blog.status,
+        publishedAt: blog.publishedAt,
+        authorId: blog.authorId,
       });
     } catch (err: any) {
       console.error("Failed to fetch blog:", err);
-      setError(err.message || "Failed to load blog");
+      // Check for API error format: { error: { code, message, details } }
+      let errorMessage = "Failed to load blog";
+      if (err.response?.data?.error?.message) {
+        errorMessage = err.response.data.error.message;
+      } else if (err.error?.message) {
+        errorMessage = err.error.message;
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.status === 404) {
+        errorMessage = "Blog not found. It may have been deleted.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generate slug from title
-  const generateSlug = (title: string): string => {
-    return title
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+  // Handle thumbnail upload
+  const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.upload(ENDPOINTS.upload.file(), file);
+      
+      // Handle different response formats
+      const uploadedUrl = response.data?.url || response.data?.fileUrl || response.url || response.fileUrl;
+      
+      if (uploadedUrl) {
+        setFormData({ ...formData, thumbnailUrl: uploadedUrl });
+        setSuccessMessage("Thumbnail uploaded successfully");
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error("Upload response did not contain a URL");
+      }
+    } catch (err: any) {
+      console.error("Failed to upload thumbnail:", err);
+      setError(err.message || "Failed to upload thumbnail. Please try again.");
+    } finally {
+      setIsUploadingThumbnail(false);
+      // Reset input so same file can be selected again
+      event.target.value = "";
+    }
   };
 
-  // Auto-generate slug when title changes
-  const handleTitleChange = (title: string) => {
-    setFormData({ ...formData, title, slug: generateSlug(title) });
+  const handleRemoveThumbnail = () => {
+    setFormData({ ...formData, thumbnailUrl: "" });
+  };
+
+  // Helper function to extract error message from API response
+  const getErrorMessage = (err: any): string => {
+    // Check for API error format: { error: { code, message, details } }
+    if (err.response?.data?.error?.message) {
+      return err.response.data.error.message;
+    }
+    if (err.error?.message) {
+      return err.error.message;
+    }
+    // Check for direct message
+    if (err.response?.data?.message) {
+      return err.response.data.message;
+    }
+    // Handle specific status codes
+    if (err.status === 404) {
+      return "Blog not found. It may have been deleted.";
+    }
+    if (err.status === 409) {
+      return "A blog with this slug already exists. Please choose a different slug.";
+    }
+    if (err.status === 400) {
+      return "Invalid input. Please check all fields and try again.";
+    }
+    if (err.status === 401) {
+      return "Unauthorized. Please log in again.";
+    }
+    if (err.status === 403) {
+      return "You don't have permission to update this blog.";
+    }
+    // Default message
+    return err.message || "Failed to update blog. Please try again.";
   };
 
   const handleSave = async () => {
@@ -85,18 +179,8 @@ export default function EditBlogPage() {
       return;
     }
 
-    if (!formData.slug || !formData.slug.trim()) {
-      setError("Slug is required");
-      return;
-    }
-
     if (!formData.content || !formData.content.trim()) {
       setError("Content is required");
-      return;
-    }
-
-    if (!formData.author || !formData.author.trim()) {
-      setError("Author is required");
       return;
     }
 
@@ -105,11 +189,12 @@ export default function EditBlogPage() {
     setSuccessMessage(null);
 
     try {
+      // Payload matches API: { title, content, thumbnailUrl, status }
       const payload = {
         title: formData.title.trim(),
-        slug: formData.slug.trim(),
         content: formData.content.trim(),
-        author: formData.author.trim(),
+        thumbnailUrl: formData.thumbnailUrl || null,
+        status: formData.status,
       };
 
       const response = await apiClient.put(ENDPOINTS.blogs.update(blogId), payload);
@@ -121,10 +206,7 @@ export default function EditBlogPage() {
       }, 1500);
     } catch (err: any) {
       console.error("Failed to update blog:", err);
-      const errorMessage = err.message || 
-                          (err.response?.data?.message) ||
-                          "Failed to update blog";
-      setError(errorMessage);
+      setError(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +276,7 @@ export default function EditBlogPage() {
                 id="title"
                 value={formData.title}
                 onChange={(e) => {
-                  handleTitleChange(e.target.value);
+                  setFormData({ ...formData, title: e.target.value });
                   setError(null);
                 }}
                 placeholder="Enter blog title"
@@ -203,41 +285,86 @@ export default function EditBlogPage() {
               />
             </div>
 
-            {/* Slug */}
+            {/* Status */}
             <div className="space-y-2.5">
-              <Label htmlFor="slug" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                Slug <span className="text-red-500 font-bold">*</span>
+              <Label htmlFor="status" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                Status <span className="text-red-500 font-bold">*</span>
               </Label>
-              <Input
-                id="slug"
-                value={formData.slug}
-                onChange={(e) => {
-                  setFormData({ ...formData, slug: e.target.value });
-                  setError(null);
-                }}
-                placeholder="blog-post-slug"
+              <Select
+                value={formData.status}
+                onValueChange={(value: "draft" | "published") => setFormData({ ...formData, status: value })}
                 disabled={isSaving}
-                className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm font-mono"
-              />
-              <p className="text-xs text-slate-500 font-medium">URL-friendly identifier (auto-generated from title)</p>
+              >
+                <SelectTrigger className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 font-medium">Choose whether to publish the blog immediately or save as draft</p>
             </div>
 
-            {/* Author */}
+            {/* Thumbnail URL */}
             <div className="space-y-2.5">
-              <Label htmlFor="author" className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                Author <span className="text-red-500 font-bold">*</span>
+              <Label htmlFor="thumbnail" className="text-sm font-semibold text-slate-800">
+                Thumbnail Image
               </Label>
-              <Input
-                id="author"
-                value={formData.author}
-                onChange={(e) => {
-                  setFormData({ ...formData, author: e.target.value });
-                  setError(null);
-                }}
-                placeholder="Author name"
-                disabled={isSaving}
-                className="h-12 border-2 border-slate-300 bg-white focus:border-[color:var(--brand-blue)] focus:ring-2 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
-              />
+              {formData.thumbnailUrl ? (
+                <div className="space-y-3">
+                  <div className="relative inline-block">
+                    <img
+                      src={formData.thumbnailUrl}
+                      alt="Thumbnail preview"
+                      className="h-32 w-auto rounded-lg border-2 border-slate-200 object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={handleRemoveThumbnail}
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      disabled={isSaving || isUploadingThumbnail}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-500 break-all">{formData.thumbnailUrl}</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label
+                    htmlFor="thumbnail-upload"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {isUploadingThumbnail ? (
+                        <>
+                          <Loader2 className="w-8 h-8 mb-2 text-slate-400 animate-spin" />
+                          <p className="text-sm text-slate-500">Uploading...</p>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon className="w-8 h-8 mb-2 text-slate-400" />
+                          <p className="mb-2 text-sm text-slate-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-slate-500">PNG, JPG, GIF (MAX. 5MB)</p>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      id="thumbnail-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleThumbnailUpload}
+                      disabled={isSaving || isUploadingThumbnail}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Content */}
@@ -270,10 +397,9 @@ export default function EditBlogPage() {
             onClick={handleSave}
             disabled={
               isSaving ||
+              isUploadingThumbnail ||
               !formData.title.trim() ||
-              !formData.slug.trim() ||
-              !formData.content.trim() ||
-              !formData.author.trim()
+              !formData.content.trim()
             }
             className="min-w-[160px] h-12 px-8 bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue)]/90 text-white font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >

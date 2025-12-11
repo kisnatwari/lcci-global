@@ -6,13 +6,15 @@ import { ArrowLeft, Calendar, User, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Blog = {
-  id: string;
+  blogId: string;
   title: string;
   slug: string;
   content: string;
-  author: string;
-  createdAt: string;
-  updatedAt: string;
+  authorId: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null };
+  status: string;
+  publishedAt: string | null;
+  thumbnailUrl: string | null;
 };
 
 interface BlogDetailClientProps {
@@ -28,6 +30,12 @@ export function BlogDetailClient({ blog, error }: BlogDetailClientProps) {
       month: "long",
       day: "numeric",
     });
+  };
+
+  // Helper function to get author name
+  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null }): string => {
+    if (typeof author === 'string') return author;
+    return author?.profile?.name || author?.profile?.fullName || author?.userId || 'Unknown';
   };
 
   if (error) {
@@ -65,24 +73,30 @@ export function BlogDetailClient({ blog, error }: BlogDetailClientProps) {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto"
         >
+          {/* Thumbnail Image */}
+          {blog.thumbnailUrl && (
+            <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
+              <img
+                src={blog.thumbnailUrl}
+                alt={blog.title}
+                className="w-full h-auto max-h-[500px] object-cover"
+              />
+            </div>
+          )}
+
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)]">
-                <FileText className="h-6 w-6" />
+            <div className="flex items-center gap-4 text-sm text-slate-600 mb-4">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span className="font-medium">{getAuthorName(blog.author)}</span>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-4 text-sm text-slate-600 mb-2">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="font-medium">{blog.author}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{formatDate(blog.createdAt)}</span>
-                  </div>
+              {blog.publishedAt && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{formatDate(blog.publishedAt)}</span>
                 </div>
-              </div>
+              )}
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">

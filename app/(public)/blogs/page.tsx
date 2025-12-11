@@ -6,13 +6,15 @@ import { ENDPOINTS } from "@/lib/api/config";
 import { BlogsListingClient } from "./blogs-listing-client";
 
 type Blog = {
-  id: string;
+  blogId: string;
   title: string;
   slug: string;
   content: string;
-  author: string;
-  createdAt: string;
-  updatedAt: string;
+  authorId: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null };
+  status: string;
+  publishedAt: string | null;
+  thumbnailUrl: string | null;
 };
 
 export default async function BlogsPage() {

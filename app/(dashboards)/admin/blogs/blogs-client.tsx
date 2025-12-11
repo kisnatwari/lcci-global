@@ -23,17 +23,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, Search, FileText, Loader2, AlertCircle, CheckCircle2, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, FileText, Loader2, AlertCircle, CheckCircle2, Eye, Clock } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type Blog = {
-  id: string;
+  blogId: string;
   title: string;
   slug: string;
   content: string;
-  author: string | { userId?: string; profile?: { name?: string; fullName?: string } };
-  createdAt: string;
-  updatedAt: string;
+  authorId: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null };
+  status: string;
+  publishedAt: string | null;
+  thumbnailUrl: string | null;
 };
 
 interface BlogsPageClientProps {
@@ -47,12 +49,50 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingBlog, setDeletingBlog] = useState<Blog | null>(null);
+
+  console.log("blogs", blogs);
   
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Helper function to extract error message from API response
+  // Handles API error format: { error: { code, message, details } }
+  const getErrorMessage = (err: any, context: 'fetch' | 'delete' | 'general' = 'general'): string => {
+    // Check for API error format: { error: { code, message, details } }
+    if (err.response?.data?.error?.message) {
+      return err.response.data.error.message;
+    }
+    if (err.error?.message) {
+      return err.error.message;
+    }
+    // Check for direct message
+    if (err.response?.data?.message) {
+      return err.response.data.message;
+    }
+    // Handle specific status codes
+    if (err.status === 401) {
+      return "Unauthorized. Please log in again";
+    }
+    if (err.status === 403) {
+      return context === 'delete' 
+        ? "You don't have permission to delete this blog"
+        : "You don't have permission to access blogs";
+    }
+    if (err.status === 404) {
+      return "Blog not found";
+    }
+    if (err.status === 409) {
+      return "A blog with this slug already exists. Please choose a different slug.";
+    }
+    if (err.status === 400) {
+      return "Invalid request. Please check your input and try again.";
+    }
+    // Default message
+    return err.message || (context === 'fetch' ? "Failed to load blogs" : "An error occurred");
+  };
 
   // Fetch blogs from API (for refresh)
   const fetchBlogs = async () => {
@@ -61,6 +101,7 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
     try {
       const response = await apiClient.get(ENDPOINTS.blogs.get());
       
+      // According to API docs, GET /api/cms/blogs returns a direct array
       let blogsData: Blog[] = [];
       if (Array.isArray(response)) {
         blogsData = response;
@@ -77,7 +118,7 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
       setBlogs(blogsData);
     } catch (err: any) {
       console.error("Failed to fetch blogs:", err);
-      setError(err.message || "Failed to load blogs");
+      setError(getErrorMessage(err, 'fetch'));
       setBlogs([]);
     } finally {
       setIsLoading(false);
@@ -85,7 +126,7 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
   };
 
   // Helper function to get author name
-  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } }): string => {
+  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null }): string => {
     if (typeof author === 'string') return author;
     return author?.profile?.name || author?.profile?.fullName || author?.userId || 'Unknown';
   };
@@ -106,21 +147,24 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
     setError(null);
 
     try {
-      await apiClient.delete(ENDPOINTS.blogs.delete(deletingBlog.id));
+      const response = await apiClient.delete(ENDPOINTS.blogs.delete(deletingBlog.blogId));
+      
+      // Check for success message in response (API returns { message: "Blog deleted successfully." })
+      const successMsg = response?.message || "Blog deleted successfully!";
       
       // Remove from local state
-      setBlogs(blogs.filter((blog) => blog.id !== deletingBlog.id));
+      setBlogs(blogs.filter((blog) => blog.blogId !== deletingBlog.blogId));
       
       // Close dialog
       setIsDeleteDialogOpen(false);
       setDeletingBlog(null);
       setError(null);
-      setSuccessMessage("Blog deleted successfully!");
+      setSuccessMessage(successMsg);
       
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       console.error("Failed to delete blog:", err);
-      setError(err.message || "Failed to delete blog");
+      setError(getErrorMessage(err, 'delete'));
     } finally {
       setIsSaving(false);
     }
@@ -226,13 +270,14 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
                     <TableHead>Title</TableHead>
                     <TableHead>Slug</TableHead>
                     <TableHead>Author</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Published</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredBlogs.map((blog, index) => (
-                    <TableRow key={blog.id || `blog-${index}`}>
+                    <TableRow key={blog.blogId || blog.slug || `blog-${index}`}>
                       <TableCell>
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)]">
                           <FileText className="h-4 w-4" />
@@ -247,15 +292,31 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
                           ? blog.author 
                           : blog.author?.profile?.name || blog.author?.profile?.fullName || blog.author?.userId || 'Unknown'}
                       </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${
+                          blog.status === 'published' 
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                            : 'bg-amber-100 text-amber-700 border border-amber-200'
+                        }`}>
+                          {blog.status === 'published' ? (
+                            <CheckCircle2 className="w-3 h-3" />
+                          ) : (
+                            <Clock className="w-3 h-3" />
+                          )}
+                          {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {formatDate(blog.createdAt)}
+                        {blog.publishedAt ? formatDate(blog.publishedAt) : (
+                          <span className="text-slate-400 italic">Not published</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => router.push(`/blogs/${blog.slug}`)}
+                            onClick={() => router.push(`/admin/blogs/${blog.blogId}`)}
                             className="h-8 w-8"
                             title="View blog"
                           >
@@ -264,7 +325,7 @@ export function BlogsPageClient({ initialBlogs, error: initialError }: BlogsPage
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => router.push(`/admin/blogs/${blog.id}/edit`)}
+                            onClick={() => router.push(`/admin/blogs/${blog.blogId}/edit`)}
                             className="h-8 w-8"
                             title="Edit blog"
                           >

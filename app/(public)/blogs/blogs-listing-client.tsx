@@ -9,13 +9,15 @@ import { Search, FileText, Calendar, User, Loader2, AlertCircle } from "lucide-r
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type Blog = {
-  id: string;
+  blogId: string;
   title: string;
   slug: string;
   content: string;
-  author: string;
-  createdAt: string;
-  updatedAt: string;
+  authorId: string;
+  author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null };
+  status: string;
+  publishedAt: string | null;
+  thumbnailUrl: string | null;
 };
 
 interface BlogsListingClientProps {
@@ -31,13 +33,21 @@ export function BlogsListingClient({ initialBlogs, error: initialError }: BlogsL
 
   console.log(blogs);
 
-  // Filter blogs based on search
-  const filteredBlogs = blogs.filter(
-    (blog) =>
-      blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      blog.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (blog.content && blog.content.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Helper function to get author name
+  const getAuthorName = (author: string | { userId?: string; profile?: { name?: string; fullName?: string } | null }): string => {
+    if (typeof author === 'string') return author;
+    return author?.profile?.name || author?.profile?.fullName || author?.userId || 'Unknown';
+  };
+
+  // Filter blogs based on search and status (only show published blogs)
+  const filteredBlogs = blogs
+    .filter((blog) => blog.status === 'published' && blog.publishedAt) // Only show published blogs
+    .filter(
+      (blog) =>
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getAuthorName(blog.author).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (blog.content && blog.content.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -97,23 +107,33 @@ export function BlogsListingClient({ initialBlogs, error: initialError }: BlogsL
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {filteredBlogs.map((blog, index) => (
               <motion.div
-                key={blog.id}
+                key={blog.blogId || blog.slug || `blog-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
               >
                 <Link href={`/blogs/${blog.slug}`}>
-                  <Card className="h-full border-2 border-slate-200 hover:border-[color:var(--brand-blue)] transition-all duration-300 hover:shadow-xl cursor-pointer group">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)] group-hover:bg-[color:var(--brand-blue)]/20 transition-colors">
-                          <FileText className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <User className="h-4 w-4" />
-                            <span>{blog.author}</span>
-                          </div>
+                  <Card className="h-full border-2 border-slate-200 hover:border-[color:var(--brand-blue)] transition-all duration-300 hover:shadow-xl cursor-pointer group overflow-hidden flex flex-col">
+                    {/* Thumbnail Image */}
+                    {blog.thumbnailUrl ? (
+                      <div className="relative w-full h-48 overflow-hidden bg-slate-100">
+                        <img
+                          src={blog.thumbnailUrl}
+                          alt={blog.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 bg-gradient-to-br from-[color:var(--brand-blue)]/10 to-[color:var(--brand-cyan)]/10 flex items-center justify-center">
+                        <FileText className="h-16 w-16 text-slate-300" />
+                      </div>
+                    )}
+                    
+                    <CardContent className="p-6 flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <User className="h-4 w-4" />
+                          <span>{getAuthorName(blog.author)}</span>
                         </div>
                       </div>
                       
@@ -121,14 +141,16 @@ export function BlogsListingClient({ initialBlogs, error: initialError }: BlogsL
                         {blog.title}
                       </h3>
                       
-                      <p className="text-slate-600 mb-4 line-clamp-3">
+                      <p className="text-slate-600 mb-4 line-clamp-3 flex-1">
                         {truncateContent(blog.content)}
                       </p>
                       
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDate(blog.createdAt)}</span>
-                      </div>
+                      {blog.publishedAt && (
+                        <div className="flex items-center gap-2 text-sm text-slate-500 mt-auto">
+                          <Calendar className="h-4 w-4" />
+                          <span>{formatDate(blog.publishedAt)}</span>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </Link>
