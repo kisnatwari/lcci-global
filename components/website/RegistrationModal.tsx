@@ -148,13 +148,13 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
         registerPayload.centreUniqueIdentifier = trainingCentreId.trim();
       }
       if (centreUniqueIdentifier === "SQA" && scnNumber.trim()) {
-        registerPayload.scnNo = scnNumber.trim();
+        registerPayload.centreUniqueIdentifier = scnNumber.trim();
       }
     } else if (isSoftSkillsStudent) {
       registerPayload.userType = "Training_Site_Student";
       registerPayload.username = fullName;
       registerPayload.fullName = fullName;
-      registerPayload.institutionName = institutionName.trim();
+      registerPayload.centreUniqueIdentifier = institutionName.trim();
       registerPayload.phone = phone.trim();
     } else {
       registerPayload.userType = "Customer";
@@ -346,7 +346,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                       {centreUniqueIdentifier === "SQA" && (
                         <div>
                           <label htmlFor="scnNumber" className="block text-sm font-bold text-slate-900 mb-2">
-                            SCN Number
+                            Training Center Code
                           </label>
                           <div className="relative">
                             <IdCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -356,12 +356,12 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                               value={scnNumber}
                               onChange={(e) => setScnNumber(e.target.value)}
                               className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
-                              placeholder="Enter your SCN number"
+                              placeholder="Enter your training center code"
                               required
                             />
                           </div>
                           <p className="mt-2 text-xs text-slate-500">
-                            Enter your SCN number provided by your institution.
+                            Enter your training center code provided by your institution.
                           </p>
                         </div>
                       )}
@@ -404,7 +404,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                       </div>
                       <div>
                         <label htmlFor="institutionName" className="block text-sm font-bold text-slate-900 mb-2">
-                          Institution Name
+                          Training Center Code
                         </label>
                         <div className="relative">
                           <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -414,7 +414,7 @@ function RegistrationModalContent({ isOpen, onClose, preSelectedCentreType = nul
                             value={institutionName}
                             onChange={(e) => setInstitutionName(e.target.value)}
                             className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-[color:var(--brand-blue)] focus:border-[color:var(--brand-blue)] text-sm transition-all hover:border-slate-300"
-                            placeholder="Enter your institution name"
+                            placeholder="Enter your training center code"
                             required
                           />
                         </div>
