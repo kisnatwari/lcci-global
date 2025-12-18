@@ -9,10 +9,11 @@ type TrainingCentreCategory = "SQA" | "Cambridge" | "SoftSkill";
 type TrainingCentre = {
   centreId: string;
   name: string;
-  description: string;
+  description: string | null;
   category: TrainingCentreCategory;
   centreUniqueIdentifier?: string | null;
   createdAt: string;
+  totalEnrolledStudents: number;
 };
 
 export default async function TrainingCentresPage() {

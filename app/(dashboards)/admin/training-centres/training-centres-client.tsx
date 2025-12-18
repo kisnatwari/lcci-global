@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check, Brain } from "lucide-react";
+import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check, Brain, Users } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type TrainingCentreCategory = "SQA" | "Cambridge" | "SoftSkill";
@@ -37,10 +37,11 @@ type TrainingCentreCategory = "SQA" | "Cambridge" | "SoftSkill";
 type TrainingCentre = {
   centreId: string;
   name: string;
-  description: string;
+  description: string | null;
   category: TrainingCentreCategory;
   centreUniqueIdentifier?: string | null;
   createdAt: string;
+  totalEnrolledStudents: number;
 };
 
 interface TrainingCentresPageClientProps {
@@ -322,6 +323,7 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Enrolled Students</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -362,6 +364,12 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                         <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted">
                           {getCategoryLabel(centre.category)}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{centre.totalEnrolledStudents || 0}</span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {formatDate(centre.createdAt)}
