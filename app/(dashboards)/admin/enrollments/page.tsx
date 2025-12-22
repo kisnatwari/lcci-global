@@ -56,6 +56,7 @@ export default async function EnrollmentsPage({
     search?: string;
     userId?: string;
     courseId?: string;
+    trainingCenterId?: string;
     status?: string;
   }>;
 }) {
@@ -80,6 +81,7 @@ export default async function EnrollmentsPage({
   if (params.search) queryParams.search = params.search;
   if (params.userId) queryParams.userId = params.userId;
   if (params.courseId) queryParams.courseId = params.courseId;
+  if (params.trainingCenterId) queryParams.trainingCenterId = params.trainingCenterId;
   if (params.status && ["enrolled", "completed", "cancelled"].includes(params.status)) {
     queryParams.status = params.status;
   }

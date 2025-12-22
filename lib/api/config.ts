@@ -73,6 +73,7 @@ export const ENDPOINTS = {
             search?: string;
             userId?: string;
             courseId?: string;
+            trainingCenterId?: string;
             status?: "enrolled" | "completed" | "cancelled";
         }) => {
             const queryParams = new URLSearchParams();
@@ -83,6 +84,7 @@ export const ENDPOINTS = {
             if (params?.search) queryParams.append('search', params.search);
             if (params?.userId) queryParams.append('userId', params.userId);
             if (params?.courseId) queryParams.append('courseId', params.courseId);
+            if (params?.trainingCenterId) queryParams.append('trainingCenterId', params.trainingCenterId);
             if (params?.status) queryParams.append('status', params.status);
             const query = queryParams.toString();
             return `/api/enrollments${query ? `?${query}` : ''}`;

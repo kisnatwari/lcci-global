@@ -43,6 +43,7 @@ import {
   X,
   Check,
   ChevronDown,
+  Building2,
 } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -112,16 +113,21 @@ export function EnrollmentsPageClient({
   const [statusFilter, setStatusFilter] = useState<'enrolled' | 'completed' | 'cancelled' | ''>(searchParams.get('status') as any || '');
   const [userIdFilter, setUserIdFilter] = useState(searchParams.get('userId') || '');
   const [courseIdFilter, setCourseIdFilter] = useState(searchParams.get('courseId') || '');
+  const [trainingCenterIdFilter, setTrainingCenterIdFilter] = useState(searchParams.get('trainingCenterId') || '');
 
   // Searchable select states
   const [users, setUsers] = useState<Array<{ userId: string; email: string; name: string }>>([]);
   const [courses, setCourses] = useState<Array<{ courseId: string; name: string }>>([]);
+  const [trainingCentres, setTrainingCentres] = useState<Array<{ centreId: string; name: string; centreUniqueIdentifier?: string | null }>>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+  const [isLoadingTrainingCentres, setIsLoadingTrainingCentres] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [courseSearchQuery, setCourseSearchQuery] = useState("");
+  const [trainingCentreSearchQuery, setTrainingCentreSearchQuery] = useState("");
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false);
   const [isCoursePopoverOpen, setIsCoursePopoverOpen] = useState(false);
+  const [isTrainingCentrePopoverOpen, setIsTrainingCentrePopoverOpen] = useState(false);
 
   // Calculate pagination
   const currentPage = Math.floor(offset / limit) + 1;
@@ -142,6 +148,7 @@ export function EnrollmentsPageClient({
       if (statusFilter) params.status = statusFilter;
       if (userIdFilter.trim()) params.userId = userIdFilter.trim();
       if (courseIdFilter.trim()) params.courseId = courseIdFilter.trim();
+      if (trainingCenterIdFilter.trim()) params.trainingCenterId = trainingCenterIdFilter.trim();
 
       const response = await apiClient.get(ENDPOINTS.enrollments.get(params));
       
@@ -244,6 +251,39 @@ export function EnrollmentsPageClient({
     }
   };
 
+  // Fetch training centres when popover opens (lazy loading)
+  const fetchTrainingCentres = async (search: string = "") => {
+    if (trainingCentres.length > 0 && !search) return; // Don't refetch if already loaded and no search
+    
+    setIsLoadingTrainingCentres(true);
+    try {
+      const response = await apiClient.get(ENDPOINTS.trainingCentres.get());
+      let fetchedCentres: any[] = [];
+      
+      if (response.success && response.data && Array.isArray(response.data.trainingCentres)) {
+        fetchedCentres = response.data.trainingCentres;
+      } else if (response.data && Array.isArray(response.data.trainingCentres)) {
+        fetchedCentres = response.data.trainingCentres;
+      } else if (response.trainingCentres && Array.isArray(response.trainingCentres)) {
+        fetchedCentres = response.trainingCentres;
+      } else if (Array.isArray(response)) {
+        fetchedCentres = response;
+      }
+
+      const formattedCentres = fetchedCentres.map((centre: any) => ({
+        centreId: centre.centreId,
+        name: centre.name || "Unknown Centre",
+        centreUniqueIdentifier: centre.centreUniqueIdentifier || null,
+      }));
+
+      setTrainingCentres(formattedCentres);
+    } catch (err: any) {
+      console.error("Failed to fetch training centres:", err);
+    } finally {
+      setIsLoadingTrainingCentres(false);
+    }
+  };
+
   // Filter users by search query
   const filteredUsers = users.filter((user) => {
     if (!userSearchQuery) return true;
@@ -265,9 +305,21 @@ export function EnrollmentsPageClient({
     );
   });
 
-  // Get selected user/course display names
+  // Filter training centres by search query
+  const filteredTrainingCentres = trainingCentres.filter((centre) => {
+    if (!trainingCentreSearchQuery) return true;
+    const query = trainingCentreSearchQuery.toLowerCase();
+    return (
+      centre.name.toLowerCase().includes(query) ||
+      centre.centreId.toLowerCase().includes(query) ||
+      (centre.centreUniqueIdentifier && centre.centreUniqueIdentifier.toLowerCase().includes(query))
+    );
+  });
+
+  // Get selected user/course/training centre display names
   const selectedUser = users.find((u) => u.userId === userIdFilter);
   const selectedCourse = courses.find((c) => c.courseId === courseIdFilter);
+  const selectedTrainingCentre = trainingCentres.find((tc) => tc.centreId === trainingCenterIdFilter);
 
   // Update URL and fetch when filters change (skip initial mount)
   const [isInitialMount, setIsInitialMount] = useState(true);
@@ -287,6 +339,7 @@ export function EnrollmentsPageClient({
     if (statusFilter) params.set('status', statusFilter);
     if (userIdFilter.trim()) params.set('userId', userIdFilter.trim());
     if (courseIdFilter.trim()) params.set('courseId', courseIdFilter.trim());
+    if (trainingCenterIdFilter.trim()) params.set('trainingCenterId', trainingCenterIdFilter.trim());
     
     const newUrl = params.toString() 
       ? `/admin/enrollments?${params.toString()}`
@@ -295,7 +348,7 @@ export function EnrollmentsPageClient({
     router.push(newUrl, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchEnrollments();
-  }, [limit, offset, sortBy, sortOrder, search, statusFilter, userIdFilter, courseIdFilter, router]);
+  }, [limit, offset, sortBy, sortOrder, search, statusFilter, userIdFilter, courseIdFilter, trainingCenterIdFilter, router]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -313,10 +366,13 @@ export function EnrollmentsPageClient({
     setStatusFilter('');
     setUserIdFilter('');
     setCourseIdFilter('');
+    setTrainingCenterIdFilter('');
     setUserSearchQuery('');
     setCourseSearchQuery('');
+    setTrainingCentreSearchQuery('');
     setIsUserPopoverOpen(false);
     setIsCoursePopoverOpen(false);
+    setIsTrainingCentrePopoverOpen(false);
   };
 
   // Format date
@@ -337,7 +393,7 @@ export function EnrollmentsPageClient({
     return enrollment.user.email;
   };
 
-  const hasActiveFilters = search || statusFilter || userIdFilter || courseIdFilter || sortBy;
+  const hasActiveFilters = search || statusFilter || userIdFilter || courseIdFilter || trainingCenterIdFilter || sortBy;
 
   return (
     <div className="space-y-6">
@@ -367,7 +423,7 @@ export function EnrollmentsPageClient({
               <h3 className="text-sm font-semibold text-slate-900">Filters</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {/* Search */}
               <div className="space-y-2">
                 <Label htmlFor="search" className="text-xs font-medium text-slate-700">
@@ -655,6 +711,113 @@ export function EnrollmentsPageClient({
                 ) : (
                   <div className="h-9 w-full border border-input rounded-md bg-background flex items-center px-3 text-sm">
                     {selectedCourse ? selectedCourse.name : "Select course..."}
+                  </div>
+                )}
+              </div>
+
+              {/* Training Centre Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="trainingCenterId" className="text-xs font-medium text-slate-700">
+                  Training Centre
+                </Label>
+                {isMounted ? (
+                  <Popover 
+                    open={isTrainingCentrePopoverOpen} 
+                    onOpenChange={(open) => {
+                      setIsTrainingCentrePopoverOpen(open);
+                      if (open) {
+                        fetchTrainingCentres();
+                      } else {
+                        setTrainingCentreSearchQuery("");
+                      }
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        role="combobox"
+                        id="trainingCenterId"
+                        className={cn(
+                          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+                          !selectedTrainingCentre && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate text-left">
+                          {selectedTrainingCentre ? selectedTrainingCentre.name : "Select training centre..."}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <div className="flex items-center border-b px-3 py-2">
+                        <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <Input
+                          placeholder="Search training centres..."
+                          value={trainingCentreSearchQuery}
+                          onChange={(e) => setTrainingCentreSearchQuery(e.target.value)}
+                          className="border-0 focus-visible:ring-0 h-8"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-auto p-1">
+                        {isLoadingTrainingCentres ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-sm text-muted-foreground">Loading training centres...</span>
+                          </div>
+                        ) : filteredTrainingCentres.length === 0 ? (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            {trainingCentreSearchQuery ? "No training centres found." : "No training centres available."}
+                          </div>
+                        ) : (
+                          <>
+                            <div
+                              className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-xs text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground transition-colors"
+                              onClick={() => {
+                                setTrainingCenterIdFilter("");
+                                setIsTrainingCentrePopoverOpen(false);
+                                setTrainingCentreSearchQuery("");
+                              }}
+                            >
+                              Clear selection
+                            </div>
+                            <div className="h-px bg-border my-1" />
+                            {filteredTrainingCentres.map((centre) => (
+                              <div
+                                key={centre.centreId}
+                                className={cn(
+                                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors",
+                                  trainingCenterIdFilter === centre.centreId && "bg-accent font-medium"
+                                )}
+                                onClick={() => {
+                                  setTrainingCenterIdFilter(centre.centreId);
+                                  setIsTrainingCentrePopoverOpen(false);
+                                  setTrainingCentreSearchQuery("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4 shrink-0",
+                                    trainingCenterIdFilter === centre.centreId ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="truncate font-medium">{centre.name}</div>
+                                  {centre.centreUniqueIdentifier && (
+                                    <div className="truncate text-xs text-muted-foreground">
+                                      {centre.centreUniqueIdentifier}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <div className="h-9 w-full border border-input rounded-md bg-background flex items-center px-3 text-sm">
+                    {selectedTrainingCentre ? selectedTrainingCentre.name : "Select training centre..."}
                   </div>
                 )}
               </div>
