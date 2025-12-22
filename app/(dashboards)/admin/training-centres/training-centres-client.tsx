@@ -19,15 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,8 +71,8 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Enrollments drawer state
-  const [isEnrollmentsDrawerOpen, setIsEnrollmentsDrawerOpen] = useState(false);
+  // Enrollments dialog state
+  const [isEnrollmentsDialogOpen, setIsEnrollmentsDialogOpen] = useState(false);
   const [selectedCentreForEnrollments, setSelectedCentreForEnrollments] = useState<TrainingCentre | null>(null);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [enrollmentsTotal, setEnrollmentsTotal] = useState(0);
@@ -267,10 +258,10 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
     }
   };
 
-  // Handle opening enrollments drawer
+  // Handle opening enrollments dialog
   const handleViewEnrollments = async (centre: TrainingCentre) => {
     setSelectedCentreForEnrollments(centre);
-    setIsEnrollmentsDrawerOpen(true);
+    setIsEnrollmentsDialogOpen(true);
     setIsLoadingEnrollments(true);
     setEnrollmentsError(null);
     
@@ -756,26 +747,17 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
         </DialogContent>
       </Dialog>
 
-      {/* Enrollments Drawer */}
-      <Drawer open={isEnrollmentsDrawerOpen} onOpenChange={setIsEnrollmentsDrawerOpen} direction="right">
-        <DrawerContent className="md:min-w-[500px] lg:min-w-[600px] 2xl:min-w-[800px]">
-          <DrawerHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <div>
-                <DrawerTitle>Training Centre Enrollments</DrawerTitle>
-                <DrawerDescription>
-                  {selectedCentreForEnrollments?.name}
-                </DrawerDescription>
-              </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
-            </div>
-          </DrawerHeader>
+      {/* Enrollments Dialog */}
+      <Dialog open={isEnrollmentsDialogOpen} onOpenChange={setIsEnrollmentsDialogOpen}>
+        <DialogContent className="lg:min-w-[900px] xl:min-w-[1200px] 2xl:min-w-[1500px] max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Training Centre Enrollments</DialogTitle>
+            <DialogDescription>
+              {selectedCentreForEnrollments?.name}
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto">
             {isLoadingEnrollments ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -795,157 +777,172 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                 <p className="text-muted-foreground">No enrollments found for this training centre.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {enrollments.map((enrollment, index) => {
-                  // Handle different response formats - pretty print whatever we get
-                  const enrollmentId = enrollment.enrollmentId || enrollment.id || `enrollment-${index}`;
-                  const status = enrollment.status || "unknown";
-                  const statusColors = getStatusBadge(status);
-                  
-                  return (
-                    <div
-                      key={enrollmentId}
-                      className="border rounded-lg p-4 space-y-3 hover:bg-slate-50 transition-colors"
-                    >
-                      {/* Header */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          {enrollment.user ? (
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)]">
-                                <User className="h-5 w-5" />
-                              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Enrolled</TableHead>
+                      <TableHead>Completed</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead>Payment</TableHead>
+                      <TableHead>LCCI</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {enrollments.map((enrollment, index) => {
+                      // Handle different response formats - pretty print whatever we get
+                      const enrollmentId = enrollment.enrollmentId || enrollment.id || `enrollment-${index}`;
+                      const status = enrollment.status || "unknown";
+                      const statusColors = getStatusBadge(status);
+                      
+                      return (
+                        <TableRow key={enrollmentId}>
+                          {/* User */}
+                          <TableCell>
+                            {enrollment.user ? (
                               <div>
-                                <p className="font-semibold text-slate-900">
+                                <div className="font-medium text-slate-900">
                                   {getUserName(enrollment.user)}
-                                </p>
-                                <p className="text-sm text-slate-600">{enrollment.user?.email || "—"}</p>
+                                </div>
+                                <div className="text-sm text-slate-600">{enrollment.user?.email || "—"}</div>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-slate-600">
-                                <User className="h-5 w-5" />
-                              </div>
+                            ) : (
                               <div>
-                                <p className="font-semibold text-slate-900">Enrollment #{index + 1}</p>
-                                <p className="text-sm text-slate-600">ID: {enrollmentId}</p>
+                                <div className="font-medium text-slate-900">Enrollment #{index + 1}</div>
+                                <div className="text-sm text-slate-600">ID: {enrollmentId}</div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                        {status && (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text} border ${statusColors.border}`}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Details Grid */}
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        {enrollment.enrolledAt && (
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <Calendar className="h-4 w-4 text-slate-400" />
-                            <span>
-                              <span className="text-slate-500">Enrolled:</span>{" "}
-                              {formatDate(enrollment.enrolledAt)}
-                            </span>
-                          </div>
-                        )}
-                        {enrollment.completedAt && (
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
-                            <span>
-                              <span className="text-slate-500">Completed:</span>{" "}
-                              {formatDate(enrollment.completedAt)}
-                            </span>
-                          </div>
-                        )}
-                        {enrollment.transaction && (
-                          <div className="flex items-center gap-2 text-slate-600 col-span-2">
-                            <CreditCard className="h-4 w-4 text-slate-400" />
-                            <span>
-                              <span className="text-slate-500">Payment:</span>{" "}
-                              {enrollment.transaction.amount !== undefined && (
-                                <>NPR {Number(enrollment.transaction.amount || 0).toLocaleString()}</>
-                              )}
-                              {enrollment.transaction.paymentType && (
-                                <> ({enrollment.transaction.paymentType})</>
-                              )}
-                              {enrollment.transaction.status && (
-                                <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${
-                                  enrollment.transaction.status === 'completed' || enrollment.transaction.status === 'success'
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : enrollment.transaction.status === 'pending'
-                                    ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {enrollment.transaction.status}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        )}
-                        {enrollment.isLcci !== undefined && (
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <span className="text-slate-500">LCCI:</span>{" "}
-                            <span className={enrollment.isLcci ? "text-emerald-600 font-medium" : "text-slate-400"}>
-                              {enrollment.isLcci ? "Yes" : "No"}
-                            </span>
-                          </div>
-                        )}
-                        {enrollment.progress !== undefined && (
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <span className="text-slate-500">Progress:</span>{" "}
-                            <span className="font-medium">{enrollment.progress}%</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Progress Bar */}
-                      {enrollment.progress !== undefined && (
-                        <div className="space-y-1">
-                          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[color:var(--brand-blue)] transition-all"
-                              style={{ width: `${enrollment.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Course Info */}
-                      {enrollment.course && (
-                        <div className="pt-2 border-t">
-                          <p className="text-xs text-slate-500 mb-2">Course:</p>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900">{enrollment.course.name || enrollment.course.title || "—"}</span>
-                            {enrollment.course.courseId && (
-                              <span className="text-xs text-slate-500">({enrollment.course.courseId})</span>
                             )}
-                          </div>
-                        </div>
-                      )}
+                          </TableCell>
 
-                    </div>
-                  );
-                })}
+                          {/* Course */}
+                          <TableCell>
+                            {enrollment.course ? (
+                              <div>
+                                <div className="font-medium">{enrollment.course.name || enrollment.course.title || "—"}</div>
+                                {enrollment.course.courseId && (
+                                  <div className="text-xs text-slate-500">{enrollment.course.courseId}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
+                          {/* Status */}
+                          <TableCell>
+                            {status && (
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text} border ${statusColors.border}`}>
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </span>
+                            )}
+                          </TableCell>
+
+                          {/* Enrolled Date */}
+                          <TableCell>
+                            {enrollment.enrolledAt ? (
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                                {formatDate(enrollment.enrolledAt)}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
+                          {/* Completed Date */}
+                          <TableCell>
+                            {enrollment.completedAt ? (
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-500" />
+                                {formatDate(enrollment.completedAt)}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
+                          {/* Progress */}
+                          <TableCell>
+                            {enrollment.progress !== undefined ? (
+                              <div className="min-w-[80px]">
+                                <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                                  <span>{enrollment.progress}%</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-[color:var(--brand-blue)] transition-all"
+                                    style={{ width: `${enrollment.progress}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
+                          {/* Payment */}
+                          <TableCell>
+                            {enrollment.transaction ? (
+                              <div>
+                                {enrollment.transaction.amount !== undefined && (
+                                  <div className="font-medium">
+                                    NPR {Number(enrollment.transaction.amount || 0).toLocaleString()}
+                                  </div>
+                                )}
+                                {enrollment.transaction.paymentType && (
+                                  <div className="text-xs text-slate-500">{enrollment.transaction.paymentType}</div>
+                                )}
+                                {enrollment.transaction.status && (
+                                  <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                                    enrollment.transaction.status === 'completed' || enrollment.transaction.status === 'success'
+                                      ? 'bg-emerald-100 text-emerald-700'
+                                      : enrollment.transaction.status === 'pending'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {enrollment.transaction.status}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+
+                          {/* LCCI */}
+                          <TableCell>
+                            {enrollment.isLcci !== undefined ? (
+                              <span className={enrollment.isLcci ? "text-emerald-600 font-medium" : "text-slate-400"}>
+                                {enrollment.isLcci ? "Yes" : "No"}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
 
-          <DrawerFooter className="border-t">
-            <div className="flex items-center justify-between">
+          <DialogFooter className="border-t pt-4">
+            <div className="flex items-center justify-between w-full">
               <p className="text-sm text-muted-foreground">
                 {enrollmentsTotal} {enrollmentsTotal === 1 ? "enrollment" : "enrollments"}
               </p>
-              <DrawerClose asChild>
-                <Button variant="outline">Close</Button>
-              </DrawerClose>
+              <Button variant="outline" onClick={() => setIsEnrollmentsDialogOpen(false)}>
+                Close
+              </Button>
             </div>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
