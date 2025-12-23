@@ -39,7 +39,7 @@ export default function FaqSection() {
           .filter((faq) => faq.isActive)
           .sort((a, b) => a.orderIndex - b.orderIndex);
         
-        setFaqs(activeFAQs);
+    setFaqs(activeFAQs);
       } catch (error) {
         console.error("Failed to load FAQs:", error);
         setFaqs([]);

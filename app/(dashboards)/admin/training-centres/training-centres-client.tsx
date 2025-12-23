@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check, Brain, Users, X, Calendar, User, CreditCard, CheckCircle as CheckCircleIcon } from "lucide-react";
+import { Plus, Search, MoreVertical, Pencil, Trash2, Building2, Loader2, AlertCircle, CheckCircle2, GraduationCap, School, Copy, Check, Brain, Users, X } from "lucide-react";
 import { apiClient, ENDPOINTS } from "@/lib/api";
 
 type TrainingCentreCategory = "SQA" | "Cambridge" | "SoftSkill";
@@ -51,6 +52,7 @@ interface TrainingCentresPageClientProps {
 
 export function TrainingCentresPageClient({ initialTrainingCentres, error: initialError }: TrainingCentresPageClientProps) {
   console.log("initialTrainingCentres", initialTrainingCentres);
+  const router = useRouter();
   const [trainingCentres, setTrainingCentres] = useState<TrainingCentre[]>(initialTrainingCentres);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -70,14 +72,6 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
   const [error, setError] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // Enrollments dialog state
-  const [isEnrollmentsDialogOpen, setIsEnrollmentsDialogOpen] = useState(false);
-  const [selectedCentreForEnrollments, setSelectedCentreForEnrollments] = useState<TrainingCentre | null>(null);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [enrollmentsTotal, setEnrollmentsTotal] = useState(0);
-  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
-  const [enrollmentsError, setEnrollmentsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (successMessage) {
@@ -258,97 +252,6 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
     }
   };
 
-  // Handle opening enrollments dialog
-  const handleViewEnrollments = async (centre: TrainingCentre) => {
-    setSelectedCentreForEnrollments(centre);
-    setIsEnrollmentsDialogOpen(true);
-    setIsLoadingEnrollments(true);
-    setEnrollmentsError(null);
-    
-    try {
-      // Use the enrollments endpoint with trainingCenterId query parameter
-      const response = await apiClient.get(ENDPOINTS.enrollments.get({ trainingCenterId: centre.centreId }));
-      
-      // Handle response - pretty print whatever we get
-      console.log("Enrollments response:", response);
-      
-      // Handle different response formats
-      let enrollmentsData: any[] = [];
-      let total = 0;
-      
-      if (response.enrollments && Array.isArray(response.enrollments)) {
-        enrollmentsData = response.enrollments;
-        total = response.total || enrollmentsData.length;
-      } else if (response.success && response.data) {
-        if (response.data.enrollments && Array.isArray(response.data.enrollments)) {
-          enrollmentsData = response.data.enrollments;
-          total = response.data.total || enrollmentsData.length;
-        } else if (Array.isArray(response.data)) {
-          enrollmentsData = response.data;
-          total = enrollmentsData.length;
-        }
-      } else if (Array.isArray(response)) {
-        enrollmentsData = response;
-        total = enrollmentsData.length;
-      } else {
-        // If it's not an array, store the whole response as a single item for display
-        enrollmentsData = [response];
-        total = 1;
-      }
-      
-      setEnrollments(enrollmentsData);
-      setEnrollmentsTotal(total);
-    } catch (err: any) {
-      console.error("Failed to fetch enrollments:", err);
-      setEnrollmentsError(err.message || "Failed to load enrollments");
-      setEnrollments([]);
-    } finally {
-      setIsLoadingEnrollments(false);
-    }
-  };
-
-  // Helper to get user name from enrollment
-  const getUserName = (user: any): string => {
-    if (!user) return "Unknown";
-    if (user.profile) {
-      const firstName = user.profile.firstName || "";
-      const lastName = user.profile.lastName || "";
-      if (firstName || lastName) {
-        return `${firstName} ${lastName}`.trim();
-      }
-    }
-    return user.email || "Unknown User";
-  };
-
-  // Helper to get status badge colors
-  const getStatusBadge = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "enrolled":
-        return {
-          bg: "bg-blue-50",
-          text: "text-blue-700",
-          border: "border-blue-200",
-        };
-      case "completed":
-        return {
-          bg: "bg-emerald-50",
-          text: "text-emerald-700",
-          border: "border-emerald-200",
-        };
-      case "cancelled":
-        return {
-          bg: "bg-red-50",
-          text: "text-red-700",
-          border: "border-red-200",
-        };
-      default:
-        return {
-          bg: "bg-slate-50",
-          text: "text-slate-700",
-          border: "border-slate-200",
-        };
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -495,7 +398,7 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleViewEnrollments(centre)}
+                              onClick={() => router.push(`/admin/enrollments?trainingCenterId=${centre.centreId}`)}
                               className="cursor-pointer"
                             >
                               <Users className="mr-2 h-4 w-4" />
@@ -743,203 +646,6 @@ export function TrainingCentresPageClient({ initialTrainingCentres, error: initi
                 "Delete"
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Enrollments Dialog */}
-      <Dialog open={isEnrollmentsDialogOpen} onOpenChange={setIsEnrollmentsDialogOpen}>
-        <DialogContent className="lg:min-w-[900px] xl:min-w-[1200px] 2xl:min-w-[1500px] max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Training Centre Enrollments</DialogTitle>
-            <DialogDescription>
-              {selectedCentreForEnrollments?.name}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto">
-            {isLoadingEnrollments ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Loading enrollments...</span>
-              </div>
-            ) : enrollmentsError ? (
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                <AlertCircle className="w-5 h-5 shrink-0" />
-                <div>
-                  <p className="font-medium">Failed to load enrollments</p>
-                  <p className="text-sm">{enrollmentsError}</p>
-                </div>
-              </div>
-            ) : enrollments.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No enrollments found for this training centre.</p>
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Enrolled</TableHead>
-                      <TableHead>Completed</TableHead>
-                      <TableHead>Progress</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>LCCI</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {enrollments.map((enrollment, index) => {
-                      // Handle different response formats - pretty print whatever we get
-                      const enrollmentId = enrollment.enrollmentId || enrollment.id || `enrollment-${index}`;
-                      const status = enrollment.status || "unknown";
-                      const statusColors = getStatusBadge(status);
-                      
-                      return (
-                        <TableRow key={enrollmentId}>
-                          {/* User */}
-                          <TableCell>
-                            {enrollment.user ? (
-                              <div>
-                                <div className="font-medium text-slate-900">
-                                  {getUserName(enrollment.user)}
-                                </div>
-                                <div className="text-sm text-slate-600">{enrollment.user?.email || "—"}</div>
-                              </div>
-                            ) : (
-                              <div>
-                                <div className="font-medium text-slate-900">Enrollment #{index + 1}</div>
-                                <div className="text-sm text-slate-600">ID: {enrollmentId}</div>
-                              </div>
-                            )}
-                          </TableCell>
-
-                          {/* Course */}
-                          <TableCell>
-                            {enrollment.course ? (
-                              <div>
-                                <div className="font-medium">{enrollment.course.name || enrollment.course.title || "—"}</div>
-                                {enrollment.course.courseId && (
-                                  <div className="text-xs text-slate-500">{enrollment.course.courseId}</div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* Status */}
-                          <TableCell>
-                            {status && (
-                              <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text} border ${statusColors.border}`}>
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                              </span>
-                            )}
-                          </TableCell>
-
-                          {/* Enrolled Date */}
-                          <TableCell>
-                            {enrollment.enrolledAt ? (
-                              <div className="flex items-center gap-1.5 text-sm">
-                                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                                {formatDate(enrollment.enrolledAt)}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* Completed Date */}
-                          <TableCell>
-                            {enrollment.completedAt ? (
-                              <div className="flex items-center gap-1.5 text-sm">
-                                <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-500" />
-                                {formatDate(enrollment.completedAt)}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* Progress */}
-                          <TableCell>
-                            {enrollment.progress !== undefined ? (
-                              <div className="min-w-[80px]">
-                                <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
-                                  <span>{enrollment.progress}%</span>
-                                </div>
-                                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-[color:var(--brand-blue)] transition-all"
-                                    style={{ width: `${enrollment.progress}%` }}
-                                  />
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* Payment */}
-                          <TableCell>
-                            {enrollment.transaction ? (
-                              <div>
-                                {enrollment.transaction.amount !== undefined && (
-                                  <div className="font-medium">
-                                    NPR {Number(enrollment.transaction.amount || 0).toLocaleString()}
-                                  </div>
-                                )}
-                                {enrollment.transaction.paymentType && (
-                                  <div className="text-xs text-slate-500">{enrollment.transaction.paymentType}</div>
-                                )}
-                                {enrollment.transaction.status && (
-                                  <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
-                                    enrollment.transaction.status === 'completed' || enrollment.transaction.status === 'success'
-                                      ? 'bg-emerald-100 text-emerald-700'
-                                      : enrollment.transaction.status === 'pending'
-                                      ? 'bg-amber-100 text-amber-700'
-                                      : 'bg-red-100 text-red-700'
-                                  }`}>
-                                    {enrollment.transaction.status}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* LCCI */}
-                          <TableCell>
-                            {enrollment.isLcci !== undefined ? (
-                              <span className={enrollment.isLcci ? "text-emerald-600 font-medium" : "text-slate-400"}>
-                                {enrollment.isLcci ? "Yes" : "No"}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="border-t pt-4">
-            <div className="flex items-center justify-between w-full">
-              <p className="text-sm text-muted-foreground">
-                {enrollmentsTotal} {enrollmentsTotal === 1 ? "enrollment" : "enrollments"}
-              </p>
-              <Button variant="outline" onClick={() => setIsEnrollmentsDialogOpen(false)}>
-                Close
-              </Button>
-            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
