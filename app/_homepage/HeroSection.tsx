@@ -71,23 +71,6 @@ export default function HeroSection() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Generate stable particle positions that match server and client
-  const particles = useMemo(() => {
-    // Use a seeded random function for consistent results
-    let seed = 12345;
-    const seededRandom = () => {
-      seed = (seed * 9301 + 49297) % 233280;
-      return seed / 233280;
-    };
-
-    return Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      left: seededRandom() * 100,
-      top: seededRandom() * 100,
-      duration: 3 + seededRandom() * 2,
-      delay: seededRandom() * 5,
-    }));
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -196,27 +179,6 @@ export default function HeroSection() {
 
         {/* Animated grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
-
-        {/* Floating particles */}
-        {particles.map((particle) => (
-          <motion.div
-            key={particle.id}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${particle.left}%`,
-              top: `${particle.top}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: particle.duration,
-              repeat: Infinity,
-              delay: particle.delay,
-            }}
-          />
-        ))}
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-20 pb-16">
@@ -325,14 +287,8 @@ export default function HeroSection() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative hidden lg:block"
             >
-              {/* Main feature card with floating effect */}
-              <motion.div
-                animate={{
-                  y: [0, -20, 0],
-                }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className="relative"
-              >
+              {/* Main feature card */}
+              <div className="relative">
                 <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl" />
 
@@ -410,16 +366,10 @@ export default function HeroSection() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Floating accent cards */}
-              <motion.div
-                animate={{
-                  y: [0, 15, 0],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-8 -left-8 bg-white rounded-2xl p-6 shadow-2xl max-w-[200px]"
-              >
+              {/* Accent cards */}
+              <div className="absolute -bottom-8 -left-8 bg-white rounded-2xl p-6 shadow-2xl max-w-[200px]">
                 <div className="text-[color:var(--brand-blue)]">
                   <div className="text-3xl font-bold">
                     {isLoading ? (
@@ -430,20 +380,14 @@ export default function HeroSection() {
                   </div>
                   <div className="text-sm text-[color:var(--brand-blue)]/90">Active Courses</div>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                animate={{
-                  y: [0, -15, 0],
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="absolute -top-8 -right-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl p-6 shadow-2xl"
-              >
+              <div className="absolute -top-8 -right-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl p-6 shadow-2xl">
                 <div className="text-white text-center">
                   <div className="text-3xl font-bold">98%</div>
                   <div className="text-sm text-white/90">Pass Rate</div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
