@@ -45,6 +45,8 @@ export default async function SQAStudentsPage({
     const apiClient = await getServerApiClient();
     const response = await apiClient.get(ENDPOINTS.sqaStudents.get(page, limit, search));
 
+    console.log(response);
+
     // Handle API response structure: { success, data: { data: [...], total, page, limit, totalPages } }
     if (response.success && response.data) {
       // Check if data.data exists (nested structure)
