@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://147.93.28.223:3010";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.lccigq.com";
 
 export const ENDPOINTS = {
     auth: {
