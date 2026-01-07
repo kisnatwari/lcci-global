@@ -223,28 +223,23 @@ export default function HeroSection() {
 
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link
-                    href="/courses"
-                    className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] px-8 py-4 text-lg font-bold text-white shadow-2xl shadow-blue-500/50 hover:shadow-blue-500/70 transition-all duration-300 relative overflow-hidden"
-                  >
-                    <span className="relative z-10">Start Learning Now</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-[color:var(--brand-cyan)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </Link>
-                </motion.div>
+                <Link
+                  href="/courses"
+                  className="inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] px-8 py-4 text-lg font-bold text-white shadow-2xl shadow-blue-500/50"
+                >
+                  <span>Start Learning Now</span>
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
 
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <a
-                    href="https://youtu.be/m2Pck7Vt4Ls?si=nXJQNgD79dK54kgG"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-md px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300"
-                  >
-                    <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    Watch Overview
-                  </a>
-                </motion.div>
+                <a
+                  href="https://youtu.be/m2Pck7Vt4Ls?si=nXJQNgD79dK54kgG"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-md px-8 py-4 text-lg font-semibold text-white"
+                >
+                  <Play className="w-5 h-5" />
+                  Watch Overview
+                </a>
               </div>
 
               {/* Trust indicators */}
@@ -339,20 +334,20 @@ export default function HeroSection() {
                               initial={{ opacity: 0, x: 20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.5 + idx * 0.1 }}
-                              className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
+                              className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer"
                             >
-                              <div className={`flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                              <div className={`flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl shadow-lg`}>
                                 {item.icon}
                               </div>
                               <div className="flex-1">
-                                <h4 className="text-white font-semibold group-hover:text-[color:var(--brand-cyan)] transition-colors">
+                                <h4 className="text-white font-semibold">
                                   {item.title}
                                 </h4>
                                 <p className="text-sm text-blue-200">
                                   {item.count} {item.count === 1 ? 'programme' : 'programmes'}
                                 </p>
                               </div>
-                              <ArrowRight className="w-5 h-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                              <ArrowRight className="w-5 h-5 text-white/50" />
                             </motion.div>
                           </Link>
                         ))

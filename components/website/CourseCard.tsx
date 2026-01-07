@@ -100,13 +100,10 @@ export default function CourseCard({ course }: CourseCardProps) {
 
   return (
     <>
-      <motion.div
-        whileHover={{ y: -8, scale: 1.02 }}
-        className="group h-full"
-      >
+      <div className="h-full">
         <div
           onClick={handleCardClick}
-          className="relative h-full bg-white rounded-3xl border-2 border-slate-200 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
+          className="relative h-full bg-white rounded-3xl border-2 border-slate-200 shadow-xl overflow-hidden flex flex-col cursor-pointer"
         >
           {/* Image Header */}
           <div className="relative h-48 overflow-hidden">
@@ -117,14 +114,14 @@ export default function CourseCard({ course }: CourseCardProps) {
                     src={imageUrl}
                     alt={course.title}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 ) : (
                   <img
                     src={imageUrl}
                     alt={course.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover"
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-transparent" />
@@ -163,7 +160,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           {/* Content */}
           <div className="p-6 flex-1 flex flex-col">
             {/* Title */}
-            <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-[color:var(--brand-blue)] transition-colors leading-snug">
+            <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 leading-snug">
               {course.title}
             </h3>
 
@@ -208,19 +205,17 @@ export default function CourseCard({ course }: CourseCardProps) {
                 <Link
                   href={`/courses/${course.id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-blue)] group-hover:gap-3 transition-all"
+                  className="flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-blue)]"
                 >
                   <span>Learn more</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* Hover Gradient Overlay */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${typeGradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`} />
         </div>
-      </motion.div>
+      </div>
 
       {/* Enrollment Dialog */}
       <EnrollmentDialog

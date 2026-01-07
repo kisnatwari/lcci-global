@@ -66,43 +66,25 @@ export default function FeaturedCoursesSection({
           </motion.div>
         </div>
         
-        {/* Category Pills with animation */}
+        {/* Category Pills */}
         <div className="flex flex-wrap justify-center gap-3 mb-12">
           {categories.map((cat) => (
-            <motion.button
+            <button
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              whileTap={{ scale: 0.95 }}
-              className="relative overflow-hidden group"
+              className="relative"
             >
               <div
-                className={`relative z-10 px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 ${
+                className={`relative z-10 px-6 py-3 rounded-2xl font-semibold text-sm ${
                   activeCategory === cat
-                    ? "text-white"
-                    : "text-slate-700"
+                    ? "text-white bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] shadow-lg"
+                    : "text-slate-700 bg-white border-2 border-slate-200"
                 }`}
               >
-                {activeCategory === cat && (
-                  <motion.div
-                    layoutId="activeCategory"
-                    className="absolute inset-0 bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] rounded-2xl shadow-lg"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <div className={`absolute inset-0 rounded-2xl border-2 transition-colors ${
-                  activeCategory === cat
-                    ? "border-transparent"
-                    : "border-slate-200 group-hover:border-[color:var(--brand-blue)]/30"
-                }`} />
-                <div className={`absolute inset-0 rounded-2xl transition-colors ${
-                  activeCategory === cat
-                    ? "bg-transparent"
-                    : "bg-white group-hover:bg-gradient-to-r group-hover:from-blue-50 group-hover:to-cyan-50"
-                }`} />
-                <span className="relative z-10">{cat}</span>
+                {cat}
             </div>
-            </motion.button>
+            </button>
           ))}
         </div>
         
@@ -138,11 +120,10 @@ export default function FeaturedCoursesSection({
         >
           <Link
             href="/courses"
-            className="group inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 px-8 py-4 text-lg font-semibold text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+            className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 px-8 py-4 text-lg font-semibold text-white shadow-xl"
           >
-            <span className="relative z-10">Explore All Courses</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <span>Explore All Courses</span>
+            <ArrowRight className="w-5 h-5" />
           </Link>
         </motion.div>
       </div>

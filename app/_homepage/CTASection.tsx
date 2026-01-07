@@ -42,30 +42,20 @@ export default function CTASection() {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <Link
+                href="/courses"
+                className="inline-flex items-center justify-center gap-3 rounded-xl bg-[color:var(--brand-blue)] px-8 py-4 text-lg font-bold text-white shadow-lg"
               >
-                <Link
-                  href="/courses"
-                  className="group inline-flex items-center justify-center gap-3 rounded-xl bg-[color:var(--brand-blue)] px-8 py-4 text-lg font-bold text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <span>Explore Courses</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </motion.div>
+                <span>Explore Courses</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
 
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <Link
+                href="/contact-us"
+                className="inline-flex items-center justify-center gap-3 rounded-xl border-2 border-slate-300 bg-white px-8 py-4 text-lg font-semibold text-slate-700"
               >
-                <Link
-                  href="/contact-us"
-                  className="inline-flex items-center justify-center gap-3 rounded-xl border-2 border-slate-300 bg-white px-8 py-4 text-lg font-semibold text-slate-700 hover:border-[color:var(--brand-blue)] hover:text-[color:var(--brand-blue)] transition-all duration-300"
-                >
-                  Contact Us
-                </Link>
-              </motion.div>
+                Contact Us
+              </Link>
             </div>
 
             {/* Trust indicators */}

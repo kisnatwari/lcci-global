@@ -72,17 +72,12 @@ export default function CourseTypesSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2 }}
-                whileHover={{ y: -8 }}
-                className="group relative"
               >
                 {/* Main Card */}
-                <div className="relative h-full bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
-                  {/* Gradient overlay on hover */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-                  
+                <div className="relative h-full bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-xl overflow-hidden">
                   {/* Icon Badge */}
                   <div className="relative inline-flex">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity`} />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} rounded-2xl blur-xl opacity-50`} />
                     <div className={`relative flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${mode.gradient} shadow-lg`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>
@@ -118,16 +113,11 @@ export default function CourseTypesSection() {
                     {/* CTA Button */}
             <Link
                       href={mode.href}
-                      className="group/btn inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+                      className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold shadow-lg"
             >
                       Explore Programs
-                      <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
-
-                  {/* Decorative corner element */}
-                  <div className="absolute top-0 right-0 w-32 h-32 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.gradient} opacity-10 rounded-bl-[100px]`} />
           </div>
         </div>
               </motion.div>
