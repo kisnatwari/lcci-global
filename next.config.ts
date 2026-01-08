@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
       // Backend API server
       {
         protocol: 'http',
-        hostname: '147.93.28.223',
+        hostname: 'api.lccigq.com',
         port: '9010',
       },
     ],

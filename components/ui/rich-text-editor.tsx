@@ -191,7 +191,7 @@ export function RichTextEditor({
 
       // Get auth token
       const token = getAuthToken();
-      const baseUrl = API_BASE_URL || 'http://147.93.28.223:3010';
+      const baseUrl = API_BASE_URL || 'https://api.lccigq.com';
 
       // Upload file to backend
       const response = await fetch(`${baseUrl}${ENDPOINTS.upload.file()}`, {
