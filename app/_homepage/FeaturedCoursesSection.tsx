@@ -43,7 +43,7 @@ export default function FeaturedCoursesSection({
               Featured Programmes
           </div>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Popular Courses This Season
+              Popular Courses 
           </h2>
             <p className="text-lg text-slate-600 max-w-2xl">
               Explore our most sought-after programmes across business, IT, languages and professional skills

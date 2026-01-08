@@ -41,15 +41,21 @@ export default async function ProfilePage() {
     
     // Handle different response structures
     if (response.profileId) {
-      profile = response;
+      profile = response as ProfileData;
     } else if (response.data && response.data.profileId) {
-      profile = response.data;
+      profile = response.data as ProfileData;
     } else if (response.success && response.data && response.data.profileId) {
-      profile = response.data;
+      profile = response.data as ProfileData;
+    } else if (response.data) {
+      // Sometimes API might return profile directly in data without profileId check
+      profile = response.data as ProfileData;
     }
   } catch (err: any) {
     console.error("Failed to fetch profile:", err);
-    error = err.message || "Failed to load profile";
+    // Don't set error for 404, profile might not exist yet
+    if (err.response?.status !== 404) {
+      error = err.message || "Failed to load profile";
+    }
   }
 
   return <ProfilePageClient initialProfile={profile} error={error} />;

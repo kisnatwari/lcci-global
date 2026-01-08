@@ -21,6 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const menuItems = [
@@ -78,15 +79,21 @@ export function StudentSidebar() {
         {/* Logo/Brand */}
         <div className="flex h-16 items-center border-b border-slate-200/50 dark:border-slate-700/50 px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-              <BookOpen className="h-4 w-4" />
+            <div className="relative h-8 w-8 flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="LCCI Global Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-slate-900 dark:text-white">
                 Student Hub
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                LCCI Global
+                LCCI GQ
               </span>
             </div>
           </div>

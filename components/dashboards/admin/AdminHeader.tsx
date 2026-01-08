@@ -12,15 +12,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, LogOut, User } from "lucide-react";
+import { Search, LogOut, User, Award } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { logout, getAuthSession, getUserRole, getAuthToken, clearAuthSession, refreshAccessToken, shouldRefreshToken } from "@/lib/auth";
 import { isTokenExpired } from "@/lib/auth/token";
+
+// Hidden pages that can be accessed via search
+const searchablePages = [
+  {
+    title: "Bulk Certify",
+    description: "Upload JSON to bulk certify students",
+    href: "/admin/bulk-certify",
+    keywords: ["bulk", "certify", "certification", "upload", "json", "students"],
+    icon: Award,
+  },
+];
 
 export function AdminHeader() {
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
   const [isMounted, setIsMounted] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -112,17 +130,93 @@ export function AdminHeader() {
         
         {/* Enhanced search with unique styling */}
         <div className="flex flex-1 items-center gap-4 min-w-0">
-          <div className="relative flex-1 max-w-md group min-w-0">
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-[color:var(--brand-blue)]/10 to-[color:var(--brand-cyan)]/10 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-hover:text-[color:var(--brand-blue)] transition-colors" />
-              <Input
-                type="search"
-                placeholder="Search anything..."
-                className="pl-10 pr-4 bg-background/60 backdrop-blur-md border-border/60 focus:border-[color:var(--brand-blue)]/40 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm"
-              />
-            </div>
-          </div>
+          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative flex-1 max-w-md group min-w-0">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-[color:var(--brand-blue)]/10 to-[color:var(--brand-cyan)]/10 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-hover:text-[color:var(--brand-blue)] transition-colors pointer-events-none z-10" />
+                  <Input
+                    type="search"
+                    placeholder="Search anything..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchOpen(true)}
+                    className="pl-10 pr-4 bg-background/60 backdrop-blur-md border-border/60 focus:border-[color:var(--brand-blue)]/40 focus:ring-[color:var(--brand-blue)]/20 transition-all shadow-sm cursor-pointer"
+                  />
+                </div>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0" align="start">
+              <div className="border-b px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search pages and features..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-sm"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto p-1">
+                {searchQuery && searchablePages
+                  .filter((page) => {
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      page.title.toLowerCase().includes(query) ||
+                      page.description.toLowerCase().includes(query) ||
+                      page.keywords.some((keyword) => keyword.toLowerCase().includes(query))
+                    );
+                  })
+                  .length === 0 ? (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    No results found.
+                  </div>
+                ) : (
+                  <>
+                    {searchQuery && (
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                        Hidden Features
+                      </div>
+                    )}
+                    {searchablePages
+                      .filter((page) => {
+                        if (!searchQuery) return false;
+                        const query = searchQuery.toLowerCase();
+                        return (
+                          page.title.toLowerCase().includes(query) ||
+                          page.description.toLowerCase().includes(query) ||
+                          page.keywords.some((keyword) => keyword.toLowerCase().includes(query))
+                        );
+                      })
+                      .map((page) => {
+                        const Icon = page.icon;
+                        return (
+                          <div
+                            key={page.href}
+                            onClick={() => {
+                              router.push(page.href);
+                              setSearchOpen(false);
+                              setSearchQuery("");
+                            }}
+                            className="relative flex cursor-pointer select-none items-center gap-3 rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors"
+                          >
+                            <Icon className="h-4 w-4" />
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="font-medium">{page.title}</span>
+                              <span className="text-xs text-muted-foreground truncate">{page.description}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         
         {/* Enhanced action buttons */}

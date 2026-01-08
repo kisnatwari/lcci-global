@@ -28,7 +28,7 @@ export default function StatsBannerSection() {
     },
     {
       icon: Building2,
-      value: "128+",
+      value: "80+",
       label: "Partners",
       description: "Institutions worldwide",
       color: "from-blue-600 to-teal-600",

@@ -12,8 +12,8 @@ export default function AboutPage() {
         <PageHeader
           badge={{ icon: "🌟", text: "Our Story" }}
           title="About"
-          titleHighlight="LCCI"
-          description="Empowering professionals worldwide with industry-recognized qualifications."
+          titleHighlight="LCCI GQ"
+          description="We help people and business grow through quality education and training."
         />
 
         <AboutContent />

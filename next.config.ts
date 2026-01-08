@@ -37,6 +37,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '**.digitaloceanspaces.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'storage.lccigq.com',
+      },
       // Backend API server
       {
         protocol: 'http',

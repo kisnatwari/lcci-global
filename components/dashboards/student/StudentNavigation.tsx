@@ -5,13 +5,13 @@ import {
   BookOpen,
   Award,
   User,
-  Settings,
   Menu,
   Sparkles,
   ChevronLeft,
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -148,13 +148,19 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
       )}
     >
       <div className={cn("mb-6 flex items-center gap-3", collapsed && "justify-center gap-0")}>
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white">
-          <Sparkles className="h-5 w-5" />
+        <div className="relative h-10 w-10 flex items-center justify-center">
+          <Image
+            src="/logo.png"
+            alt="LCCI Global Logo"
+            width={40}
+            height={40}
+            className="object-contain"
+          />
         </div>
         {!collapsed && (
           <Link href="/" className="transition-colors hover:text-slate-900">
             <p className="text-sm font-semibold text-slate-900">Student Hub</p>
-            <p className="text-xs text-slate-500">LCCI Global</p>
+            <p className="text-xs text-slate-500">LCCI GQ</p>
           </Link>
         )}
         <button
@@ -230,12 +236,6 @@ export function StudentDesktopNavigation({ collapsed, onToggle }: DesktopNavProp
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/student/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
@@ -308,12 +308,18 @@ export function StudentMobileNavigation() {
     <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm lg:hidden">
       <div className="flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white">
-            <Sparkles className="h-5 w-5" />
+          <div className="relative h-10 w-10 flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="LCCI Global Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900">Student Hub</p>
-            <p className="text-xs text-slate-500">LCCI Global</p>
+            <p className="text-xs text-slate-500">LCCI GQ</p>
           </div>
         </Link>
 
@@ -345,12 +351,6 @@ export function StudentMobileNavigation() {
                 <Link href="/student/profile">
                   <User className="mr-2 h-4 w-4" />
                   Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/student/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

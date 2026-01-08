@@ -108,6 +108,7 @@ export const ENDPOINTS = {
         getByUser: (userId: string) => `/api/certificates/user/${userId}`, // GET: List certificates for a user
         getByCourse: (courseId: string) => `/api/certificates/course/${courseId}`, // GET: Get certificate by course ID
         validate: () => "/api/certificates/validate", // POST: Validate certificate by student name and course name
+        bulkCertify: () => "/api/admin/bulk-certify", // POST: Bulk certify students
     },
     stats: {
         get: () => "/api/stats", // GET: Get admin dashboard statistics

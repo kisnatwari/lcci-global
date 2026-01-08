@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -134,12 +135,18 @@ export function StudentTopNavigation() {
         {/* Logo & Brand */}
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--brand-blue)] text-white shadow-lg">
-              <Sparkles className="h-5 w-5" />
+            <div className="relative h-10 w-10 flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="LCCI Global Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-slate-900">Student Hub</p>
-              <p className="text-xs text-slate-500">LCCI Global</p>
+              <p className="text-xs text-slate-500">LCCI GQ</p>
             </div>
           </Link>
 
@@ -196,12 +203,6 @@ export function StudentTopNavigation() {
                   Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/student/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={async () => {
@@ -255,14 +256,6 @@ export function StudentTopNavigation() {
                   >
                     <User className="h-5 w-5" />
                     Profile
-                  </Link>
-                  <Link
-                    href="/student/settings"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 mt-2"
-                  >
-                    <Settings className="h-5 w-5" />
-                    Settings
                   </Link>
                 </div>
               </div>

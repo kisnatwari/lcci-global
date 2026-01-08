@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Target, Lightbulb, Shield, Heart, ArrowRight, Sparkles } from "lucide-react";
+import { Target, Lightbulb, Shield, Heart, ArrowRight, Sparkles, Users, Award, BookOpen, CheckCircle, GraduationCap, Globe, Building2, Star, ExternalLink } from "lucide-react";
 
 export default function AboutContent() {
   return (
     <div className="relative py-20 bg-slate-50">
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
-        {/* Mission Section */}
+        {/* Welcome Section */}
         <motion.section
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -16,29 +16,31 @@ export default function AboutContent() {
           className="mb-20 text-center"
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
-            <Target className="w-4 h-4" />
-            Our Mission
+            <Sparkles className="w-4 h-4" />
+            Welcome to LCCI GQ
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-            Empowering Global Success Through
-            <span className="block text-[color:var(--brand-blue)] mt-2">
-              Quality Education
-            </span>
+            We help people and business grow
           </h2>
-          <div className="space-y-4 text-lg text-slate-600 leading-relaxed max-w-4xl mx-auto">
+          <div className="space-y-6 text-lg text-slate-600 leading-relaxed max-w-4xl mx-auto text-left">
             <p>
-              Since 1887, LCCI Global Qualifications has been at the forefront of professional education,
-              developing practical capabilities in business, management, English, hospitality and computing
-              for learners in a competitive global environment.
+              LCCI Global Qualifications (LCCI GQ) is an award-winning organization and a leading provider of professional qualifications in Soft Skills, Management, English, Hospitality, and Computing & IT. We empower individuals and businesses worldwide through internationally recognized training and certification programs, building our reputation as a trusted education enterprise globally.
             </p>
-            <p className="text-slate-900 font-semibold">
-              We partner with schools, colleges and organizations worldwide to deliver structured,
-              industry‑relevant programmes that create real opportunities.
+            <p className="text-center pt-4">
+              <a
+                href="https://lccigq.com/about-us"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[color:var(--brand-blue)] hover:text-[color:var(--brand-blue)]/80 font-semibold transition-colors"
+              >
+                For more info, visit LCCI GQ
+                <ExternalLink className="w-4 h-4" />
+              </a>
             </p>
           </div>
         </motion.section>
 
-        {/* What We Offer Section */}
+        {/* Why LCCI GQ Stats Section */}
         <motion.section
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -47,66 +49,110 @@ export default function AboutContent() {
         >
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
-              <Lightbulb className="w-4 h-4" />
-              What We Offer
+              <Star className="w-4 h-4" />
+              Why LCCI GQ is Best Service Provider?
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Comprehensive Programmes
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Flexible, industry-aligned qualifications designed for success
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                title: "Diverse Qualifications",
-                description: "From entry-level certificates to advanced diplomas in business, accounting, finance and professional skills",
-                icon: "🎓",
+                title: "Happy Trainees",
+                value: "25000+",
+                icon: Users,
                 gradient: "from-blue-500 to-cyan-500",
               },
               {
-                title: "Flexible Delivery",
-                description: "Guided cohorts for institutions plus self-paced options for independent learners",
-                icon: "⚡",
+                title: "Happy Clients",
+                value: "120+",
+                icon: Building2,
                 gradient: "from-purple-500 to-pink-500",
               },
               {
-                title: "Industry Alignment",
-                description: "Programmes designed with employer expectations and global qualification frameworks in mind",
-                icon: "🎯",
+                title: "Training Programmes",
+                value: "40+",
+                icon: BookOpen,
                 gradient: "from-emerald-500 to-teal-500",
               },
               {
-                title: "Ongoing Support",
-                description: "Comprehensive academic, operational and marketing support for partner centers and tutors",
-                icon: "🤝",
+                title: "Commitment",
+                value: "100%",
+                icon: Award,
                 gradient: "from-orange-500 to-amber-500",
               },
-            ].map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="group"
-              >
-                <div className="h-full bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-lg hover:border-[color:var(--brand-blue)] hover:shadow-xl transition-all duration-300">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color:var(--brand-blue)]/10 text-3xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                    {item.icon}
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="group"
+                >
+                  <div className="h-full bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-lg hover:border-[color:var(--brand-blue)] hover:shadow-xl transition-all duration-300 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color:var(--brand-blue)]/10 mb-4 group-hover:scale-110 transition-transform duration-300 mx-auto">
+                      <Icon className="w-8 h-8 text-[color:var(--brand-blue)]" />
+                    </div>
+                    <div className="text-4xl font-bold text-slate-900 mb-2">
+                      {item.value}
+                    </div>
+                    <div className="text-lg font-semibold text-slate-600">
+                      {item.title}
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="text-slate-600 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* Mission & Vision Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-20"
+        >
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Mission */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-lg"
+            >
+              <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
+                <Target className="w-4 h-4" />
+                Our Mission
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Our Mission
+              </h3>
+              <p className="text-slate-600 leading-relaxed">
+                To become a leading institution of Nepal capable of helping thousands of people annually, to advance career through professional and vocational training and certification programmes for knowledge and skills of international quality in business, life skills and related fields.
+              </p>
+            </motion.div>
+
+            {/* Vision */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-3xl border-2 border-slate-200 p-8 shadow-lg"
+            >
+              <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-blue)]/10 border border-[color:var(--brand-blue)]/20 px-4 py-2 text-sm font-semibold text-[color:var(--brand-blue)] mb-6">
+                <Lightbulb className="w-4 h-4" />
+                Our Vision
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Our Vision
+              </h3>
+              <p className="text-slate-600 leading-relaxed">
+                An institution actively helping people to advance career through development of knowledge and skills of international quality in a competitive and prosperous world.
+              </p>
+            </motion.div>
           </div>
         </motion.section>
 
@@ -123,64 +169,44 @@ export default function AboutContent() {
               Our Values
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Guided by Principles
+              Our Values
             </h2>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                value: "Excellence",
-                description: "High standards in programme design, delivery and assessment",
-                icon: Shield,
-                gradient: "from-blue-500 to-cyan-500",
-              },
-              {
-                value: "Accessibility",
-                description: "Making professional education reachable for diverse learners",
-                icon: Heart,
-                gradient: "from-purple-500 to-pink-500",
-              },
-              {
-                value: "Innovation",
-                description: "Updating content and delivery to match changing industry needs",
-                icon: Lightbulb,
-                gradient: "from-emerald-500 to-teal-500",
-              },
-              {
-                value: "Integrity",
-                description: "Transparency and responsibility in all partnerships",
-                icon: Shield,
-                gradient: "from-orange-500 to-amber-500",
-              },
-            ].map((item, idx) => {
-              const Icon = item.icon;
-              return (
+          <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 lg:p-12 shadow-lg">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                "Commitment to quality",
+                "Continual improvement",
+                "Innovation in work",
+                "Integrity and honesty",
+                "Striving for excellence in every work we do",
+                "Self-respect and respect for others",
+                "Dignity at workplace",
+                "Devotion to practical learning",
+                "Learning work environment",
+                "Linking organizational objectives to fulfil societal needs",
+              ].map((value, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  whileHover={{ y: -5 }}
-                  className="group"
+                  transition={{ delay: idx * 0.05 }}
+                  className="flex items-start gap-3"
                 >
-                  <div className="h-full bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-lg hover:border-[color:var(--brand-blue)] hover:shadow-xl transition-all duration-300 text-center">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-[color:var(--brand-blue)]/10 mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <Icon className="w-7 h-7 text-[color:var(--brand-blue)]" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">
-                      {item.value}
-                    </h3>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {item.description}
-                    </p>
+                  <div className="flex-shrink-0 mt-1">
+                    <CheckCircle className="w-5 h-5 text-[color:var(--brand-blue)]" />
                   </div>
+                  <p className="text-slate-700 leading-relaxed font-medium">
+                    {value}
+                  </p>
                 </motion.div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </motion.section>
+
 
         {/* CTA Section */}
         <motion.section
@@ -194,10 +220,10 @@ export default function AboutContent() {
               Ready to Start?
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Partner With LCCI Today
+              Learn With LCCI GQ Today
             </h2>
             <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-              Discover how LCCI can support your institution or advance your professional career
+              Discover how LCCI GQ can support your institution or advance your professional career
             </p>
             <Link
               href="/courses"

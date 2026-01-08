@@ -156,24 +156,22 @@ export default function ContactContent() {
                   </div>
                 </div>
 
-              {/* Business Hours */}
+              {/* Google Maps */}
               <div className="mt-12">
                 <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                  Office Hours
+                  Location
                 </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Monday – Friday</span>
-                    <span className="font-bold text-slate-900">9:00 AM – 5:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Saturday</span>
-                    <span className="font-bold text-slate-900">10:00 AM – 2:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-600">Sunday</span>
-                    <span className="font-bold text-slate-900">Closed</span>
-                  </div>
+                <div className="w-full h-96 rounded-xl overflow-hidden border-2 border-slate-200 shadow-lg">
+                  <iframe
+                    src="https://www.google.com/maps?ll=27.670091,85.311197&z=17&output=embed&cid=4239885354496361345"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="LCCI Global Qualifications Location"
+                  ></iframe>
                 </div>
               </div>
           </motion.div>

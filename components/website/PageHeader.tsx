@@ -11,7 +11,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({ badge, title, titleHighlight, description }: PageHeaderProps) {
   return (
-    <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-24 bg-slate-900">
+    <section className="relative pt-24 pb-12 lg:pt-28 lg:pb-16 bg-slate-900">
 
       <div className="container mx-auto px-4 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
@@ -20,10 +20,10 @@ export default function PageHeader({ badge, title, titleHighlight, description }
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6"
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1.5 mb-4"
             >
-              <span className="text-2xl">{badge.icon}</span>
-              <span className="text-sm font-semibold text-blue-200">{badge.text}</span>
+              <span className="text-lg">{badge.icon}</span>
+              <span className="text-xs font-semibold text-blue-200">{badge.text}</span>
             </motion.div>
             )}
             
@@ -32,7 +32,7 @@ export default function PageHeader({ badge, title, titleHighlight, description }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight"
           >
               {title}
               {titleHighlight && (
@@ -47,7 +47,7 @@ export default function PageHeader({ badge, title, titleHighlight, description }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg md:text-xl text-blue-100 leading-relaxed max-w-3xl mx-auto"
+            className="text-base md:text-lg text-blue-100 leading-relaxed max-w-3xl mx-auto"
           >
             {description}
           </motion.p>

@@ -184,17 +184,7 @@ export default function CourseCard({ course }: CourseCardProps) {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between gap-2">
-              {course.price ? (
-                <span className="text-lg font-bold text-slate-900">
-                  {course.price}
-                </span>
-              ) : (
-                <span className="text-xs text-slate-500 font-medium">
-                  Contact for pricing
-                </span>
-              )}
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2">
                 <Button
                   onClick={handleEnrollClick}
                   size="sm"
@@ -210,7 +200,6 @@ export default function CourseCard({ course }: CourseCardProps) {
                   <span>Learn more</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-              </div>
             </div>
           </div>
 

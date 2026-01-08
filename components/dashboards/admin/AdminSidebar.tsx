@@ -25,6 +25,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { logout } from "@/lib/auth";
@@ -115,12 +116,15 @@ export function AdminSidebar() {
         
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
-            {/* Unique logo design with glow effect */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] rounded-xl blur-md opacity-50 animate-pulse" />
-              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-[color:var(--brand-blue)] to-[color:var(--brand-cyan)] flex items-center justify-center shadow-lg ring-2 ring-[color:var(--brand-blue)]/20">
-                <span className="text-white font-bold text-xl">L</span>
-              </div>
+            {/* Logo */}
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="LCCI Global Logo"
+                width={48}
+                height={48}
+                className="object-contain"
+              />
             </div>
             <div>
               <h2 className="font-bold text-lg text-foreground tracking-tight">Admin Panel</h2>

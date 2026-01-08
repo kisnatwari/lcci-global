@@ -50,8 +50,10 @@ interface ProfilePageClientProps {
 }
 
 export default function ProfilePageClient({ initialProfile, error: initialError }: ProfilePageClientProps) {
+  const [profile, setProfile] = useState<ProfileData | null>(initialProfile);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isFetching, setIsFetching] = useState(!initialProfile);
   const [error, setError] = useState<string | null>(initialError);
   const [success, setSuccess] = useState(false);
 
@@ -64,18 +66,58 @@ export default function ProfilePageClient({ initialProfile, error: initialError 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialProfile?.avatarUrl || null);
 
+  // Fetch profile if not provided
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!initialProfile) {
+        setIsFetching(true);
+        try {
+          const response = await apiClient.get(ENDPOINTS.profile.me());
+          
+          // Handle different response structures
+          let profileData: ProfileData | null = null;
+          if (response.profileId) {
+            profileData = response;
+          } else if (response.data && response.data.profileId) {
+            profileData = response.data;
+          } else if (response.success && response.data && response.data.profileId) {
+            profileData = response.data;
+          } else if (response.data) {
+            // Sometimes the API might return the profile directly in data
+            profileData = response.data;
+          }
+          
+          if (profileData) {
+            setProfile(profileData);
+          }
+        } catch (err: any) {
+          console.error("Failed to fetch profile:", err);
+          // Don't set error for 404, profile might not exist yet
+          if (err.response?.status !== 404) {
+            setError(err.message || "Failed to load profile");
+          }
+        } finally {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [initialProfile]);
+
   // Update form when profile changes
   useEffect(() => {
-    if (initialProfile) {
-      setFirstName(initialProfile.firstName || "");
-      setLastName(initialProfile.lastName || "");
-      setPhone(initialProfile.phone || "");
-      setAddress(initialProfile.address || "");
-      setBio(initialProfile.bio || "");
-      setAvatarUrl(initialProfile.avatarUrl);
-      setPreviewUrl(initialProfile.avatarUrl);
+    const currentProfile = profile || initialProfile;
+    if (currentProfile) {
+      setFirstName(currentProfile.firstName || "");
+      setLastName(currentProfile.lastName || "");
+      setPhone(currentProfile.phone || "");
+      setAddress(currentProfile.address || "");
+      setBio(currentProfile.bio || "");
+      setAvatarUrl(currentProfile.avatarUrl);
+      setPreviewUrl(currentProfile.avatarUrl);
     }
-  }, [initialProfile]);
+  }, [profile, initialProfile]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,19 +197,22 @@ export default function ProfilePageClient({ initialProfile, error: initialError 
       });
 
       // Handle API response structure: { success: true, message: "...", data: {...} }
+      let updatedProfile: ProfileData | null = null;
       if (response.success && response.data && response.data.profileId) {
-        setSuccess(true);
-        setAvatarUrl(finalAvatarUrl);
-        setSelectedFile(null);
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          setSuccess(false);
-        }, 3000);
+        updatedProfile = response.data;
       } else if (response.profileId) {
         // Fallback: if response is directly the profile object
+        updatedProfile = response;
+      } else if (response.data && response.data.profileId) {
+        updatedProfile = response.data;
+      }
+
+      if (updatedProfile) {
         setSuccess(true);
         setAvatarUrl(finalAvatarUrl);
         setSelectedFile(null);
+        setProfile(updatedProfile);
+        // Clear success message after 3 seconds
         setTimeout(() => {
           setSuccess(false);
         }, 3000);
@@ -184,17 +229,18 @@ export default function ProfilePageClient({ initialProfile, error: initialError 
 
   // Get user initials
   const getUserInitials = () => {
+    const currentProfile = profile || initialProfile;
     if (firstName && lastName) {
       return `${firstName[0]}${lastName[0]}`.toUpperCase();
     }
     if (firstName) {
       return firstName[0].toUpperCase();
     }
-    if (initialProfile?.user.username) {
-      return initialProfile.user.username[0].toUpperCase();
+    if (currentProfile?.user?.username) {
+      return currentProfile.user.username[0].toUpperCase();
     }
-    if (initialProfile?.user.email) {
-      return initialProfile.user.email[0].toUpperCase();
+    if (currentProfile?.user?.email) {
+      return currentProfile.user.email[0].toUpperCase();
     }
     return "U";
   };
@@ -299,35 +345,35 @@ export default function ProfilePageClient({ initialProfile, error: initialError 
                     <Mail className="h-4 w-4" />
                     Email
                   </Label>
-                  <p className="text-sm text-slate-900">{initialProfile?.user.email}</p>
+                  <p className="text-sm text-slate-900">{(profile || initialProfile)?.user?.email || "N/A"}</p>
                 </div>
-                {initialProfile?.user.username && (
+                {(profile || initialProfile)?.user?.username && (
                   <div>
                     <Label className="text-sm font-semibold text-slate-500 flex items-center gap-2 mb-1">
                       <User className="h-4 w-4" />
                       Username
                     </Label>
-                    <p className="text-sm text-slate-900">@{initialProfile.user.username}</p>
+                    <p className="text-sm text-slate-900">@{(profile || initialProfile)?.user?.username}</p>
                   </div>
                 )}
                 <div>
                   <Label className="text-sm font-semibold text-slate-500 mb-1 block">Account Type</Label>
-                  <Badge variant="default">{initialProfile?.user.userType || "Customer"}</Badge>
+                  <Badge variant="default">{(profile || initialProfile)?.user?.userType || "Customer"}</Badge>
                 </div>
                 <div>
                   <Label className="text-sm font-semibold text-slate-500 mb-1 block">Status</Label>
-                  <Badge variant={initialProfile?.user.status === "active" ? "default" : "secondary"}>
-                    {initialProfile?.user.status || "active"}
+                  <Badge variant={(profile || initialProfile)?.user?.status === "active" ? "default" : "secondary"}>
+                    {(profile || initialProfile)?.user?.status || "active"}
                   </Badge>
                 </div>
-                {initialProfile && (
+                {(profile || initialProfile) && (
                   <div className="pt-4 border-t">
                     <Label className="text-sm font-semibold text-slate-500 flex items-center gap-2 mb-1">
                       <Calendar className="h-4 w-4" />
                       Member Since
                     </Label>
                     <p className="text-sm text-slate-900">
-                      {new Date(initialProfile.createdAt).toLocaleDateString()}
+                      {new Date((profile || initialProfile)!.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 )}
