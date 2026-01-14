@@ -46,11 +46,11 @@ export default function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.15 }}
-              className="relative"
+              className="w-full"
             >
-              <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-xl bg-slate-900">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl bg-slate-900">
                 <iframe
-                  className="w-full h-full"
+                  className="absolute inset-0 w-full h-full"
                   src={video.embedUrl}
                   title={`Testimonial ${index + 1}`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
