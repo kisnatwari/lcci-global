@@ -199,7 +199,7 @@ export default function HeroSection() {
                 className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 text-sm font-semibold text-white shadow-lg"
               >
                 <Sparkles className="w-4 h-4 text-yellow-400" />
-                Award-winning qualifications since 2009
+                Award-winning qualification since 2009
               </motion.div>
 
               {/* Main Headline */}

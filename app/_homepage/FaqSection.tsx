@@ -69,7 +69,7 @@ export default function FaqSection() {
             Common Questions
           </h2>
           <p className="text-xl text-slate-600">
-            Everything you need to know about LCCI qualifications
+            Everything you need to know about LCCI GQ qualifications
           </p>
         </motion.div>
 

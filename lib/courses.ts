@@ -49,7 +49,7 @@ export function mapApiCourseToWebsiteCourse(apiCourse: any): Course {
     image: apiCourse.thumbnailUrl || "",
     instructor: apiCourse.creator?.profile 
       ? `${apiCourse.creator.profile.firstName} ${apiCourse.creator.profile.lastName}`
-      : "LCCI Instructor",
+      : "",
     price: formatPrice(apiCourse.price || 0),
     format: courseType === "guided" ? "Guided Programme" : "Self-Paced",
   };

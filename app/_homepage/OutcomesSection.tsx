@@ -13,7 +13,7 @@ const outcomes = [
   },
   {
     icon: Globe2,
-    value: "120+",
+    value: "80+",
     label: "Partner Institutions",
     description: "Schools, colleges and training centers worldwide",
     gradient: "from-emerald-500 to-teal-500",

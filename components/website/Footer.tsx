@@ -67,7 +67,7 @@ export default function Footer() {
           >
             <Logo className="mb-6" />
             <p className="text-blue-200 leading-relaxed mb-6">
-              Award-winning qualifications in Business, IT, English and Professional Skills since 1887.
+              Award-winning qualification in Business, IT, English and Professional Skills since 1887.
             </p>
             <div className="flex gap-3">
               <a

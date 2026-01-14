@@ -7,7 +7,7 @@ const audiences = [
   {
     icon: GraduationCap,
     label: "Schools & Colleges",
-    description: "Enhance your curriculum with industry-recognized LCCI qualifications",
+    description: "Enhance your curriculum with industry-recognized LCCI GQ qualifications",
     points: [
       "Structured progression from foundation to advanced",
       "Full academic and assessment support",

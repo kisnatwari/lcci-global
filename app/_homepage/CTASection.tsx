@@ -37,7 +37,7 @@ export default function CTASection() {
             {/* Description */}
             <p className="text-xl text-slate-600 mb-10 max-w-3xl mx-auto leading-relaxed">
               Join thousands of learners who have accelerated their careers with
-              industry-recognized LCCI qualifications. Your success story starts here.
+              industry-recognized LCCI GQ qualifications. Your success story starts here.
             </p>
 
             {/* CTAs */}
@@ -67,7 +67,7 @@ export default function CTASection() {
               <div className="hidden sm:block w-px h-4 bg-slate-300" />
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-[color:var(--brand-blue)] rounded-full" />
-                <span className="text-sm font-medium">120+ Partner Institutions</span>
+                <span className="text-sm font-medium">80+ Partner Institutions</span>
               </div>
               <div className="hidden sm:block w-px h-4 bg-slate-300" />
               <div className="flex items-center gap-2">

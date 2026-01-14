@@ -28,7 +28,7 @@ const steps = [
   {
     step: "04",
     title: "Earn Certificate",
-    body: "Complete assessments and receive your globally-recognized LCCI certificate to advance your career.",
+    body: "Complete assessments and receive your globally-recognized LCCI GQ certificate to advance your career.",
     icon: Award,
     color: "from-orange-500 to-amber-500",
   },
